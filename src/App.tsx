@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { 
-  Menu, X, Search, Heart, ShoppingCart, User, 
+import {
+  Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
   Facebook, Instagram, Youtube, Phone, MapPin,
   ChevronRight, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { CartSidebar } from '@/components/CartSidebar';
+import { ProductDetailModal } from '@/components/ProductDetailModal';
+import { ProductCard } from '@/components/ProductCard';
+import { products, getFeaturedProducts } from '@/data/products';
+import type { Product } from '@/data/products';
 
 // Announcement Bar Component
 function AnnouncementBar() {
@@ -21,9 +26,10 @@ function AnnouncementBar() {
 }
 
 // Navigation Header Component
-function NavigationHeader() {
+function NavigationHeader({ onCartClick }: { onCartClick: () => void }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,12 +49,11 @@ function NavigationHeader() {
   ];
 
   return (
-    <header 
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'glass shadow-lg border-b border-gray-100' 
-          : 'bg-white'
-      }`}
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'glass shadow-lg border-b border-gray-100'
+        : 'bg-white'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -56,10 +61,10 @@ function NavigationHeader() {
           <a href="#" className="flex items-center gap-2 animate-scale-in">
             <div className="relative">
               <svg width="50" height="50" viewBox="0 0 100 100" className="text-[#D4AF37]">
-                <path 
-                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <path
+                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="3"
                   className="animate-shimmer"
                 />
@@ -94,17 +99,22 @@ function NavigationHeader() {
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
               <Heart className="w-5 h-5 text-gray-700" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+            <button
+              onClick={onCartClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+            >
               <ShoppingCart className="w-5 h-5 text-gray-700" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D4AF37] text-white text-xs rounded-full flex items-center justify-center font-medium">
-                2
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D4AF37] text-white text-xs rounded-full flex items-center justify-center font-medium animate-price-pop">
+                  {totalItems}
+                </span>
+              )}
             </button>
             <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors">
               <User className="w-4 h-4" />
               <span>ENTRAR</span>
             </button>
-            <button 
+            <button
               className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
@@ -140,7 +150,7 @@ function HeroSection() {
     <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden bg-gradient-to-br from-white via-gray-50 to-white">
       {/* Decorative gold line */}
       <div className="absolute left-[8%] top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#D4AF37] to-transparent opacity-60" />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Content */}
@@ -155,7 +165,7 @@ function HeroSection() {
             <p className="text-lg text-gray-600 mb-8 animate-fade-in-up delay-300">
               Com elegância e conforto. Descubra a nossa coleção de móveis premium.
             </p>
-            <Button 
+            <Button
               className="bg-[#D4AF37] hover:bg-[#B8960C] text-white px-8 py-6 text-base font-semibold rounded-lg transition-all hover:scale-105 animate-pulse-glow animate-fade-in-up delay-400"
             >
               Ver Coleção
@@ -166,9 +176,9 @@ function HeroSection() {
           {/* Image */}
           <div className="relative animate-fade-in delay-200">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img 
-                src="/hero-bedroom.jpg" 
-                alt="Quarto moderno PT Móveis" 
+              <img
+                src="/hero-bedroom.jpg"
+                alt="Quarto moderno PT Móveis"
                 className="w-full h-[400px] lg:h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-white/30" />
@@ -206,7 +216,7 @@ function TrustBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
           {items.map((item, index) => (
-            <div 
+            <div
               key={item.title}
               className="flex items-center gap-3 animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
@@ -295,8 +305,8 @@ function CategoryGrid() {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="aspect-[4/3] relative">
-                <img 
-                  src={category.image} 
+                <img
+                  src={category.image}
                   alt={category.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -333,12 +343,12 @@ function AboutSection() {
               Qualidade que se sente
             </h2>
             <p className="text-white/80 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">
-              Na PT Móveis, produzimos camas e sofás com estruturas resistentes, espumas de qualidade 
-              e rigor no controlo de fabrico, garantindo conforto, durabilidade e excelente relação 
+              Na PT Móveis, produzimos camas e sofás com estruturas resistentes, espumas de qualidade
+              e rigor no controlo de fabrico, garantindo conforto, durabilidade e excelente relação
               qualidade-preço para o uso diário.
             </p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="border-white text-white hover:bg-white hover:text-[#1E3A5F] px-6 py-5 animate-fade-in-up delay-300"
             >
               Sobre a PT Móveis
@@ -349,8 +359,8 @@ function AboutSection() {
 
         {/* Image */}
         <div className="relative h-[400px] lg:h-auto animate-fade-in delay-200">
-          <img 
-            src="/about-workshop.jpg" 
+          <img
+            src="/about-workshop.jpg"
             alt="Oficina PT Móveis"
             className="w-full h-full object-cover"
           />
@@ -360,54 +370,11 @@ function AboutSection() {
   );
 }
 
-// Product Card Component
-function ProductCard({ product, index }: { product: any; index: number }) {
-  return (
-    <div 
-      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-up"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-        <img 
-          src={product.image} 
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {product.badge && (
-          <Badge className={`absolute top-3 left-3 ${product.badgeColor} text-white text-xs font-semibold px-3 py-1`}>
-            {product.badge}
-          </Badge>
-        )}
-        <button className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
-          <Heart className="w-4 h-4 text-gray-600" />
-        </button>
-      </div>
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
-        <div className="flex items-center gap-2 mb-3">
-          {product.oldPrice && (
-            <span className="text-sm text-gray-400 line-through">{product.oldPrice}</span>
-          )}
-          <span className="text-lg font-bold text-[#D4AF37]">{product.price}</span>
-        </div>
-        <Button className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-sm py-2">
-          ADICIONAR
-        </Button>
-      </div>
-    </div>
-  );
-}
+// Legacy ProductCard removed - using new ProductCard component from @/components/ProductCard
 
 // Featured Products Section
-function FeaturedProducts() {
-  const products = [
-    { name: 'Sofá Chaiselong Reversível Saturno', price: '339,00 €', oldPrice: '399,00 €', image: '/prod-sofa-1.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cama Estofada Orlando', price: '199,00 €', oldPrice: '249,00 €', image: '/prod-cama-1.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cama Estofada Luxuria', price: '249,00 €', oldPrice: '299,00 €', image: '/prod-cama-2.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cómoda Malva M8 139cm', price: '259,90 €', image: '/prod-comoda-1.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cama Estofada Romântica', price: '199,00 €', oldPrice: '279,00 €', image: '/prod-cama-3.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Sofá Celeste 190cm', price: '219,00 €', oldPrice: '259,00 €', image: '/prod-sofa-3.jpg', badge: 'NOVO', badgeColor: 'bg-[#D4AF37]' },
-  ];
+function FeaturedProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
+  const featuredProducts = getFeaturedProducts();
 
   return (
     <section className="py-16 bg-gray-50">
@@ -418,9 +385,14 @@ function FeaturedProducts() {
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
-          {products.map((product, index) => (
-            <ProductCard key={product.name} product={product} index={index} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {featuredProducts.map((product, index) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              index={index}
+              onViewDetails={onProductClick}
+            />
           ))}
         </div>
       </div>
@@ -432,8 +404,8 @@ function FeaturedProducts() {
 function DeliveryBanner() {
   return (
     <section className="relative h-[400px] overflow-hidden">
-      <img 
-        src="/delivery-banner.jpg" 
+      <img
+        src="/delivery-banner.jpg"
         alt="Entrega PT Móveis"
         className="w-full h-full object-cover"
       />
@@ -446,8 +418,8 @@ function DeliveryBanner() {
             </h2>
             <ul className="space-y-3">
               {['MONTAGENS', 'PAGAMENTO NA ENTREGA', 'QUALIDADE DE FABRICANTE', 'ATENDIMENTO PERSONALIZADO'].map((item, index) => (
-                <li 
-                  key={item} 
+                <li
+                  key={item}
                   className="flex items-center gap-3 text-white animate-fade-in-left"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -464,15 +436,8 @@ function DeliveryBanner() {
 }
 
 // More Products Section
-function MoreProducts() {
-  const products = [
-    { name: 'Sofá Chaiselong Reversível Star 4 L', price: '289,00 €', oldPrice: '349,00 €', image: '/prod-sofa-2.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Sofá Celeste 190cm', price: '219,00 €', oldPrice: '259,00 €', image: '/prod-sofa-3.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cama Estofada Versace Alongada', price: '399,00 €', image: '/prod-cama-4.jpg', badge: 'NOVO', badgeColor: 'bg-[#D4AF37]' },
-    { name: 'Cama Estofada Prisma Alongada', price: '479,00 €', image: '/prod-cama-5.jpg', badge: 'NOVO', badgeColor: 'bg-[#D4AF37]' },
-    { name: 'Cama Estofada Roland Alongada', price: '379,00 €', oldPrice: '449,00 €', image: '/prod-cama-1.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-    { name: 'Cama Estofada Premium', price: '299,00 €', image: '/prod-cama-2.jpg', badge: 'PROMO', badgeColor: 'bg-red-500' },
-  ];
+function MoreProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
+  const moreProducts = products.slice(6, 12);
 
   return (
     <section className="py-16 bg-white">
@@ -483,9 +448,14 @@ function MoreProducts() {
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
-          {products.map((product, index) => (
-            <ProductCard key={product.name} product={product} index={index} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {moreProducts.map((product, index) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              index={index}
+              onViewDetails={onProductClick}
+            />
           ))}
         </div>
       </div>
@@ -533,14 +503,14 @@ function Testimonials() {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {testimonials.map((testimonial, index) => (
-            <div 
+            <div
               key={testimonial.name}
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src={testimonial.avatar} 
+                <img
+                  src={testimonial.avatar}
                   alt={testimonial.name}
                   className="w-12 h-12 rounded-full object-cover border-2 border-[#D4AF37]"
                 />
@@ -572,10 +542,10 @@ function Footer() {
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-2 mb-6">
               <svg width="40" height="40" viewBox="0 0 100 100" className="text-[#D4AF37]">
-                <path 
-                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <path
+                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="3"
                 />
                 <text x="35" y="65" fontSize="28" fontWeight="bold" fill="currentColor" fontFamily="Playfair Display">PT</text>
@@ -627,9 +597,9 @@ function Footer() {
             <h4 className="font-semibold text-white mb-4">Redes Sociais</h4>
             <div className="flex gap-3 mb-6">
               {[Facebook, Instagram, Youtube].map((Icon, index) => (
-                <a 
+                <a
                   key={index}
-                  href="#" 
+                  href="#"
                   className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"
                 >
                   <Icon className="w-5 h-5" />
@@ -658,22 +628,35 @@ function Footer() {
 
 // Main App Component
 function App() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   return (
     <div className="min-h-screen bg-white">
       <AnnouncementBar />
-      <NavigationHeader />
+      <NavigationHeader onCartClick={() => setIsCartOpen(true)} />
       <main>
         <HeroSection />
         <TrustBar />
         <CountdownTimer />
         <CategoryGrid />
         <AboutSection />
-        <FeaturedProducts />
+        <FeaturedProducts onProductClick={setSelectedProduct} />
         <DeliveryBanner />
-        <MoreProducts />
+        <MoreProducts onProductClick={setSelectedProduct} />
         <Testimonials />
       </main>
       <Footer />
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={selectedProduct !== null}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
