@@ -42,45 +42,54 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
 
     return (
         <div
-            className="product-card asymmetric-card group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl cursor-pointer animate-reveal-up"
-            style={{ animationDelay: `${index * 80}ms` }}
+            className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-[#D4AF37]/30 transition-all duration-300 cursor-pointer animate-fade-in-up"
+            style={{
+                animationDelay: `${index * 60}ms`,
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+            }}
             onClick={handleViewDetails}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+            }}
         >
             {/* Image Container */}
-            <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
+            <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
                 <img
                     src={product.image}
                     alt={product.name}
-                    className={`product-image w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'
-                        }`}
+                    className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                        } group-hover:scale-105`}
                     onLoad={() => setImageLoaded(true)}
                     loading="lazy"
                 />
 
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Gradient Overlay on Hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Badge */}
                 {product.badge && (
                     <Badge
-                        className={`absolute top-4 left-4 ${product.badgeColor} text-white text-xs font-bold px-3 py-1.5 shadow-lg animate-badge-slide uppercase tracking-wider`}
+                        className={`absolute top-3 left-3 ${product.badgeColor} text-white text-xs font-bold px-2.5 py-1 shadow-sm uppercase tracking-wide`}
                     >
                         {product.badge}
                     </Badge>
                 )}
 
                 {/* Quick Actions */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsLiked(!isLiked);
                         }}
-                        className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                        className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
                         aria-label="Add to wishlist"
                     >
                         <Heart
-                            className={`w-5 h-5 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                            className={`w-4 h-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'
                                 }`}
                         />
                     </button>
@@ -89,19 +98,19 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                             e.stopPropagation();
                             handleViewDetails();
                         }}
-                        className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                        className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
                         aria-label="Quick view"
                     >
-                        <Eye className="w-5 h-5 text-gray-600" />
+                        <Eye className="w-4 h-4 text-gray-600" />
                     </button>
                 </div>
 
-                {/* Rating Badge - Bottom Left */}
+                {/* Rating Badge */}
                 {product.rating && (
-                    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="flex items-center gap-1.5">
-                            <Star className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
-                            <span className="text-sm font-semibold text-gray-900">{product.rating}</span>
+                            <Star className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" />
+                            <span className="text-xs font-semibold text-gray-900">{product.rating}</span>
                             <span className="text-xs text-gray-500">({product.reviewCount})</span>
                         </div>
                     </div>
@@ -109,26 +118,26 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
             </div>
 
             {/* Content */}
-            <div className="p-5">
+            <div className="p-4">
                 {/* Category */}
-                <p className="text-xs font-medium text-[#D4AF37] uppercase tracking-wider mb-2">
+                <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wider mb-2">
                     {product.category}
                 </p>
 
                 {/* Product Name */}
-                <h3 className="text-base font-semibold text-gray-900 mb-3 line-clamp-2 min-h-[3rem] leading-snug" style={{ fontFamily: 'Playfair Display' }}>
+                <h3 className="text-base font-bold text-gray-900 mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Playfair Display' }}>
                     {product.name}
                 </h3>
 
                 {/* Price Section */}
-                <div className="flex items-end justify-between mb-4">
-                    <div className="flex flex-col gap-1">
+                <div className="flex items-end justify-between mb-3">
+                    <div className="flex flex-col gap-0.5">
                         {product.oldPrice && (
-                            <span className="text-sm text-gray-400 line-through font-medium">
+                            <span className="text-xs text-gray-400 line-through font-medium">
                                 {product.oldPrice.toFixed(2)} €
                             </span>
                         )}
-                        <span className="floating-price text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                        <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
                             {product.price.toFixed(2)} €
                         </span>
                     </div>
@@ -143,10 +152,10 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 {/* Add to Cart Button */}
                 <Button
                     onClick={handleAddToCart}
-                    className="btn-premium w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-sm font-semibold py-5 rounded-lg transition-all"
+                    className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-sm font-bold py-2.5 rounded-lg transition-all group-hover:shadow-md"
                 >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    ADICIONAR AO CARRINHO
+                    ADICIONAR
                 </Button>
 
                 {/* Stock Status */}

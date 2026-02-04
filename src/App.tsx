@@ -385,7 +385,7 @@ function FeaturedProducts({ onProductClick }: { onProductClick: (product: Produc
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
           {featuredProducts.map((product, index) => (
             <ProductCard
               key={product.id}
@@ -448,7 +448,7 @@ function MoreProducts({ onProductClick }: { onProductClick: (product: Product) =
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
           {moreProducts.map((product, index) => (
             <ProductCard
               key={product.id}
