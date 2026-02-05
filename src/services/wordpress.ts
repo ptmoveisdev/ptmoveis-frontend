@@ -1,6 +1,8 @@
 /**
- * WordPress REST API Service
+ * WordPress REST API Service - VERSÃO CORRIGIDA
  * Serviço para comunicação com WordPress como headless CMS
+ * 
+ * CORREÇÃO: Usa Basic Auth para WooCommerce em ambiente local
  */
 
 import type {
@@ -79,28 +81,54 @@ async function fetchWordPress<T>(
 
 /**
  * Função auxiliar para fazer requisições à API do WooCommerce
+ * CORRIGIDA: Usa Basic Auth em vez de query parameters
  */
 async function fetchWooCommerce<T>(
     endpoint: string,
     params: Record<string, any> = {}
 ): Promise<{ data: T; headers: Headers }> {
     try {
-        // Adiciona credenciais aos parâmetros
-        const queryParams = new URLSearchParams({
-            ...params,
-            consumer_key: WOOCOMMERCE_CONSUMER_KEY,
-            consumer_secret: WOOCOMMERCE_CONSUMER_SECRET,
+        // Converte parâmetros para query string
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                queryParams.append(key, value.toString());
+            }
         });
 
-        const url = `${WOOCOMMERCE_API_URL}${endpoint}?${queryParams}`;
+        const queryString = queryParams.toString();
+        const url = `${WOOCOMMERCE_API_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
+
+        // Cria Basic Auth header
+        const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
+
+        console.log('🔍 Fazendo requisição WooCommerce:', {
+            url: url.replace(WOOCOMMERCE_CONSUMER_KEY, 'KEY_HIDDEN').replace(WOOCOMMERCE_CONSUMER_SECRET, 'SECRET_HIDDEN'),
+            endpoint,
+            params
+        });
+
         const response = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Basic ${auth}`,
             },
         });
 
         if (!response.ok) {
-            const error: WPError = await response.json();
+            let error: WPError;
+            try {
+                error = await response.json();
+            } catch {
+                error = {
+                    code: 'http_error',
+                    message: `HTTP ${response.status}: ${response.statusText}`,
+                    data: { status: response.status }
+                };
+            }
+
+            console.error('❌ Erro WooCommerce:', error);
+
             throw new WordPressAPIError(
                 error.message || 'Erro ao buscar dados do WooCommerce',
                 error.code || 'unknown_error',
@@ -109,11 +137,14 @@ async function fetchWooCommerce<T>(
         }
 
         const data = await response.json();
+        console.log('✅ Resposta WooCommerce:', Array.isArray(data) ? `${data.length} itens` : 'objeto');
+
         return { data: data as T, headers: response.headers };
     } catch (error) {
         if (error instanceof WordPressAPIError) {
             throw error;
         }
+        console.error('❌ Erro de conexão WooCommerce:', error);
         throw new WordPressAPIError(
             'Erro de conexão com o WooCommerce',
             'connection_error',

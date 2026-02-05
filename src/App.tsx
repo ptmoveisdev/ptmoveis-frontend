@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { CartSidebar } from '@/components/CartSidebar';
 import { ProductDetailModal } from '@/components/ProductDetailModal';
-import { ProductCard } from '@/components/ProductCard';
-import { products, getFeaturedProducts } from '@/data/products';
 import type { Product } from '@/data/products';
+import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
+import { WordPressProducts } from '@/components/WordPressProducts';
 
 // Announcement Bar Component
 function AnnouncementBar() {
@@ -372,32 +372,9 @@ function AboutSection() {
 
 // Legacy ProductCard removed - using new ProductCard component from @/components/ProductCard
 
-// Featured Products Section
+// Featured Products Section - Usando WordPress
 function FeaturedProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
-  const featuredProducts = getFeaturedProducts();
-
-  return (
-    <section className="py-16 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#1E3A5F] mb-4" style={{ fontFamily: 'Playfair Display' }}>
-            Destaques
-          </h2>
-          <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
-          {featuredProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={index}
-              onViewDetails={onProductClick}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <WordPressFeaturedProducts onProductClick={onProductClick} />;
 }
 
 // Delivery Banner Component
@@ -435,32 +412,9 @@ function DeliveryBanner() {
   );
 }
 
-// More Products Section
+// More Products Section - Usando WordPress
 function MoreProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
-  const moreProducts = products.slice(6, 12);
-
-  return (
-    <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#1E3A5F] mb-4" style={{ fontFamily: 'Playfair Display' }}>
-            Camas / Sofás
-          </h2>
-          <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
-          {moreProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={index}
-              onViewDetails={onProductClick}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <WordPressProducts onProductClick={onProductClick} title="Camas / Sofás" perPage={10} />;
 }
 
 // Testimonials Section
