@@ -101,13 +101,11 @@ async function fetchWooCommerce<T>(
             }
         });
 
-        // Adiciona credenciais aos parâmetros da URL (Query String Authentication)
-        // Isso ajuda a evitar erros 403 em alguns servidores/WAFs que bloqueiam Basic Auth
-        queryParams.append('consumer_key', WOOCOMMERCE_CONSUMER_KEY);
-        queryParams.append('consumer_secret', WOOCOMMERCE_CONSUMER_SECRET);
-
         const queryString = queryParams.toString();
         const url = `${WOOCOMMERCE_API_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
+
+        // Cria Basic Auth header
+        const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
 
         console.log('🔍 Fazendo requisição WooCommerce:', {
             url: url.replace(WOOCOMMERCE_CONSUMER_KEY, 'KEY_HIDDEN').replace(WOOCOMMERCE_CONSUMER_SECRET, 'SECRET_HIDDEN'),
@@ -118,7 +116,7 @@ async function fetchWooCommerce<T>(
         const response = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
-                // Removido Basic Auth para evitar bloqueios de WAF
+                'Authorization': `Basic ${auth}`,
             },
         });
 
