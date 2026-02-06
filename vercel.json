@@ -1,8 +1,0 @@
-{
-    "rewrites": [
-        {
-            "source": "/wp/:path*",
-            "destination": "https://www.ptmoveis.pt:443/wp/:path*"
-        }
-    ]
-}
