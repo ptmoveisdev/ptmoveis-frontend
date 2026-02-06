@@ -12,6 +12,7 @@ import { ProductDetailModal } from '@/components/ProductDetailModal';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
 import { WordPressProducts } from '@/components/WordPressProducts';
+import { AllProductsPage } from '@/components/AllProductsPage';
 
 // Announcement Bar Component
 function AnnouncementBar() {
@@ -26,7 +27,7 @@ function AnnouncementBar() {
 }
 
 // Navigation Header Component
-function NavigationHeader({ onCartClick }: { onCartClick: () => void }) {
+function NavigationHeader({ onCartClick, onNavigateHome }: { onCartClick: () => void; onNavigateHome: () => void }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems } = useCart();
@@ -57,7 +58,7 @@ function NavigationHeader({ onCartClick }: { onCartClick: () => void }) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <a href="#" className="flex items-center gap-2 animate-scale-in">
+          <a href="#" onClick={(e) => { e.preventDefault(); onNavigateHome(); }} className="flex items-center gap-2 animate-scale-in">
             <img
               src="/logo.png"
               alt="PT Móveis"
@@ -134,7 +135,7 @@ function NavigationHeader({ onCartClick }: { onCartClick: () => void }) {
 }
 
 // Hero Section Component
-function HeroSection() {
+function HeroSection({ onViewCollection }: { onViewCollection: () => void }) {
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden bg-gradient-to-br from-white via-gray-50 to-white">
       {/* Decorative gold line */}
@@ -155,6 +156,7 @@ function HeroSection() {
               Com elegância e conforto. Descubra a nossa coleção de móveis premium.
             </p>
             <Button
+              onClick={onViewCollection}
               className="bg-[#D4AF37] hover:bg-[#B8960C] text-white px-8 py-6 text-base font-semibold rounded-lg transition-all hover:scale-105 animate-pulse-glow animate-fade-in-up delay-400"
             >
               Ver Coleção
@@ -358,8 +360,6 @@ function AboutSection() {
     </section>
   );
 }
-
-// Legacy ProductCard removed - using new ProductCard component from @/components/ProductCard
 
 // Featured Products Section - Usando WordPress
 function FeaturedProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
@@ -568,21 +568,34 @@ function Footer() {
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [currentView, setCurrentView] = useState<'home' | 'collection'>('home');
 
   return (
     <div className="min-h-screen bg-white">
       <AnnouncementBar />
-      <NavigationHeader onCartClick={() => setIsCartOpen(true)} />
+      <NavigationHeader
+        onCartClick={() => setIsCartOpen(true)}
+        onNavigateHome={() => setCurrentView('home')}
+      />
       <main>
-        <HeroSection />
-        <TrustBar />
-        <CountdownTimer />
-        <CategoryGrid />
-        <AboutSection />
-        <FeaturedProducts onProductClick={setSelectedProduct} />
-        <DeliveryBanner />
-        <MoreProducts onProductClick={setSelectedProduct} />
-        <Testimonials />
+        {currentView === 'home' ? (
+          <>
+            <HeroSection onViewCollection={() => setCurrentView('collection')} />
+            <TrustBar />
+            <CountdownTimer />
+            <CategoryGrid />
+            <AboutSection />
+            <FeaturedProducts onProductClick={setSelectedProduct} />
+            <DeliveryBanner />
+            <MoreProducts onProductClick={setSelectedProduct} />
+            <Testimonials />
+          </>
+        ) : (
+          <AllProductsPage
+            onBack={() => setCurrentView('home')}
+            onProductClick={setSelectedProduct}
+          />
+        )}
       </main>
       <Footer />
 

@@ -29,13 +29,18 @@ const WOOCOMMERCE_CONSUMER_SECRET = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_SE
  * Classe de erro customizada para WordPress API
  */
 export class WordPressAPIError extends Error {
+    public code: string;
+    public status: number;
+
     constructor(
         message: string,
-        public code: string,
-        public status: number
+        code: string,
+        status: number
     ) {
         super(message);
         this.name = 'WordPressAPIError';
+        this.code = code;
+        this.status = status;
     }
 }
 

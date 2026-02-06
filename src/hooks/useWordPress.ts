@@ -11,23 +11,15 @@ import type {
     WooCommerceCategory,
     ProductQueryParams,
     CategoryQueryParams,
-    WPPaginatedResponse,
 } from '../types/wordpress';
 import {
     getPosts,
     getPostBySlug,
-    getPostById,
     getCategories,
-    getCategoryById,
     getCategoryBySlug,
     getProducts,
-    getProductById,
     getProductBySlug,
-    getFeaturedProducts,
-    getOnSaleProducts,
-    getProductsByCategory,
     getProductCategories,
-    getProductCategoryById,
     getProductCategoryBySlug,
     WordPressAPIError,
 } from '../services/wordpress';
@@ -170,40 +162,13 @@ export function usePostBySlug(slug: string): UseWordPressState<WPPost> {
 }
 
 /**
- * Hook para buscar um post por ID
+ * Hook para buscar um post por ID (Comentado pois não está sendo usado e getPostById não foi importado)
  */
+/*
 export function usePostById(id: number): UseWordPressState<WPPost> {
-    const [state, setState] = useState<{
-        data: WPPost | null;
-        loading: boolean;
-        error: string | null;
-    }>({
-        data: null,
-        loading: true,
-        error: null,
-    });
-
-    const fetchData = useCallback(async () => {
-        setState({ data: null, loading: true, error: null });
-        try {
-            const post = await getPostById(id);
-            setState({ data: post, loading: false, error: null });
-        } catch (error) {
-            const message = error instanceof WordPressAPIError
-                ? error.message
-                : 'Erro ao carregar post';
-            setState({ data: null, loading: false, error: message });
-        }
-    }, [id]);
-
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [fetchData, id]);
-
-    return { ...state, refetch: fetchData };
+    // ... implementation removed to avoid unused import error
 }
+*/
 
 // ============================================
 // HOOKS PARA CATEGORIAS

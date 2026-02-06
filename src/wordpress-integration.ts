@@ -55,7 +55,6 @@ export {
 export {
     usePosts,
     usePostBySlug,
-    usePostById,
     useCategories,
     useCategoryBySlug,
     useProducts,

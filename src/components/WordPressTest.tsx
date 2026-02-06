@@ -198,7 +198,7 @@ export default function WordPressTest() {
                             {/* Teste WordPress */}
                             <TestResult
                                 title="Conexão WordPress"
-                                success={testResults.wordpress}
+                                success={testResults.wordpress || false}
                                 details={
                                     testResults.wordpress
                                         ? 'Conexão estabelecida com sucesso'
@@ -209,7 +209,7 @@ export default function WordPressTest() {
                             {/* Teste WooCommerce */}
                             <TestResult
                                 title="Configuração WooCommerce"
-                                success={testResults.woocommerce}
+                                success={testResults.woocommerce || false}
                                 details={
                                     testResults.woocommerce
                                         ? 'Consumer Key e Secret configurados'
@@ -309,8 +309,8 @@ function TestResult({
     return (
         <div
             className={`p-4 rounded-lg border-2 ${success
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-red-50 border-red-200'
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
                 }`}
         >
             <div className="flex items-start justify-between">
