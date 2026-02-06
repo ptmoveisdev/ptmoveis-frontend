@@ -3,8 +3,8 @@
  * Substitui os produtos locais por produtos do WooCommerce
  */
 
-import { useEffect } from 'react';
-import { useFeaturedProducts } from '@/hooks/useWordPress';
+import { useEffect, useMemo } from 'react';
+import { useProducts } from '@/hooks/useWordPress';
 import { ProductCard } from '@/components/ProductCard';
 import type { Product } from '@/data/products';
 import type { WooCommerceProduct } from '@/types/wordpress';
@@ -53,12 +53,22 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
 }
 
 export function WordPressFeaturedProducts({ onProductClick }: WordPressFeaturedProductsProps) {
-    const { data: wpProducts, loading, error, refetch } = useFeaturedProducts({ per_page: 10 });
+    // Busca 50 produtos para ter uma amostra maior para aleatoriedade
+    const { data: allProducts, loading, error, refetch } = useProducts({ per_page: 50 });
+
+    // Seleciona 10 produtos aleatórios do conjunto retornado
+    const wpProducts = useMemo(() => {
+        if (!allProducts || allProducts.length === 0) return [];
+        // Cria uma cópia e embaralha
+        const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
+        // Retorna os 10 primeiros
+        return shuffled.slice(0, 10);
+    }, [allProducts]);
 
     // Log para debug
     useEffect(() => {
         if (wpProducts.length > 0) {
-            console.log('✅ Produtos em destaque carregados:', wpProducts.length);
+            console.log('✅ Produtos aleatórios gerados:', wpProducts.length);
         }
     }, [wpProducts]);
 

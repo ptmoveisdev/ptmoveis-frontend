@@ -180,7 +180,7 @@ function HeroSection() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#1E3A5F]">Qualidade Premium</p>
-                  <p className="text-xs text-gray-500">Garantia de 3 anos</p>
+                  <p className="text-xs text-gray-500">Garantia com a  PTMóveis</p>
                 </div>
               </div>
             </div>
@@ -194,7 +194,7 @@ function HeroSection() {
 // Trust Bar Component
 function TrustBar() {
   const items = [
-    { icon: Shield, title: 'Garantia de 3 Anos', subtitle: 'Qualidade assegurada' },
+    { icon: Shield, title: 'Garantia com a  PTMóveis', subtitle: 'Qualidade assegurada' },
     { icon: Truck, title: 'Entrega e Montagem', subtitle: 'Em toda Portugal' },
     { icon: CreditCard, title: 'Pagamento na Entrega', subtitle: '100% seguro' },
     { icon: Headphones, title: 'Apoio ao Cliente', subtitle: 'Disponível 24/7' },
