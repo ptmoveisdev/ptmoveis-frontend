@@ -166,7 +166,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             <Button
                                 onClick={() => {
                                     const message = `Olá! Gostaria de finalizar a compra dos seguintes itens:\n\n${items.map(item => `- ${item.name} (${item.quantity}x) - ${item.price.toFixed(2)}€`).join('\n')}\n\n*Total: ${totalPrice.toFixed(2)}€*`;
-                                    window.open(`https://wa.me/351910650003?text=${encodeURIComponent(message)}`, '_blank');
+                                    window.open(`https://wa.me/351939076117?text=${encodeURIComponent(message)}`, '_blank');
                                 }}
                                 className="btn-premium w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white text-base font-bold py-6 rounded-lg"
                             >

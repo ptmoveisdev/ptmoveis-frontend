@@ -3,7 +3,7 @@ import { FloatingWhatsApp, WhatsAppIcon } from '@/components/FloatingWhatsApp';
 import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
-  Instagram, Phone, MapPin,
+  Instagram, MapPin,
   ChevronRight, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -105,7 +105,7 @@ function NavigationHeader({
               <Search className="w-5 h-5 text-gray-700" />
             </button>
             <a
-              href="https://wa.me/351910650003"
+              href="https://wa.me/351939076117"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 hover:bg-green-50 rounded-full transition-colors hidden sm:block text-[#25D366]"
@@ -545,12 +545,8 @@ function Footer() {
                 <MapPin className="w-4 h-4 mt-0.5 text-[#D4AF37]" />
                 <span>Av. João XXI 91, 4590-515<br />Paços de Ferreira, Portugal</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#D4AF37]" />
-                <span>+351 255 006 016</span>
-              </div>
               <a
-                href="https://wa.me/351910650003"
+                href="https://wa.me/351939076117"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 hover:text-[#25D366] transition-colors"
@@ -558,7 +554,7 @@ function Footer() {
                 <div className="w-4 h-4 flex items-center justify-center">
                   <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
                 </div>
-                <span>+351 910 650 003</span>
+                <span>+351 939 076 117</span>
               </a>
             </div>
           </div>
