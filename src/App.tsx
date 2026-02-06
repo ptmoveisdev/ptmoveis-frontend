@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { FloatingWhatsApp, WhatsAppIcon } from '@/components/FloatingWhatsApp';
 import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
-  Facebook, Instagram, Youtube, Phone, MapPin,
+  Instagram, Phone, MapPin,
   ChevronRight, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,15 @@ function NavigationHeader({
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <Search className="w-5 h-5 text-gray-700" />
             </button>
+            <a
+              href="https://wa.me/351910650003"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-green-50 rounded-full transition-colors hidden sm:block text-[#25D366]"
+              aria-label="WhatsApp"
+            >
+              <WhatsAppIcon className="w-5 h-5" />
+            </a>
             <button
               onClick={onFavoritesClick}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block relative"
@@ -380,7 +390,7 @@ function AboutSection() {
             </p>
             <Button
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-[#1E3A5F] px-6 py-5 animate-fade-in-up delay-300"
+              className="bg-transparent border-white text-white hover:bg-white hover:text-[#1E3A5F] px-6 py-5 animate-fade-in-up delay-300"
             >
               Sobre a PT Móveis
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -539,10 +549,17 @@ function Footer() {
                 <Phone className="w-4 h-4 text-[#D4AF37]" />
                 <span>+351 255 006 016</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#D4AF37]" />
+              <a
+                href="https://wa.me/351910650003"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:text-[#25D366] transition-colors"
+              >
+                <div className="w-4 h-4 flex items-center justify-center">
+                  <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
+                </div>
                 <span>+351 910 650 003</span>
-              </div>
+              </a>
             </div>
           </div>
 
@@ -574,15 +591,14 @@ function Footer() {
           <div className="animate-fade-in-up delay-300">
             <h4 className="font-semibold text-white mb-4">Redes Sociais</h4>
             <div className="flex gap-3 mb-6">
-              {[Facebook, Instagram, Youtube].map((Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              ))}
+              <a
+                href="https://www.instagram.com/ptmov_eis/?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
             </div>
             <p className="text-xs text-gray-500">
               Preços e especificações sujeitos a alteração sem aviso prévio. A PT Móveis declina qualquer responsabilidade por erros tipográficos ou fotográficos.
@@ -658,12 +674,12 @@ function App() {
       {/* Favorites Sidebar */}
       <FavoritesSidebar isOpen={isFavoritesOpen} onClose={() => setIsFavoritesOpen(false)} />
 
-      {/* Product Detail Modal */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={selectedProduct !== null}
         onClose={() => setSelectedProduct(null)}
       />
+      <FloatingWhatsApp />
     </div>
   );
 }
