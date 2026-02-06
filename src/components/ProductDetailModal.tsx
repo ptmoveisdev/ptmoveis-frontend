@@ -53,7 +53,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                 <div className="h-full flex flex-col">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                        <h2 className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                        <h2 className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                             Detalhes do Produto
                         </h2>
                         <button
@@ -128,7 +128,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                 </p>
 
                                 {/* Title */}
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Playfair Display' }}>
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Montserrat' }}>
                                     {product.name}
                                 </h1>
 
@@ -158,7 +158,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                                 {product.oldPrice.toFixed(2)} €
                                             </span>
                                         )}
-                                        <span className="text-4xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                                        <span className="text-4xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                             {product.price.toFixed(2)} €
                                         </span>
                                     </div>

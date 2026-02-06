@@ -30,7 +30,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         <div className="flex items-center gap-3">
                             <ShoppingBag className="w-6 h-6 text-[#D4AF37]" />
                             <div>
-                                <h2 className="text-xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                                <h2 className="text-xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                     Carrinho de Compras
                                 </h2>
                                 <p className="text-sm text-gray-500">
@@ -154,10 +154,10 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
                             {/* Total */}
                             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Playfair Display' }}>
+                                <span className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Montserrat' }}>
                                     Total
                                 </span>
-                                <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                                <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                     {totalPrice.toFixed(2)} €
                                 </span>
                             </div>

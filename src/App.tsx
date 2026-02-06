@@ -57,23 +57,12 @@ function NavigationHeader({ onCartClick }: { onCartClick: () => void }) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
           <a href="#" className="flex items-center gap-2 animate-scale-in">
-            <div className="relative">
-              <svg width="50" height="50" viewBox="0 0 100 100" className="text-[#D4AF37]">
-                <path
-                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  className="animate-shimmer"
-                />
-                <text x="35" y="65" fontSize="28" fontWeight="bold" fill="currentColor" fontFamily="Playfair Display">PT</text>
-              </svg>
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>MÓVEIS</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="PT Móveis"
+              className="h-12 sm:h-14 w-auto object-contain"
+            />
           </a>
 
           {/* Desktop Navigation */}
@@ -158,7 +147,7 @@ function HeroSection() {
             <span className="inline-block text-xs font-semibold tracking-[0.2em] text-[#D4AF37] mb-4 animate-fade-in-up">
               QUALIDADE QUE TRANSFORMA
             </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1E3A5F] mb-4 leading-tight" style={{ fontFamily: 'Playfair Display' }}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1E3A5F] mb-4 leading-tight" style={{ fontFamily: 'Montserrat' }}>
               <span className="block animate-fade-in-up delay-100">Tudo para</span>
               <span className="block animate-fade-in-up delay-200">sua <span className="text-[#D4AF37]">Casa</span></span>
             </h1>
@@ -256,7 +245,7 @@ function CountdownTimer() {
   const TimeBox = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-[#D4AF37] rounded-lg flex items-center justify-center bg-white shadow-lg">
-        <span className="text-2xl sm:text-3xl font-bold text-[#D4AF37]" style={{ fontFamily: 'Playfair Display' }}>
+        <span className="text-2xl sm:text-3xl font-bold text-[#D4AF37]" style={{ fontFamily: 'Montserrat' }}>
           {value.toString().padStart(2, '0')}
         </span>
       </div>
@@ -312,7 +301,7 @@ function CategoryGrid() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-semibold text-lg mb-1" style={{ fontFamily: 'Playfair Display' }}>
+                  <h3 className="text-white font-semibold text-lg mb-1" style={{ fontFamily: 'Montserrat' }}>
                     {category.name}
                   </h3>
                   <p className="text-white/70 text-xs">
@@ -339,7 +328,7 @@ function AboutSection() {
             <span className="text-[#D4AF37] text-sm font-semibold tracking-[0.2em] mb-4 block animate-fade-in">
               SOMOS FABRICANTE
             </span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6 animate-fade-in-up delay-100" style={{ fontFamily: 'Playfair Display' }}>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6 animate-fade-in-up delay-100" style={{ fontFamily: 'Montserrat' }}>
               Qualidade que se sente
             </h2>
             <p className="text-white/80 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">
@@ -390,7 +379,7 @@ function DeliveryBanner() {
       <div className="absolute inset-0 flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="max-w-md animate-fade-in-up">
-            <h2 className="text-3xl font-bold text-white mb-6" style={{ fontFamily: 'Playfair Display' }}>
+            <h2 className="text-3xl font-bold text-white mb-6" style={{ fontFamily: 'Montserrat' }}>
               A SUA ENTREGA É RÁPIDA
             </h2>
             <ul className="space-y-3">
@@ -450,7 +439,7 @@ function Testimonials() {
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#1E3A5F] mb-4" style={{ fontFamily: 'Playfair Display' }}>
+          <h2 className="text-3xl font-bold text-[#1E3A5F] mb-4" style={{ fontFamily: 'Montserrat' }}>
             Opinião de Clientes
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
@@ -492,19 +481,14 @@ function Footer() {
     <footer className="bg-[#1A1A1A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Logo & Contact */}
+          {/* Contact */}
           <div className="animate-fade-in-up">
-            <div className="flex items-center gap-2 mb-6">
-              <svg width="40" height="40" viewBox="0 0 100 100" className="text-[#D4AF37]">
-                <path
-                  d="M20 80 L20 35 L50 15 L80 35 L80 80 L70 80 L70 40 L50 28 L30 40 L30 80 Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                />
-                <text x="35" y="65" fontSize="28" fontWeight="bold" fill="currentColor" fontFamily="Playfair Display">PT</text>
-              </svg>
-              <span className="text-xl font-bold" style={{ fontFamily: 'Playfair Display' }}>MÓVEIS</span>
+            <div className="mb-6">
+              <img
+                src="/logo.png"
+                alt="PT Móveis"
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <div className="space-y-3 text-sm text-gray-400">
               <div className="flex items-start gap-2">

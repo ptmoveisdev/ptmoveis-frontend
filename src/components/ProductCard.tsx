@@ -125,7 +125,7 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 </p>
 
                 {/* Product Name */}
-                <h3 className="text-base font-bold text-gray-900 mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Playfair Display' }}>
+                <h3 className="text-base font-bold text-gray-900 mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Montserrat' }}>
                     {product.name}
                 </h3>
 
@@ -137,7 +137,7 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                                 {product.oldPrice.toFixed(2)} €
                             </span>
                         )}
-                        <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Playfair Display' }}>
+                        <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                             {product.price.toFixed(2)} €
                         </span>
                     </div>
