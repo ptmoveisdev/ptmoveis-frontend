@@ -13,4 +13,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/wp-json': {
+        target: 'https://api.ptmoveis.pt',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
