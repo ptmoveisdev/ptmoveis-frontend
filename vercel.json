@@ -1,0 +1,27 @@
+{
+    "rewrites": [
+        {
+            "source": "/wp/:path*",
+            "destination": "https://www.ptmoveis.pt/wp/:path*"
+        },
+        {
+            "source": "/wp-content/:path*",
+            "destination": "https://www.ptmoveis.pt/wp-content/:path*"
+        },
+        {
+            "source": "/wp-includes/:path*",
+            "destination": "https://www.ptmoveis.pt/wp-includes/:path*"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/wp/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=0, must-revalidate"
+                }
+            ]
+        }
+    ]
+}
