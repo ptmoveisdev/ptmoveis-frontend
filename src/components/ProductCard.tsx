@@ -3,6 +3,7 @@ import { Heart, ShoppingCart, Eye, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import type { Product } from '@/data/products';
 
 interface ProductCardProps {
@@ -12,9 +13,10 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 0, onViewDetails }: ProductCardProps) {
-    const [isLiked, setIsLiked] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const { addToCart } = useCart();
+    const { isFavorite, toggleFavorite } = useFavorites();
+    const isLiked = isFavorite(product.id);
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -83,10 +85,10 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            setIsLiked(!isLiked);
+                            toggleFavorite(product);
                         }}
                         className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
-                        aria-label="Add to wishlist"
+                        aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
                     >
                         <Heart
                             className={`w-4 h-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'

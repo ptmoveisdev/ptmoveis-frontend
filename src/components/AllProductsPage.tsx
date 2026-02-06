@@ -49,7 +49,7 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
 }
 
 export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps) {
-    const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
     // Fetch Categories
@@ -68,7 +68,7 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
         error: productsError
     } = useProducts({
         per_page: 50, // Fetch a good amount
-        category: selectedCategorySlug || undefined,
+        category: selectedCategoryId ? selectedCategoryId.toString() : undefined,
         orderby: 'date', // Or 'title'
         order: 'desc'
     });
@@ -76,8 +76,8 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
     const localProducts = wpProducts.map(convertWPProductToLocal);
 
     const selectedCategoryName =
-        selectedCategorySlug
-            ? categories.find(c => c.slug === selectedCategorySlug)?.name
+        selectedCategoryId
+            ? categories.find(c => c.id === selectedCategoryId)?.name
             : 'Todos os Produtos';
 
     return (
@@ -124,8 +124,8 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                             <h3 className="font-semibold text-lg text-[#1E3A5F] mb-4">Categorias</h3>
                             <div className="space-y-2">
                                 <button
-                                    onClick={() => setSelectedCategorySlug(null)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${selectedCategorySlug === null
+                                    onClick={() => setSelectedCategoryId(null)}
+                                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${selectedCategoryId === null
                                         ? 'bg-[#1E3A5F] text-white'
                                         : 'text-gray-600 hover:bg-gray-100'
                                         }`}
@@ -143,14 +143,14 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                                     categories.map(category => (
                                         <button
                                             key={category.id}
-                                            onClick={() => setSelectedCategorySlug(category.slug)}
-                                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm flex justify-between items-center ${selectedCategorySlug === category.slug
+                                            onClick={() => setSelectedCategoryId(category.id)}
+                                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm flex justify-between items-center ${selectedCategoryId === category.id
                                                 ? 'bg-[#1E3A5F] text-white'
                                                 : 'text-gray-600 hover:bg-gray-100'
                                                 }`}
                                         >
                                             <span>{category.name}</span>
-                                            <span className={`text-xs ${selectedCategorySlug === category.slug ? 'text-white/70' : 'text-gray-400'}`}>
+                                            <span className={`text-xs ${selectedCategoryId === category.id ? 'text-white/70' : 'text-gray-400'}`}>
                                                 ({category.count})
                                             </span>
                                         </button>
@@ -183,7 +183,7 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                             <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                                 <p className="text-gray-500 text-lg">Nenhum produto encontrado nesta categoria.</p>
                                 <button
-                                    onClick={() => setSelectedCategorySlug(null)}
+                                    onClick={() => setSelectedCategoryId(null)}
                                     className="mt-4 text-[#D4AF37] hover:underline"
                                 >
                                     Ver todos os produtos
@@ -220,10 +220,10 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                         <div className="space-y-2">
                             <button
                                 onClick={() => {
-                                    setSelectedCategorySlug(null);
+                                    setSelectedCategoryId(null);
                                     setIsMobileFiltersOpen(false);
                                 }}
-                                className={`w-full text-left px-3 py-3 rounded-lg transition-colors text-sm ${selectedCategorySlug === null
+                                className={`w-full text-left px-3 py-3 rounded-lg transition-colors text-sm ${selectedCategoryId === null
                                     ? 'bg-[#1E3A5F] text-white'
                                     : 'text-gray-600 hover:bg-gray-100'
                                     }`}
@@ -234,16 +234,16 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                                 <button
                                     key={category.id}
                                     onClick={() => {
-                                        setSelectedCategorySlug(category.slug);
+                                        setSelectedCategoryId(category.id);
                                         setIsMobileFiltersOpen(false);
                                     }}
-                                    className={`w-full text-left px-3 py-3 rounded-lg transition-colors text-sm flex justify-between items-center ${selectedCategorySlug === category.slug
+                                    className={`w-full text-left px-3 py-3 rounded-lg transition-colors text-sm flex justify-between items-center ${selectedCategoryId === category.id
                                         ? 'bg-[#1E3A5F] text-white'
                                         : 'text-gray-600 hover:bg-gray-100'
                                         }`}
                                 >
                                     <span>{category.name}</span>
-                                    <span className={`text-xs ${selectedCategorySlug === category.slug ? 'text-white/70' : 'text-gray-400'}`}>
+                                    <span className={`text-xs ${selectedCategoryId === category.id ? 'text-white/70' : 'text-gray-400'}`}>
                                         ({category.count})
                                     </span>
                                 </button>

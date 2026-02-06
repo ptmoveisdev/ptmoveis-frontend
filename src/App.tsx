@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { CartSidebar } from '@/components/CartSidebar';
+import { FavoritesSidebar } from '@/components/FavoritesSidebar';
 import { ProductDetailModal } from '@/components/ProductDetailModal';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
@@ -27,10 +29,20 @@ function AnnouncementBar() {
 }
 
 // Navigation Header Component
-function NavigationHeader({ onCartClick, onNavigateHome }: { onCartClick: () => void; onNavigateHome: () => void }) {
+function NavigationHeader({
+  onCartClick,
+  onFavoritesClick,
+  onNavigateHome
+}: {
+  onCartClick: () => void;
+  onFavoritesClick: () => void;
+  onNavigateHome: () => void;
+}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems } = useCart();
+  const { favorites } = useFavorites();
+  const totalFavorites = favorites.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,8 +98,16 @@ function NavigationHeader({ onCartClick, onNavigateHome }: { onCartClick: () => 
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <Search className="w-5 h-5 text-gray-700" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
+            <button
+              onClick={onFavoritesClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block relative"
+            >
               <Heart className="w-5 h-5 text-gray-700" />
+              {totalFavorites > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium animate-pulse-glow">
+                  {totalFavorites}
+                </span>
+              )}
             </button>
             <button
               onClick={onCartClick}
@@ -127,6 +147,16 @@ function NavigationHeader({ onCartClick, onNavigateHome }: { onCartClick: () => 
                 {link.label}
               </a>
             ))}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onFavoritesClick();
+              }}
+              className="py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors text-left flex items-center gap-2"
+            >
+              <Heart className="w-4 h-4" />
+              Meus Favoritos ({totalFavorites})
+            </button>
           </nav>
         </div>
       )}
@@ -139,7 +169,7 @@ function HeroSection({ onViewCollection }: { onViewCollection: () => void }) {
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden bg-gradient-to-br from-white via-gray-50 to-white">
       {/* Decorative gold line */}
-      <div className="absolute left-[8%] top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#D4AF37] to-transparent opacity-60" />
+      <div className="hidden lg:block absolute left-[8%] top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#D4AF37] to-transparent opacity-60" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -567,6 +597,7 @@ function Footer() {
 // Main App Component
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'collection'>('home');
 
@@ -575,6 +606,7 @@ function App() {
       <AnnouncementBar />
       <NavigationHeader
         onCartClick={() => setIsCartOpen(true)}
+        onFavoritesClick={() => setIsFavoritesOpen(true)}
         onNavigateHome={() => setCurrentView('home')}
       />
       <main>
@@ -601,6 +633,9 @@ function App() {
 
       {/* Cart Sidebar */}
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Favorites Sidebar */}
+      <FavoritesSidebar isOpen={isFavoritesOpen} onClose={() => setIsFavoritesOpen(false)} />
 
       {/* Product Detail Modal */}
       <ProductDetailModal
