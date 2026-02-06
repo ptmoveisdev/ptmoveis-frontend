@@ -15,6 +15,7 @@ import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
 import { WordPressProducts } from '@/components/WordPressProducts';
 import { AllProductsPage } from '@/components/AllProductsPage';
+import { useProductCategories } from '@/hooks/useWordPress';
 
 // Announcement Bar Component
 function AnnouncementBar() {
@@ -32,17 +33,26 @@ function AnnouncementBar() {
 function NavigationHeader({
   onCartClick,
   onFavoritesClick,
-  onNavigateHome
+  onNavigateHome,
+  onCategoryClick
 }: {
   onCartClick: () => void;
   onFavoritesClick: () => void;
   onNavigateHome: () => void;
+  onCategoryClick?: (categoryId: number) => void;
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
   const totalFavorites = favorites.length;
+
+  const { data: categories, loading: categoriesLoading } = useProductCategories({
+    hide_empty: true,
+    per_page: 6,
+    order: 'desc',
+    orderby: 'count'
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,15 +61,6 @@ function NavigationHeader({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const navLinks = [
-    { label: 'SOFÁS / CADEIRÕES', href: '#' },
-    { label: 'CAMAS / CABECEIRAS', href: '#' },
-    { label: 'QUARTOS', href: '#' },
-    { label: 'SALAS / ESTANTES', href: '#' },
-    { label: 'COZINHA', href: '#' },
-    { label: 'MESAS / CADEIRAS', href: '#' },
-  ];
 
   return (
     <header
@@ -80,14 +81,18 @@ function NavigationHeader({
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
-            {navLinks.map((link, index) => (
+            {!categoriesLoading && categories.map((category, index) => (
               <a
-                key={link.label}
-                href={link.href}
-                className="text-xs font-medium text-gray-700 hover:text-[#D4AF37] transition-colors relative group animate-fade-in"
+                key={category.id}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onCategoryClick) onCategoryClick(category.id);
+                }}
+                className="text-xs font-medium text-gray-700 hover:text-[#D4AF37] transition-colors relative group animate-fade-in uppercase"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                {link.label}
+                {category.name}
                 <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-[#D4AF37] transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </a>
             ))}
@@ -138,13 +143,18 @@ function NavigationHeader({
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 animate-fade-in">
           <nav className="flex flex-col p-4">
-            {navLinks.map((link) => (
+            {!categoriesLoading && categories.map((category) => (
               <a
-                key={link.label}
-                href={link.href}
-                className="py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors"
+                key={category.id}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onCategoryClick) onCategoryClick(category.id);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors uppercase"
               >
-                {link.label}
+                {category.name} ({category.count})
               </a>
             ))}
             <button
@@ -601,6 +611,16 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'collection'>('home');
 
+  const handleCategoryClick = () => {
+    // This is temporary until we have prop drilling or context for AllProductsPage pre-selection
+    // For now we just go to collection. The user asked to show categories in menu.
+    // If they click, ideally it filters by that category.
+    // But AllProductsPage doesn't accept initialCategory prop yet.
+    // I can modify AllProductsPage to accept it, or just navigate to collection for now.
+    // Let's assume we just navigate to collection page. The user request was "show only categories that have products in the menu"
+    setCurrentView('collection');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <AnnouncementBar />
@@ -608,6 +628,7 @@ function App() {
         onCartClick={() => setIsCartOpen(true)}
         onFavoritesClick={() => setIsFavoritesOpen(true)}
         onNavigateHome={() => setCurrentView('home')}
+        onCategoryClick={handleCategoryClick}
       />
       <main>
         {currentView === 'home' ? (
