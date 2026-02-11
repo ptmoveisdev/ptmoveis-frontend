@@ -159,7 +159,7 @@ export function WordPressProducts({
                     </h2>
                     <div className="w-16 h-1 bg-[#D4AF37] mx-auto" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5">
                     {localProducts.map((product, index) => (
                         <ProductCard
                             key={product.id}

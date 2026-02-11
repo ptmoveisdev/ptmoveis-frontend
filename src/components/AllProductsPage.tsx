@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProductCategories, useProducts } from '@/hooks/useWordPress';
 import { ProductCard } from '@/components/ProductCard';
 import type { Product } from '@/data/products';
@@ -48,9 +48,15 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
     };
 }
 
-export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: AllProductsPageProps & { initialCategoryId?: number | null }) {
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId || null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
+    useEffect(() => {
+        if (initialCategoryId !== undefined) {
+            setSelectedCategoryId(initialCategoryId);
+        }
+    }, [initialCategoryId]);
 
     // Fetch Categories
     const {
@@ -163,7 +169,7 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                     {/* Main Content */}
                     <div className="flex-1">
                         {productsLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                                 {[...Array(8)].map((_, i) => (
                                     <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
                                         <div className="aspect-[4/5] bg-gray-200" />
@@ -190,7 +196,7 @@ export function AllProductsPage({ onBack, onProductClick }: AllProductsPageProps
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                                 {localProducts.map((product, index) => (
                                     <ProductCard
                                         key={product.id}

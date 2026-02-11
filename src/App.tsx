@@ -17,6 +17,7 @@ import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProduct
 import { WordPressProducts } from '@/components/WordPressProducts';
 import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
+import type { WooCommerceCategory } from '@/types/wordpress';
 
 // Announcement Bar Component
 function AnnouncementBar() {
@@ -323,7 +324,13 @@ function CountdownTimer() {
 }
 
 // Category Grid Component
-function CategoryGrid() {
+function CategoryGrid({
+  categories: apiCategories,
+  onCategoryClick
+}: {
+  categories: WooCommerceCategory[],
+  onCategoryClick: (id: number) => void
+}) {
   const categories = [
     { name: 'Camas', image: '/cat-camas.jpg', subcategories: ['Estofadas', 'Madeira', 'Colchões'] },
     { name: 'Sofás', image: '/cat-sofas.jpg', subcategories: ['Chaise Longue', 'Canto', '3 Lugares'] },
@@ -335,6 +342,19 @@ function CategoryGrid() {
     { name: 'Escritório', image: '/cat-escritorio.jpg', subcategories: ['Secretárias', 'Cadeiras', 'Estantes'] },
   ];
 
+  const handleCategoryClick = (name: string) => {
+    // Try to find the category ID from the API data
+    // Case insensitive search
+    const category = apiCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (category) {
+      onCategoryClick(category.id);
+    } else {
+      console.warn(`Category "${name}" not found in API data`);
+      // Optional: Navigate to all products if category ID not found?
+      // For now, we only navigate if we find the ID to show the correct filter.
+    }
+  };
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -344,8 +364,9 @@ function CategoryGrid() {
               key={category.name}
               className="group relative rounded-2xl overflow-hidden cursor-pointer animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => handleCategoryClick(category.name)}
             >
-              <div className="aspect-[4/3] relative">
+              <div className="aspect-square relative">
                 <img
                   src={category.image}
                   alt={category.name}
@@ -543,7 +564,7 @@ function Footer() {
             <div className="space-y-3 text-sm text-gray-400">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 text-[#D4AF37]" />
-                <span>Av. João XXI 91, 4590-515<br />Paços de Ferreira, Portugal</span>
+                <span>Rua do parque n 459<br />4595-302 Penamaior</span>
               </div>
               <a
                 href="https://wa.me/351939076117"
@@ -623,15 +644,21 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'collection'>('home');
 
-  const handleCategoryClick = () => {
-    // This is temporary until we have prop drilling or context for AllProductsPage pre-selection
-    // For now we just go to collection. The user asked to show categories in menu.
-    // If they click, ideally it filters by that category.
-    // But AllProductsPage doesn't accept initialCategory prop yet.
-    // I can modify AllProductsPage to accept it, or just navigate to collection for now.
-    // Let's assume we just navigate to collection page. The user request was "show only categories that have products in the menu"
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+
+  const handleCategoryClick = (categoryId: number) => {
+    setSelectedCategoryId(categoryId);
     setCurrentView('collection');
+    window.scrollTo(0, 0);
   };
+
+  // Fetch categories here to pass to CategoryGrid
+  const { data: categories } = useProductCategories({
+    hide_empty: true,
+    per_page: 20,
+    order: 'desc',
+    orderby: 'count'
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -639,16 +666,24 @@ function App() {
       <NavigationHeader
         onCartClick={() => setIsCartOpen(true)}
         onFavoritesClick={() => setIsFavoritesOpen(true)}
-        onNavigateHome={() => setCurrentView('home')}
+        onNavigateHome={() => {
+          setCurrentView('home');
+          setSelectedCategoryId(null);
+          window.scrollTo(0, 0);
+        }}
         onCategoryClick={handleCategoryClick}
       />
       <main>
         {currentView === 'home' ? (
           <>
-            <HeroSection onViewCollection={() => setCurrentView('collection')} />
+            <HeroSection onViewCollection={() => {
+              setSelectedCategoryId(null);
+              setCurrentView('collection');
+              window.scrollTo(0, 0);
+            }} />
             <TrustBar />
             <CountdownTimer />
-            <CategoryGrid />
+            <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
             <AboutSection />
             <FeaturedProducts onProductClick={setSelectedProduct} />
             <DeliveryBanner />
@@ -657,7 +692,12 @@ function App() {
           </>
         ) : (
           <AllProductsPage
-            onBack={() => setCurrentView('home')}
+            initialCategoryId={selectedCategoryId}
+            onBack={() => {
+              setCurrentView('home');
+              setSelectedCategoryId(null);
+              window.scrollTo(0, 0);
+            }}
             onProductClick={setSelectedProduct}
           />
         )}

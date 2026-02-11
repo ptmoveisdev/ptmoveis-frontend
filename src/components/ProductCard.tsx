@@ -58,11 +58,11 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
             }}
         >
             {/* Image Container */}
-            <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
+            <div className="relative aspect-square overflow-hidden bg-white">
                 <img
                     src={product.image}
                     alt={product.name}
-                    className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                    className={`w-full h-full object-contain p-4 transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                         } group-hover:scale-105`}
                     onLoad={() => setImageLoaded(true)}
                     loading="lazy"
@@ -120,32 +120,32 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
                 {/* Category */}
-                <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wider mb-2">
+                <p className="text-[10px] sm:text-xs font-semibold text-[#D4AF37] uppercase tracking-wider mb-1 sm:mb-2">
                     {product.category}
                 </p>
 
                 {/* Product Name */}
-                <h3 className="text-base font-bold text-gray-900 mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Montserrat' }}>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Montserrat' }}>
                     {product.name}
                 </h3>
 
                 {/* Price Section */}
-                <div className="flex items-end justify-between mb-3">
+                <div className="flex items-end justify-between mb-2 sm:mb-3">
                     <div className="flex flex-col gap-0.5">
                         {product.oldPrice && (
-                            <span className="text-xs text-gray-400 line-through font-medium">
+                            <span className="text-[10px] sm:text-xs text-gray-400 line-through font-medium">
                                 {product.oldPrice.toFixed(2)} €
                             </span>
                         )}
-                        <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                        <span className="text-lg sm:text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                             {product.price.toFixed(2)} €
                         </span>
                     </div>
 
                     {product.oldPrice && (
-                        <div className="bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded">
+                        <div className="bg-red-50 text-red-600 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                             -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
                         </div>
                     )}
@@ -154,15 +154,15 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 {/* Add to Cart Button */}
                 <Button
                     onClick={handleAddToCart}
-                    className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-sm font-bold py-2.5 rounded-lg transition-all group-hover:shadow-md"
+                    className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-xs sm:text-sm font-bold py-2 sm:py-2.5 rounded-lg transition-all group-hover:shadow-md h-8 sm:h-auto"
                 >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     ADICIONAR
                 </Button>
 
                 {/* Stock Status */}
                 {!product.inStock && (
-                    <p className="text-xs text-red-500 text-center mt-2 font-medium">
+                    <p className="text-[10px] sm:text-xs text-red-500 text-center mt-2 font-medium">
                         Esgotado
                     </p>
                 )}
