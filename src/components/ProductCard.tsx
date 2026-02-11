@@ -62,7 +62,7 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 <img
                     src={product.image}
                     alt={product.name}
-                    className={`w-full h-full object-contain p-4 transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                    className={`w-full h-full object-contain p-2 transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                         } group-hover:scale-105`}
                     onLoad={() => setImageLoaded(true)}
                     loading="lazy"

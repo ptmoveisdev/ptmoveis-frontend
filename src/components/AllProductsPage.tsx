@@ -8,6 +8,7 @@ import { Filter, X, ChevronLeft } from 'lucide-react';
 interface AllProductsPageProps {
     onBack: () => void;
     onProductClick: (product: Product) => void;
+    initialSearchQuery?: string;
 }
 
 // Function to convert WordPress product to local format
@@ -48,8 +49,9 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
     };
 }
 
-export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: AllProductsPageProps & { initialCategoryId?: number | null }) {
+export function AllProductsPage({ onBack, onProductClick, initialCategoryId, initialSearchQuery = '' }: AllProductsPageProps & { initialCategoryId?: number | null }) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId || null);
+    const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
     useEffect(() => {
@@ -57,6 +59,10 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: A
             setSelectedCategoryId(initialCategoryId);
         }
     }, [initialCategoryId]);
+
+    useEffect(() => {
+        setSearchQuery(initialSearchQuery);
+    }, [initialSearchQuery]);
 
     // Fetch Categories
     const {
@@ -75,14 +81,16 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: A
     } = useProducts({
         per_page: 50, // Fetch a good amount
         category: selectedCategoryId ? selectedCategoryId.toString() : undefined,
+        search: searchQuery || undefined,
         orderby: 'date', // Or 'title'
         order: 'desc'
     });
 
     const localProducts = wpProducts.map(convertWPProductToLocal);
 
-    const selectedCategoryName =
-        selectedCategoryId
+    const selectedCategoryName = searchQuery
+        ? `Resultados para "${searchQuery}"`
+        : selectedCategoryId
             ? categories.find(c => c.id === selectedCategoryId)?.name
             : 'Todos os Produtos';
 
@@ -130,8 +138,17 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: A
                             <h3 className="font-semibold text-lg text-[#1E3A5F] mb-4">Categorias</h3>
                             <div className="space-y-2">
                                 <button
-                                    onClick={() => setSelectedCategoryId(null)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${selectedCategoryId === null
+                                    onClick={() => {
+                                        setSelectedCategoryId(null);
+                                        // setSearchQuery(''); // Optional: clear search when clicking "All Categories"? Maybe not if refining search.
+                                        // For now, let's keep search if it exists, or just clear it? Usually clicking a category clears search.
+                                        // Let's clear search to allow browsing.
+                                        // actually we need a way to clear search in this component or just accept that selecting a category overrides search?
+                                        // The useProducts hook uses both. If both are present, it tries to find products in that category matching that search.
+                                        // But users might want to clear search.
+                                        // Let's make "Todas as Categorias" clear everything just to be safe/simple navigation.
+                                    }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${selectedCategoryId === null && !searchQuery
                                         ? 'bg-[#1E3A5F] text-white'
                                         : 'text-gray-600 hover:bg-gray-100'
                                         }`}
@@ -161,6 +178,16 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId }: A
                                             </span>
                                         </button>
                                     ))
+                                )}
+
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="w-full text-left px-3 py-2 rounded-lg transition-colors text-sm text-red-500 hover:bg-red-50 flex items-center gap-2 mt-4"
+                                    >
+                                        <X className="w-4 h-4" />
+                                        Limpar Busca
+                                    </button>
                                 )}
                             </div>
                         </div>

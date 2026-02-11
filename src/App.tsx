@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FloatingWhatsApp, WhatsAppIcon } from '@/components/FloatingWhatsApp';
+import { CookieConsent } from '@/components/CookieConsent';
+import {
+  TermsConditions, PrivacyPolicy, WorkWithUs,
+  ContactFAQ, ComplaintsBook, Payments
+} from '@/components/StaticPages';
 import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
@@ -36,18 +41,27 @@ function NavigationHeader({
   onCartClick,
   onFavoritesClick,
   onNavigateHome,
-  onCategoryClick
+  onCategoryClick,
+  onSearch
 }: {
   onCartClick: () => void;
   onFavoritesClick: () => void;
   onNavigateHome: () => void;
   onCategoryClick?: (categoryId: number) => void;
+  onSearch: (query: string) => void;
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
   const totalFavorites = favorites.length;
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(searchQuery);
+    setIsMobileMenuOpen(false);
+  };
 
   const { data: categories, loading: categoriesLoading } = useProductCategories({
     hide_empty: true,
@@ -102,7 +116,25 @@ function NavigationHeader({
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative group">
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="w-0 group-hover:w-48 focus:w-48 transition-all duration-300 border-none bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-[#D4AF37] outline-none opacity-0 group-hover:opacity-100 focus:opacity-100 absolute right-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="p-2 hover:bg-gray-100 rounded-full transition-colors z-10">
+                <Search className="w-5 h-5 text-gray-700" />
+              </button>
+            </form>
+            <button
+              className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+              onClick={() => {
+                const query = prompt('O que procura?');
+                if (query) onSearch(query);
+              }}
+            >
               <Search className="w-5 h-5 text-gray-700" />
             </button>
             <a
@@ -547,7 +579,7 @@ function Testimonials() {
 }
 
 // Footer Component
-function Footer() {
+function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
   return (
     <footer className="bg-[#1A1A1A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -584,23 +616,21 @@ function Footer() {
           <div className="animate-fade-in-up delay-100">
             <h4 className="font-semibold text-white mb-4">Minha Conta</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              {['Carrinho', 'Finalizar Compra', 'Termos e Condições', 'Política de Privacidade'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="hover:text-[#D4AF37] transition-colors">{item}</a>
-                </li>
-              ))}
+              <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Carrinho</a></li>
+              <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Finalizar Compra</a></li>
+              <li><button onClick={() => onNavigate('terms')} className="hover:text-[#D4AF37] transition-colors text-left">Termos e Condições</button></li>
+              <li><button onClick={() => onNavigate('privacy')} className="hover:text-[#D4AF37] transition-colors text-left">Política de Privacidade</button></li>
             </ul>
           </div>
 
           {/* Trabalhe Connosco */}
           <div className="animate-fade-in-up delay-200">
-            <h4 className="font-semibold text-white mb-4">Trabalhe Connosco</h4>
+            <h4 className="font-semibold text-white mb-4">Institucional</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              {['Dúvidas e Contato', 'Livro de Reclamações', 'Pagamentos', 'Manuais de Produtos'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="hover:text-[#D4AF37] transition-colors">{item}</a>
-                </li>
-              ))}
+              <li><button onClick={() => onNavigate('work')} className="hover:text-[#D4AF37] transition-colors text-left">Trabalhe Connosco</button></li>
+              <li><button onClick={() => onNavigate('contact')} className="hover:text-[#D4AF37] transition-colors text-left">Dúvidas e Contato</button></li>
+              <li><button onClick={() => onNavigate('complaints')} className="hover:text-[#D4AF37] transition-colors text-left">Livro de Reclamações</button></li>
+              <li><button onClick={() => onNavigate('payments')} className="hover:text-[#D4AF37] transition-colors text-left">Pagamentos</button></li>
             </ul>
           </div>
 
@@ -642,15 +672,30 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [currentView, setCurrentView] = useState<'home' | 'collection'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'terms' | 'privacy' | 'work' | 'contact' | 'complaints' | 'payments'>('home');
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleCategoryClick = (categoryId: number) => {
     setSelectedCategoryId(categoryId);
+    setSearchQuery('');
     setCurrentView('collection');
     window.scrollTo(0, 0);
   };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setSelectedCategoryId(null);
+    setCurrentView('collection');
+    window.scrollTo(0, 0);
+  };
+
+  const handleNavigate = (view: any) => {
+    setCurrentView(view);
+    window.scrollTo(0, 0);
+  };
+
 
   // Fetch categories here to pass to CategoryGrid
   const { data: categories } = useProductCategories({
@@ -669,15 +714,18 @@ function App() {
         onNavigateHome={() => {
           setCurrentView('home');
           setSelectedCategoryId(null);
+          setSearchQuery('');
           window.scrollTo(0, 0);
         }}
         onCategoryClick={handleCategoryClick}
+        onSearch={handleSearch}
       />
       <main>
-        {currentView === 'home' ? (
+        {currentView === 'home' && (
           <>
             <HeroSection onViewCollection={() => {
               setSelectedCategoryId(null);
+              setSearchQuery('');
               setCurrentView('collection');
               window.scrollTo(0, 0);
             }} />
@@ -690,19 +738,32 @@ function App() {
             <MoreProducts onProductClick={setSelectedProduct} />
             <Testimonials />
           </>
-        ) : (
+        )}
+
+        {currentView === 'collection' && (
           <AllProductsPage
             initialCategoryId={selectedCategoryId}
+            initialSearchQuery={searchQuery}
             onBack={() => {
               setCurrentView('home');
               setSelectedCategoryId(null);
+              setSearchQuery('');
               window.scrollTo(0, 0);
             }}
             onProductClick={setSelectedProduct}
           />
         )}
+
+        {currentView === 'terms' && <TermsConditions onBack={() => handleNavigate('home')} />}
+        {currentView === 'privacy' && <PrivacyPolicy onBack={() => handleNavigate('home')} />}
+        {currentView === 'work' && <WorkWithUs onBack={() => handleNavigate('home')} />}
+        {currentView === 'contact' && <ContactFAQ onBack={() => handleNavigate('home')} />}
+        {currentView === 'complaints' && <ComplaintsBook onBack={() => handleNavigate('home')} />}
+        {currentView === 'payments' && <Payments onBack={() => handleNavigate('home')} />}
       </main>
-      <Footer />
+      <Footer onNavigate={handleNavigate} />
+
+      <CookieConsent />
 
       {/* Cart Sidebar */}
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
