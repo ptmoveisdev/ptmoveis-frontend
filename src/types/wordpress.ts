@@ -149,10 +149,57 @@ export interface WooCommerceTag {
 export interface WooCommerceAttribute {
     id: number;
     name: string;
+    slug: string;
     position: number;
     visible: boolean;
     variation: boolean;
     options: string[];
+}
+
+
+export interface WooCommerceVariation {
+    id: number;
+    date_created: string;
+    date_created_gmt: string;
+    date_modified: string;
+    date_modified_gmt: string;
+    description: string;
+    permalink: string;
+    sku: string;
+    price: string;
+    regular_price: string;
+    sale_price: string;
+    on_sale: boolean;
+    purchasable: boolean;
+    virtual: boolean;
+    downloadable: boolean;
+    manage_stock: boolean;
+    stock_quantity: number | null;
+    stock_status: 'instock' | 'outofstock' | 'onbackorder';
+    backorders: 'no' | 'notify' | 'yes';
+    backorders_allowed: boolean;
+    backordered: boolean;
+    weight: string;
+    dimensions: {
+        length: string;
+        width: string;
+        height: string;
+    };
+    shipping_class: string;
+    shipping_class_id: number;
+    image: WooCommerceImage | null;
+    attributes: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        option: string;
+    }>;
+    meta_data: Array<{
+        id: number;
+        key: string;
+        value: any;
+    }>;
+    _links: any;
 }
 
 export interface WooCommerceProduct {

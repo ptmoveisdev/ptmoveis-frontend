@@ -46,8 +46,13 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
         inStock: wpProduct.stock_status === 'instock',
         rating: parseFloat(wpProduct.average_rating) || 4.5,
         reviewCount: wpProduct.rating_count || 0,
+        // Campos de variações
+        hasVariations: wpProduct.type === 'variable',
+        variationIds: wpProduct.variations || [],
+        productType: wpProduct.type,
     };
 }
+
 
 export function AllProductsPage({ onBack, onProductClick, initialCategoryId, initialSearchQuery = '' }: AllProductsPageProps & { initialCategoryId?: number | null }) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId || null);

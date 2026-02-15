@@ -18,7 +18,13 @@ export interface Product {
     inStock: boolean;
     rating: number;
     reviewCount: number;
+    // Campos para suporte a variações
+    hasVariations?: boolean;
+    variationIds?: number[];
+    productType?: 'simple' | 'grouped' | 'external' | 'variable';
 }
+
+
 
 export const products: Product[] = [
     {

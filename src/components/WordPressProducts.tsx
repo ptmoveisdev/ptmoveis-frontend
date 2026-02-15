@@ -52,8 +52,13 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
         inStock: wpProduct.stock_status === 'instock',
         rating: parseFloat(wpProduct.average_rating) || 4.5,
         reviewCount: wpProduct.rating_count || 0,
+        // Campos de variações
+        hasVariations: wpProduct.type === 'variable',
+        variationIds: wpProduct.variations || [],
+        productType: wpProduct.type,
     };
 }
+
 
 export function WordPressProducts({
     onProductClick,

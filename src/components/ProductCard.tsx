@@ -80,6 +80,16 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                     </Badge>
                 )}
 
+                {/* Variations Badge */}
+                {product.hasVariations && (
+                    <Badge
+                        className="absolute top-3 right-3 bg-[#D4AF37] text-white text-xs font-bold px-2.5 py-1 shadow-sm uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    >
+                        Várias opções
+                    </Badge>
+                )}
+
+
                 {/* Quick Actions */}
                 <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <button

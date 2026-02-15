@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
+import { ProductVariations } from '@/components/ProductVariations';
+import { useProductBySlug } from '@/hooks/useWordPress';
 import type { Product } from '@/data/products';
+import type { WooCommerceVariation } from '@/types/wordpress';
 
 interface ProductDetailModalProps {
     product: Product | null;
@@ -15,11 +18,33 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isLiked, setIsLiked] = useState(false);
+    const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
     const { addToCart } = useCart();
+
+    // Buscar dados completos do produto WooCommerce se for produto variável
+    const { data: wpProduct } = useProductBySlug(product?.slug || '');
+
+    // Resetar variação selecionada quando o produto mudar
+    useEffect(() => {
+        setSelectedVariation(null);
+        setSelectedImage(0);
+    }, [product?.id]);
 
     if (!product) return null;
 
-    const images = product.images || [product.image];
+    // Usar imagem da variação se selecionada, senão usar imagens do produto
+    const variationImage = selectedVariation?.image?.src;
+    const productImages = product.images || [product.image];
+    const images = variationImage ? [variationImage, ...productImages] : productImages;
+
+    // Usar preço da variação se selecionada
+    const displayPrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
+    const displayOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
+
+    // Verificar disponibilidade
+    const isInStock = selectedVariation
+        ? selectedVariation.stock_status === 'instock'
+        : product.inStock;
 
     const handleAddToCart = () => {
         for (let i = 0; i < quantity; i++) {
@@ -105,8 +130,8 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                                 key={index}
                                                 onClick={() => setSelectedImage(index)}
                                                 className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                                                        ? 'border-[#D4AF37] shadow-md'
-                                                        : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-[#D4AF37] shadow-md'
+                                                    : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                             >
                                                 <img
@@ -139,8 +164,8 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                             <Star
                                                 key={i}
                                                 className={`w-5 h-5 ${i < Math.floor(product.rating)
-                                                        ? 'fill-[#D4AF37] text-[#D4AF37]'
-                                                        : 'text-gray-300'
+                                                    ? 'fill-[#D4AF37] text-[#D4AF37]'
+                                                    : 'text-gray-300'
                                                     }`}
                                             />
                                         ))}
@@ -153,19 +178,19 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                 {/* Price */}
                                 <div className="flex items-end gap-4 py-4 border-y border-gray-200">
                                     <div className="flex flex-col gap-1">
-                                        {product.oldPrice && (
+                                        {displayOldPrice && (
                                             <span className="text-lg text-gray-400 line-through font-medium">
-                                                {product.oldPrice.toFixed(2)} €
+                                                {displayOldPrice.toFixed(2)} €
                                             </span>
                                         )}
                                         <span className="text-4xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
-                                            {product.price.toFixed(2)} €
+                                            {displayPrice.toFixed(2)} €
                                         </span>
                                     </div>
 
-                                    {product.oldPrice && (
+                                    {displayOldPrice && (
                                         <div className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg mb-2">
-                                            POUPE {(product.oldPrice - product.price).toFixed(2)} €
+                                            POUPE {(displayOldPrice - displayPrice).toFixed(2)} €
                                         </div>
                                     )}
                                 </div>
@@ -204,6 +229,15 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                     </div>
                                 </div>
 
+                                {/* Product Variations */}
+                                {product.hasVariations && wpProduct && wpProduct.attributes && (
+                                    <ProductVariations
+                                        productId={parseInt(product.id)}
+                                        attributes={wpProduct.attributes}
+                                        onVariationChange={setSelectedVariation}
+                                    />
+                                )}
+
                                 {/* Quantity Selector */}
                                 <div>
                                     <label className="text-sm font-semibold text-gray-900 mb-2 block">
@@ -231,11 +265,16 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                 {/* Add to Cart Button */}
                                 <Button
                                     onClick={handleAddToCart}
-                                    disabled={!product.inStock}
+                                    disabled={!isInStock || (product.hasVariations && !selectedVariation)}
                                     className="btn-premium w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white text-lg font-bold py-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ShoppingCart className="w-5 h-5 mr-2" />
-                                    {product.inStock ? 'ADICIONAR AO CARRINHO' : 'ESGOTADO'}
+                                    {!isInStock
+                                        ? 'ESGOTADO'
+                                        : product.hasVariations && !selectedVariation
+                                            ? 'SELECIONE AS OPÇÕES'
+                                            : 'ADICIONAR AO CARRINHO'
+                                    }
                                 </Button>
 
                                 {/* Trust Badges */}

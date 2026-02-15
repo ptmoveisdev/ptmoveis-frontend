@@ -1,0 +1,171 @@
+{
+  "product": {
+    "id": 458,
+    "name": "teste  variacoes",
+    "slug": "teste-variacoes",
+    "permalink": "https://api.ptmoveis.pt/produto/teste-variacoes/",
+    "date_created": "2026-02-15T12:45:31",
+    "date_created_gmt": "2026-02-15T15:45:31",
+    "date_modified": "2026-02-15T19:24:10",
+    "date_modified_gmt": "2026-02-15T22:24:10",
+    "type": "variable",
+    "status": "publish",
+    "featured": false,
+    "catalog_visibility": "visible",
+    "description": "",
+    "short_description": "",
+    "sku": "5234523",
+    "price": "2",
+    "regular_price": "",
+    "sale_price": "",
+    "date_on_sale_from": null,
+    "date_on_sale_from_gmt": null,
+    "date_on_sale_to": null,
+    "date_on_sale_to_gmt": null,
+    "on_sale": false,
+    "purchasable": true,
+    "total_sales": 0,
+    "virtual": false,
+    "downloadable": false,
+    "downloads": [],
+    "download_limit": -1,
+    "download_expiry": -1,
+    "external_url": "",
+    "button_text": "",
+    "tax_status": "taxable",
+    "tax_class": "",
+    "manage_stock": true,
+    "stock_quantity": 100,
+    "backorders": "no",
+    "backorders_allowed": false,
+    "backordered": false,
+    "low_stock_amount": null,
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": {
+      "length": "",
+      "width": "",
+      "height": ""
+    },
+    "shipping_required": true,
+    "shipping_taxable": true,
+    "shipping_class": "",
+    "shipping_class_id": 0,
+    "reviews_allowed": true,
+    "average_rating": "0.00",
+    "rating_count": 0,
+    "upsell_ids": [],
+    "cross_sell_ids": [],
+    "parent_id": 0,
+    "purchase_note": "",
+    "categories": [
+      {
+        "id": 25,
+        "name": "APARADOR",
+        "slug": "aparador"
+      }
+    ],
+    "brands": [],
+    "tags": [],
+    "images": [
+      {
+        "id": 447,
+        "date_created": "2026-02-08T10:28:08",
+        "date_created_gmt": "2026-02-08T16:28:08",
+        "date_modified": "2026-02-08T10:28:08",
+        "date_modified_gmt": "2026-02-08T16:28:08",
+        "src": "https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5.png",
+        "name": "Gemini_Generated_Image_ath554ath554ath5",
+        "alt": "",
+        "srcset": "https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5.png 1344w, https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5-300x171.png 300w, https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5-1024x585.png 1024w, https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5-768x439.png 768w, https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5-600x343.png 600w",
+        "sizes": "(max-width: 1344px) 100vw, 1344px",
+        "thumbnail": "https://api.ptmoveis.pt/wp-content/uploads/2026/02/Gemini_Generated_Image_ath554ath554ath5-300x300.png"
+      }
+    ],
+    "attributes": [
+      {
+        "id": 1,
+        "name": "Cor",
+        "slug": "pa_cor",
+        "position": 0,
+        "visible": true,
+        "variation": true,
+        "options": [
+          "Azul",
+          "Preto"
+        ]
+      }
+    ],
+    "default_attributes": [],
+    "variations": [
+      459,
+      460
+    ],
+    "grouped_products": [],
+    "menu_order": 0,
+    "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi>2,00&nbsp;<span class=\"woocommerce-Price-currencySymbol\">&euro;</span></bdi></span>",
+    "related_ids": [
+      60,
+      64,
+      62
+    ],
+    "meta_data": [
+      {
+        "id": 3732,
+        "key": "wcboost_variation_swatches",
+        "value": {
+          "pa_cor": {
+            "type": "",
+            "shape": "",
+            "size": "",
+            "custom_size": {
+              "width": 0,
+              "height": 0
+            },
+            "swatches": {
+              "39": {
+                "color": "",
+                "image": "",
+                "label": ""
+              },
+              "40": {
+                "color": "",
+                "image": "",
+                "label": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "stock_status": "instock",
+    "has_options": true,
+    "post_password": "",
+    "global_unique_id": "",
+    "_links": {
+      "self": [
+        {
+          "href": "https://api.ptmoveis.pt/wp-json/wc/v3/products/458",
+          "targetHints": {
+            "allow": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://api.ptmoveis.pt/wp-json/wc/v3/products"
+        }
+      ]
+    }
+  },
+  "variations": [
+    459,
+    460
+  ]
+}
