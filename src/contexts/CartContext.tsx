@@ -2,7 +2,8 @@ import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export interface CartItem {
-    id: string;
+    id: string; // Pode ser "ID_PRODUTO" ou "ID_PRODUTO-ID_VARIACAO"
+    productId: string; // ID original do produto
     name: string;
     price: number;
     oldPrice?: number;
@@ -10,6 +11,8 @@ export interface CartItem {
     quantity: number;
     badge?: string;
     badgeColor?: string;
+    selectedAttributes?: string; // Ex: "Cor: Azul, Tecido: T1"
+    variationId?: number;
 }
 
 interface CartContextType {
@@ -29,14 +32,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const addToCart = (product: Omit<CartItem, 'quantity'>) => {
         setItems(prevItems => {
-            const existingItem = prevItems.find(item => item.id === product.id);
+            // Criar um ID único para o item no carrinho
+            // Se tiver variação, o ID será "PRODUTO-VARIACAO", se não, apenas "PRODUTO"
+            // Mas para garantir compatibilidade, vamos usar a lógica de comparação
 
-            if (existingItem) {
-                return prevItems.map(item =>
-                    item.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
+            const existingItemIndex = prevItems.findIndex(item =>
+                item.productId === product.productId &&
+                item.variationId === product.variationId &&
+                item.selectedAttributes === product.selectedAttributes // Comparação extra por segurança
+            );
+
+            if (existingItemIndex > -1) {
+                const newItems = [...prevItems];
+                newItems[existingItemIndex].quantity += 1;
+                return newItems;
             }
 
             return [...prevItems, { ...product, quantity: 1 }];

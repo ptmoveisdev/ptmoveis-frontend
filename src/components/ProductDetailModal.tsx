@@ -36,6 +36,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     const variationImage = selectedVariation?.image?.src;
     const productImages = product.images || [product.image];
     const images = variationImage ? [variationImage, ...productImages] : productImages;
+    const displayImage = images[0];
 
     // Usar preço da variação se selecionada
     const displayPrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
@@ -47,17 +48,34 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
         : product.inStock;
 
     const handleAddToCart = () => {
-        for (let i = 0; i < quantity; i++) {
-            addToCart({
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                oldPrice: product.oldPrice,
-                image: product.image,
-                badge: product.badge,
-                badgeColor: product.badgeColor,
-            });
+        if (product.hasVariations && !selectedVariation) return;
+
+        // Formatar atributos selecionados para exibição
+        let selectedAttributesString = '';
+        if (selectedVariation) {
+            selectedAttributesString = selectedVariation.attributes
+                .map(attr => `${attr.name}: ${attr.option}`)
+                .join(', ');
         }
+
+        // Determinar ID único para o item do carrinho
+        // Se for produto simples: ID do produto
+        // Se for variação: ID da variação (se disponível) ou combinação
+        const cartItemId = selectedVariation ? `${product.id}-${selectedVariation.id}` : product.id;
+
+        addToCart({
+            id: cartItemId,
+            productId: product.id,
+            name: product.name,
+            price: displayPrice,
+            oldPrice: displayOldPrice,
+            image: displayImage, // Usar a imagem exibida atualmente (que pode ser a da variação)
+            badge: product.badge,
+            badgeColor: product.badgeColor,
+            selectedAttributes: selectedAttributesString,
+            variationId: selectedVariation?.id
+        });
+
         onClose();
     };
 

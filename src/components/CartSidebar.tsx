@@ -87,6 +87,12 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                                 {item.name}
                                             </h4>
 
+                                            {item.selectedAttributes && (
+                                                <p className="text-xs text-gray-500 mb-2">
+                                                    {item.selectedAttributes}
+                                                </p>
+                                            )}
+
                                             <div className="flex items-center gap-2 mb-3">
                                                 {item.oldPrice && (
                                                     <span className="text-xs text-gray-400 line-through">
