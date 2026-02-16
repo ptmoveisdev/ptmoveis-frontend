@@ -301,13 +301,13 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                         <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center">
                                             <Truck className="w-6 h-6 text-[#D4AF37]" />
                                         </div>
-                                        <p className="text-xs text-gray-600 font-medium">Entrega Grátis</p>
+                                        <p className="text-xs text-gray-600 font-medium">Entrega em toda a região</p>
                                     </div>
                                     <div className="flex flex-col items-center text-center gap-2">
                                         <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center">
                                             <Shield className="w-6 h-6 text-[#D4AF37]" />
                                         </div>
-                                        <p className="text-xs text-gray-600 font-medium">Garantia 3 Anos</p>
+                                        <p className="text-xs text-gray-600 font-medium">Garantia de 2 anos</p>
                                     </div>
                                     <div className="flex flex-col items-center text-center gap-2">
                                         <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center">
