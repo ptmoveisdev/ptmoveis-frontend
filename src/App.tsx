@@ -9,7 +9,7 @@ import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
   Instagram, MapPin,
-  ChevronRight, ArrowRight
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -24,17 +24,7 @@ import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
 import type { WooCommerceCategory } from '@/types/wordpress';
 
-// Announcement Bar Component
-function AnnouncementBar() {
-  return (
-    <div className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-2.5 px-4 animate-slide-down">
-      <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 text-sm">
-        <span className="font-medium">APROVEITE! PREÇOS DE 2025 ATÉ 15/02</span>
-        <ArrowRight className="w-4 h-4 animate-bounce-x" />
-      </div>
-    </div>
-  );
-}
+
 
 // Navigation Header Component
 function NavigationHeader({
@@ -310,50 +300,7 @@ function TrustBar() {
   );
 }
 
-// Countdown Timer Component
-function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({ days: 12, hours: 10, minutes: 45, seconds: 5 });
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const TimeBox = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center">
-      <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-[#D4AF37] rounded-lg flex items-center justify-center bg-white shadow-lg">
-        <span className="text-2xl sm:text-3xl font-bold text-[#D4AF37]" style={{ fontFamily: 'Montserrat' }}>
-          {value.toString().padStart(2, '0')}
-        </span>
-      </div>
-      <span className="text-xs text-gray-500 mt-2 uppercase tracking-wider">{label}</span>
-    </div>
-  );
-
-  return (
-    <section className="py-12 bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <p className="text-lg font-medium text-gray-800 mb-8 animate-fade-in">
-          Falta pouco para acabar, produtos com preços de 2025
-        </p>
-        <div className="flex justify-center gap-3 sm:gap-6 animate-fade-in-up delay-200">
-          <TimeBox value={timeLeft.days} label="Dias" />
-          <TimeBox value={timeLeft.hours} label="Horas" />
-          <TimeBox value={timeLeft.minutes} label="Min" />
-          <TimeBox value={timeLeft.seconds} label="Seg" />
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // Category Grid Component
 function CategoryGrid({
@@ -707,7 +654,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      <AnnouncementBar />
+
       <NavigationHeader
         onCartClick={() => setIsCartOpen(true)}
         onFavoritesClick={() => setIsFavoritesOpen(true)}
@@ -730,7 +677,7 @@ function App() {
               window.scrollTo(0, 0);
             }} />
             <TrustBar />
-            <CountdownTimer />
+
             <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
             <AboutSection />
             <FeaturedProducts onProductClick={setSelectedProduct} />
