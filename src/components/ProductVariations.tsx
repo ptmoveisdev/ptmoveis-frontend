@@ -5,6 +5,24 @@ import { Check, Loader2 } from 'lucide-react';
 import { useProductVariations } from '@/hooks/useProductVariations';
 import type { WooCommerceVariation, WooCommerceAttribute } from '@/types/wordpress';
 
+// Mapa de cores para traduzir nomes de atributos em cores CSS
+const COLOR_MAP: Record<string, string> = {
+    'azul': '#1E3A8A', // Azul escuro premium
+    'preto': '#000000',
+    'branco': '#FFFFFF',
+    'vermelho': '#DC2626',
+    'verde': '#16A34A',
+    'amarelo': '#CA8A04',
+    'cinza': '#4B5563',
+    'rosa': '#DB2777',
+    'bege': '#F5F5DC',
+    'marrom': '#78350F',
+    'roxo': '#7C3AED',
+    'laranja': '#EA580C',
+    'dourado': '#D4AF37',
+    'prata': '#C0C0C0',
+};
+
 interface ProductVariationsProps {
     productId: number;
     attributes: WooCommerceAttribute[];
@@ -106,25 +124,47 @@ export function ProductVariations({
                             const isSelected = selectedOptions[attribute.slug] === option;
                             const isAvailable = isOptionAvailable(attribute.slug, option);
 
+                            // Verificar se é um atributo de cor
+                            const isColor = attribute.name.toLowerCase() === 'cor' || attribute.slug.includes('color') || attribute.slug === 'pa_cor';
+                            const colorValue = isColor ? COLOR_MAP[option.toLowerCase()] : undefined;
+
                             return (
                                 <button
                                     key={option}
                                     onClick={() => handleOptionSelect(attribute.slug, option)}
                                     disabled={!isAvailable}
+                                    title={isColor ? option : undefined}
                                     className={`
-                                        relative min-w-[60px] px-4 py-2 rounded-lg border-2 transition-all
-                                        ${isSelected
-                                            ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold'
-                                            : isAvailable
-                                                ? 'border-gray-300 hover:border-[#D4AF37]/50 text-gray-700'
-                                                : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed line-through'
+                                        relative transition-all
+                                        ${isColor
+                                            ? `w-10 h-10 rounded-full border-2 shadow-sm ${isSelected
+                                                ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30 scale-110'
+                                                : 'border-gray-200 hover:border-[#D4AF37]/50 hover:scale-105'
+                                            }`
+                                            : `min-w-[60px] px-4 py-2 rounded-lg border-2 ${isSelected
+                                                ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold'
+                                                : isAvailable
+                                                    ? 'border-gray-300 hover:border-[#D4AF37]/50 text-gray-700'
+                                                    : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed line-through'
+                                            }`
                                         }
+                                        ${!isAvailable && isColor ? 'opacity-50 cursor-not-allowed overflow-hidden after:absolute after:w-full after:h-[1px] after:bg-red-500 after:top-1/2 after:left-0 after:-rotate-45' : ''}
                                     `}
+                                    style={isColor && colorValue ? { backgroundColor: colorValue } : undefined}
                                     aria-label={`Selecionar ${attribute.name}: ${option}`}
                                 >
-                                    {option}
-                                    {isSelected && (
-                                        <Check className="absolute top-1 right-1 w-3 h-3 text-[#D4AF37]" />
+                                    {!isColor && (
+                                        <>
+                                            {option}
+                                            {isSelected && (
+                                                <Check className="absolute top-1 right-1 w-3 h-3 text-[#D4AF37]" />
+                                            )}
+                                        </>
+                                    )}
+                                    {isColor && isSelected && (
+                                        <span className="absolute inset-0 flex items-center justify-center">
+                                            <Check className={`w-5 h-5 ${['branco', 'bege', 'amarelo', 'dourado', 'prata'].includes(option.toLowerCase()) ? 'text-black' : 'text-white'} drop-shadow-md`} />
+                                        </span>
                                     )}
                                 </button>
                             );
