@@ -196,17 +196,17 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                 {/* Price */}
                                 <div className="flex items-end gap-4 py-4 border-y border-gray-200">
                                     <div className="flex flex-col gap-1">
-                                        {displayOldPrice && (
+                                        {displayOldPrice && !isNaN(displayOldPrice) && (
                                             <span className="text-lg text-gray-400 line-through font-medium">
                                                 {displayOldPrice.toFixed(2)} €
                                             </span>
                                         )}
                                         <span className="text-4xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
-                                            {displayPrice.toFixed(2)} €
+                                            {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
                                         </span>
                                     </div>
 
-                                    {displayOldPrice && (
+                                    {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
                                         <div className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg mb-2">
                                             POUPE {(displayOldPrice - displayPrice).toFixed(2)} €
                                         </div>

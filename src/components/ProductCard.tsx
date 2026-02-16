@@ -144,17 +144,17 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 {/* Price Section */}
                 <div className="flex items-end justify-between mb-2 sm:mb-3">
                     <div className="flex flex-col gap-0.5">
-                        {product.oldPrice && (
+                        {product.oldPrice && !isNaN(product.oldPrice) && (
                             <span className="text-[10px] sm:text-xs text-gray-400 line-through font-medium">
                                 {product.oldPrice.toFixed(2)} €
                             </span>
                         )}
                         <span className="text-lg sm:text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
-                            {product.price.toFixed(2)} €
+                            {!isNaN(product.price) ? `${product.price.toFixed(2)} €` : ''}
                         </span>
                     </div>
 
-                    {product.oldPrice && (
+                    {product.oldPrice && !isNaN(product.oldPrice) && !isNaN(product.price) && (
                         <div className="bg-red-50 text-red-600 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                             -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
                         </div>

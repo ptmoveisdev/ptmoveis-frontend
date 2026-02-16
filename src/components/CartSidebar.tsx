@@ -94,13 +94,13 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                             )}
 
                                             <div className="flex items-center gap-2 mb-3">
-                                                {item.oldPrice && (
+                                                {item.oldPrice && !isNaN(item.oldPrice) && (
                                                     <span className="text-xs text-gray-400 line-through">
                                                         {item.oldPrice.toFixed(2)} €
                                                     </span>
                                                 )}
                                                 <span className="text-lg font-bold text-[#D4AF37]">
-                                                    {item.price.toFixed(2)} €
+                                                    {!isNaN(item.price) ? `${item.price.toFixed(2)} €` : ''}
                                                 </span>
                                             </div>
 
@@ -148,7 +148,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Subtotal</span>
                                 <span className="font-semibold text-gray-900">
-                                    {totalPrice.toFixed(2)} €
+                                    {!isNaN(totalPrice) ? `${totalPrice.toFixed(2)} €` : ''}
                                 </span>
                             </div>
 
@@ -164,7 +164,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                     Total
                                 </span>
                                 <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
-                                    {totalPrice.toFixed(2)} €
+                                    {!isNaN(totalPrice) ? `${totalPrice.toFixed(2)} €` : ''}
                                 </span>
                             </div>
 
