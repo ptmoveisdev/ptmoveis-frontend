@@ -48,7 +48,7 @@ export function TermsConditions({ onBack }: { onBack: () => void }) {
             <p>Realizamos entregas em Portugal Continental. O serviço de montagem está incluído em produtos selecionados ou pode ser requisitado sob orçamento. Os prazos de entrega são estimados e podem sofrer alterações alheias à nossa vontade.</p>
 
             <h3 className="text-xl font-bold text-[#1E3A5F]">4. Devoluções e Garantia</h3>
-            <p>O cliente tem direito à livre resolução do contrato no prazo de 14 dias após a receção, desde que o produto se encontre na embalagem original e sem sinais de uso. Todos os produtos têm garantia de 3 anos nos termos da lei.</p>
+            <p>O cliente tem direito à livre resolução do contrato no prazo de 14 dias após a receção, desde que o produto se encontre na embalagem original e sem sinais de uso. Todos os produtos têm garantia de 2 anos nos termos da lei.</p>
         </StaticPageLayout>
     );
 }

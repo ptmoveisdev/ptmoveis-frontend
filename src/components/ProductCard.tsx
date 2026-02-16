@@ -28,6 +28,7 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
             image: product.image,
             badge: product.badge,
             badgeColor: product.badgeColor,
+            productId: product.id,
         });
 
         // Visual feedback

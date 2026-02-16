@@ -45,7 +45,7 @@ export const products: Product[] = [
             'Espuma de alta densidade para conforto superior',
             'Tecido resistente e fácil de limpar',
             'Pés em madeira com acabamento premium',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '280 x 160 x 85 cm' },
@@ -77,7 +77,7 @@ export const products: Product[] = [
             'Base com ripas de madeira para melhor ventilação',
             'Estofado em tecido de alta qualidade',
             'Fácil montagem',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '160 x 200 cm (Casal)' },
@@ -109,7 +109,7 @@ export const products: Product[] = [
             'Estrutura extra reforçada',
             'Tecido premium de alta durabilidade',
             'Pés cromados elegantes',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '160 x 200 cm (Casal)' },
@@ -172,7 +172,7 @@ export const products: Product[] = [
             'Estrutura em madeira de qualidade',
             'Tecido suave ao toque',
             'Montagem simples',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '160 x 200 cm (Casal)' },
@@ -204,7 +204,7 @@ export const products: Product[] = [
             'Estrutura robusta',
             'Tecido de fácil manutenção',
             'Pés em madeira maciça',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '190 x 85 x 85 cm' },
@@ -236,7 +236,7 @@ export const products: Product[] = [
             'Espuma de alta qualidade',
             'Tecido resistente',
             'Estrutura reforçada',
-            'Garantia com a  PTMóveis'
+            'Garantia de 2 anos'
         ],
         specifications: [
             { label: 'Dimensões', value: '270 x 155 x 85 cm' },

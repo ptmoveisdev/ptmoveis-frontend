@@ -21,6 +21,7 @@ export function FavoritesSidebar({ isOpen, onClose }: FavoritesSidebarProps) {
             image: product.image,
             badge: product.badge,
             badgeColor: product.badgeColor,
+            productId: product.id,
         });
     };
 
