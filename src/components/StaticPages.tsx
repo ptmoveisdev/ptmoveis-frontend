@@ -167,7 +167,7 @@ export function ContactFAQ({ onBack }: { onBack: () => void }) {
                                 Quais os métodos de pagamento?
                                 <ChevronLeft className="w-4 h-4 rotate-0 group-open:-rotate-90 transition-transform" />
                             </summary>
-                            <p className="mt-2 text-sm text-gray-600">Preferencialmente pagamento na entrega (numerário) ou transferência bancária prévia.</p>
+                            <p className="mt-2 text-sm text-gray-600">Preferencialmente Pagamento Seguro (numerário) ou transferência bancária prévia.</p>
                         </details>
                     </div>
                 </div>
@@ -210,7 +210,7 @@ export function Payments({ onBack }: { onBack: () => void }) {
                     <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-4">
                         <CreditCard className="w-6 h-6 text-green-600" />
                     </div>
-                    <h3 className="font-bold text-[#1E3A5F] mb-2">Pagamento na Entrega</h3>
+                    <h3 className="font-bold text-[#1E3A5F] mb-2">Pagamento Seguro</h3>
                     <p className="text-sm text-gray-600">
                         Pague apenas quando receber os seus móveis. Aceitamos numerário no momento da entrega e montagem.
                         É o método preferido dos nossos clientes pela segurança que oferece.

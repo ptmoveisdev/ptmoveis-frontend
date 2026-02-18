@@ -20,7 +20,7 @@ import { FavoritesSidebar } from '@/components/FavoritesSidebar';
 import { ProductDetailModal } from '@/components/ProductDetailModal';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
-import { WordPressProducts } from '@/components/WordPressProducts';
+
 import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
 import type { WooCommerceCategory } from '@/types/wordpress';
@@ -272,7 +272,7 @@ function TrustBar() {
   const items = [
     { icon: Shield, title: 'Garantia de 2 anos', subtitle: 'por defeito de fábrica' },
     { icon: Truck, title: 'Entrega e Montagem', subtitle: 'Em toda Portugal Continental' },
-    { icon: CreditCard, title: 'Pagamento na Entrega', subtitle: '100% seguro' },
+    { icon: CreditCard, title: 'Pagamento Seguro', subtitle: '100% seguro' },
     { icon: Headphones, title: 'Apoio ao Cliente', subtitle: 'Disponível 8h-20h' },
   ];
 
@@ -424,7 +424,7 @@ function DeliveryBanner() {
               A SUA ENTREGA É RÁPIDA
             </h2>
             <ul className="space-y-3">
-              {['MONTAGENS', 'PAGAMENTO NA ENTREGA', 'QUALIDADE DE FABRICANTE', 'ATENDIMENTO PERSONALIZADO'].map((item, index) => (
+              {['MONTAGENS', 'Pagamento Seguro', 'QUALIDADE DE FABRICANTE', 'ATENDIMENTO PERSONALIZADO'].map((item, index) => (
                 <li
                   key={item}
                   className="flex items-center gap-3 text-white animate-fade-in-left"
@@ -442,10 +442,7 @@ function DeliveryBanner() {
   );
 }
 
-// More Products Section - Usando WordPress
-function MoreProducts({ onProductClick }: { onProductClick: (product: Product) => void }) {
-  return <WordPressProducts onProductClick={onProductClick} title="Camas / Sofás" perPage={10} />;
-}
+
 
 // Testimonials Section
 function Testimonials() {
@@ -678,11 +675,10 @@ function App() {
             }} />
             <TrustBar />
 
-            <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
-            <AboutSection />
             <FeaturedProducts onProductClick={setSelectedProduct} />
+            <AboutSection />
+            <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
             <DeliveryBanner />
-            <MoreProducts onProductClick={setSelectedProduct} />
             <Testimonials />
           </>
         )}
