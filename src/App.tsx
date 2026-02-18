@@ -9,7 +9,8 @@ import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
   Instagram, MapPin,
-  ChevronRight
+  ChevronRight,
+  Facebook
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -543,7 +544,8 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
             <div className="space-y-3 text-sm text-gray-400">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 text-[#D4AF37]" />
-                <span>Rua do parque n 459<br />4595-302 Penamaior</span>
+                <span>
+                  Rua do Parque n 459 Penamaior , <br />Paços de Ferreira, <br />Portugal, 4595-298</span>
               </div>
               <a
                 href="https://wa.me/351939076117"
@@ -554,7 +556,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
                 <div className="w-4 h-4 flex items-center justify-center">
                   <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
                 </div>
-                <span>+351 939 076 117</span>
+                <span><a href="https://wa.me/351939076117" target="_blank" rel="noopener noreferrer">+351 939 076 117</a></span>
               </a>
             </div>
           </div>
@@ -593,6 +595,15 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
               >
                 <Instagram className="w-5 h-5" />
               </a>
+
+              <a
+                href="https://www.facebook.com/ptmoveis"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
             </div>
             <p className="text-xs text-gray-500">
               Preços e especificações sujeitos a alteração sem aviso prévio. A PT Móveis declina qualquer responsabilidade por erros tipográficos ou fotográficos.
@@ -605,8 +616,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-            <p>© 2022-2025 PT MÓVEIS. TODOS OS DIREITOS RESERVADOS.</p>
-            <p>PT MÓVEIS RBC LDA - NIF: 5166012</p>
+            <p>©2026 PT MÓVEIS. TODOS OS DIREITOS RESERVADOS.</p>
           </div>
         </div>
       </div>

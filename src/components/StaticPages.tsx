@@ -127,7 +127,7 @@ export function ContactFAQ({ onBack }: { onBack: () => void }) {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500">Email</p>
-                                <p className="font-medium">geral@ptmoveis.pt</p>
+                                <p className="font-medium">ptmoveisgeral@gmail.com</p>
                             </div>
                         </div>
 
