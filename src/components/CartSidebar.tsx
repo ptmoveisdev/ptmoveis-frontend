@@ -155,7 +155,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             {/* Shipping */}
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Entrega</span>
-                                <span className="font-semibold text-[#D4AF37]">GRÁTIS</span>
+                                <span className="font-semibold text-[#D4AF37]">em todo Portugal Continental</span>
                             </div>
 
                             {/* Total */}

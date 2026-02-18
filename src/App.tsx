@@ -304,61 +304,51 @@ function TrustBar() {
 
 
 // Category Grid Component
+// Category Grid Component
 function CategoryGrid({
-  categories: apiCategories,
+  categories,
   onCategoryClick
 }: {
   categories: WooCommerceCategory[],
   onCategoryClick: (id: number) => void
 }) {
-  const categories = [
-    { name: 'Camas', image: '/cat-camas.jpg', subcategories: ['Estofadas', 'Madeira', 'Colchões'] },
-    { name: 'Sofás', image: '/cat-sofas.jpg', subcategories: ['Chaise Longue', 'Canto', '3 Lugares'] },
-    { name: 'Quartos', image: '/cat-quartos.jpg', subcategories: ['Completos', 'Roupeiros', 'Cómodas'] },
-    { name: 'Salas', image: '/cat-salas.jpg', subcategories: ['Estantes', 'Mesas Centro', 'Poltronas'] },
-    { name: 'Quartos Infantis', image: '/cat-infantis.jpg', subcategories: ['Camas', 'Escrivaninhas', 'Decor'] },
-    { name: 'Sala de Jantar', image: '/cat-jantar.jpg', subcategories: ['Mesas', 'Cadeiras', 'Aparadores'] },
-    { name: 'Cozinha', image: '/cat-cozinha.jpg', subcategories: ['Móveis', 'Bancos', 'Arrumação'] },
-    { name: 'Escritório', image: '/cat-escritorio.jpg', subcategories: ['Secretárias', 'Cadeiras', 'Estantes'] },
-  ];
-
-  const handleCategoryClick = (name: string) => {
-    // Try to find the category ID from the API data
-    // Case insensitive search
-    const category = apiCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
-    if (category) {
-      onCategoryClick(category.id);
-    } else {
-      console.warn(`Category "${name}" not found in API data`);
-      // Optional: Navigate to all products if category ID not found?
-      // For now, we only navigate if we find the ID to show the correct filter.
-    }
-  };
+  if (!categories || categories.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        <h2 className="text-2xl font-bold text-[#1E3A5F] mb-6" style={{ fontFamily: 'Montserrat' }}>
+          Categorias
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {categories.map((category, index) => (
             <div
-              key={category.name}
-              className="group relative rounded-2xl overflow-hidden cursor-pointer animate-fade-in-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => handleCategoryClick(category.name)}
+              key={category.id}
+              className="group relative rounded-xl overflow-hidden cursor-pointer animate-fade-in-up h-40 sm:h-48 md:h-56"
+              style={{ animationDelay: `${index * 50}ms` }}
+              onClick={() => onCategoryClick(category.id)}
             >
-              <div className="aspect-square relative">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              <div className="absolute inset-0">
+                {category.image?.src ? (
+                  <img
+                    src={category.image.src}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400 text-4xl font-bold opacity-20">PT</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-semibold text-lg mb-1" style={{ fontFamily: 'Montserrat' }}>
+                  <h3 className="text-white font-semibold text-lg leading-tight" style={{ fontFamily: 'Montserrat' }}>
                     {category.name}
                   </h3>
-                  <p className="text-white/70 text-xs">
-                    {category.subcategories.join(' / ')}
+                  <p className="text-white/70 text-xs mt-1">
+                    {category.count} produtos
                   </p>
                 </div>
               </div>
@@ -578,7 +568,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
             <ul className="space-y-2 text-sm text-gray-400">
               <li><button onClick={() => onNavigate('work')} className="hover:text-[#D4AF37] transition-colors text-left">Trabalhe Connosco</button></li>
               <li><button onClick={() => onNavigate('contact')} className="hover:text-[#D4AF37] transition-colors text-left">Dúvidas e Contato</button></li>
-              <li><button onClick={() => onNavigate('complaints')} className="hover:text-[#D4AF37] transition-colors text-left">Livro de Reclamações</button></li>
+              {/* <li><button onClick={() => onNavigate('complaints')} className="hover:text-[#D4AF37] transition-colors text-left">Livro de Reclamações</button></li> */}
               <li><button onClick={() => onNavigate('payments')} className="hover:text-[#D4AF37] transition-colors text-left">Pagamentos</button></li>
             </ul>
           </div>
@@ -588,7 +578,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
             <h4 className="font-semibold text-white mb-4">Redes Sociais</h4>
             <div className="flex gap-3 mb-6">
               <a
-                href="https://www.instagram.com/ptmov_eis/?hl=en"
+                href="https://www.instagram.com/ptmov_eis"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#D4AF37] transition-colors"

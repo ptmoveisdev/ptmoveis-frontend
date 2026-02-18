@@ -138,6 +138,7 @@ export interface WooCommerceCategory {
     name: string;
     slug: string;
     count: number;
+    image?: WooCommerceImage;
 }
 
 export interface WooCommerceTag {
