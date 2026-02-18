@@ -270,10 +270,10 @@ function HeroSection({ onViewCollection }: { onViewCollection: () => void }) {
 // Trust Bar Component
 function TrustBar() {
   const items = [
-    { icon: Shield, title: 'Garantia de 2 anos', subtitle: 'Qualidade assegurada' },
-    { icon: Truck, title: 'Entrega e Montagem', subtitle: 'Em toda Portugal' },
+    { icon: Shield, title: 'Garantia de 2 anos', subtitle: 'por defeito de fábrica' },
+    { icon: Truck, title: 'Entrega e Montagem', subtitle: 'Em toda Portugal Continental' },
     { icon: CreditCard, title: 'Pagamento na Entrega', subtitle: '100% seguro' },
-    { icon: Headphones, title: 'Apoio ao Cliente', subtitle: 'Disponível 24/7' },
+    { icon: Headphones, title: 'Apoio ao Cliente', subtitle: 'Disponível 8h-20h' },
   ];
 
   return (
@@ -615,7 +615,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-xs text-gray-4400">
             <p>©2026 PT MÓVEIS. TODOS OS DIREITOS RESERVADOS.</p>
           </div>
         </div>
