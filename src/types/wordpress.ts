@@ -138,6 +138,7 @@ export interface WooCommerceCategory {
     name: string;
     slug: string;
     count: number;
+    parent: number;
     image?: WooCommerceImage;
 }
 

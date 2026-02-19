@@ -24,6 +24,7 @@ import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProduct
 import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
 import type { WooCommerceCategory } from '@/types/wordpress';
+import { MegaMenu } from '@/components/MegaMenu';
 
 
 
@@ -54,9 +55,9 @@ function NavigationHeader({
     setIsMobileMenuOpen(false);
   };
 
-  const { data: categories, loading: categoriesLoading } = useProductCategories({
+  const { data: categories } = useProductCategories({
     hide_empty: true,
-    per_page: 6,
+    per_page: 100,
     order: 'desc',
     orderby: 'count'
   });
@@ -87,23 +88,12 @@ function NavigationHeader({
           </a>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6">
-            {!categoriesLoading && categories.map((category, index) => (
-              <a
-                key={category.id}
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onCategoryClick) onCategoryClick(category.id);
-                }}
-                className="text-xs font-medium text-gray-700 hover:text-[#D4AF37] transition-colors relative group animate-fade-in uppercase"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {category.name}
-                <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-[#D4AF37] transition-all duration-300 group-hover:w-full group-hover:left-0" />
-              </a>
-            ))}
-          </nav>
+          <MegaMenu
+            categories={categories}
+            onCategoryClick={(id) => {
+              if (onCategoryClick) onCategoryClick(id);
+            }}
+          />
 
           {/* Actions */}
           <div className="flex items-center gap-3">
@@ -175,33 +165,27 @@ function NavigationHeader({
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 animate-fade-in">
-          <nav className="flex flex-col p-4">
-            {!categoriesLoading && categories.map((category) => (
-              <a
-                key={category.id}
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onCategoryClick) onCategoryClick(category.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className="py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors uppercase"
-              >
-                {category.name} ({category.count})
-              </a>
-            ))}
+        <div className="lg:hidden bg-white border-t border-gray-100 animate-fade-in h-[calc(100vh-80px)] overflow-y-auto">
+          <MegaMenu
+            categories={categories}
+            onCategoryClick={(id) => {
+              if (onCategoryClick) onCategoryClick(id);
+            }}
+            isMobile={true}
+            onMobileClose={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="p-4 border-t border-gray-100 mt-auto">
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 onFavoritesClick();
               }}
-              className="py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors text-left flex items-center gap-2"
+              className="py-3 px-4 w-full text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D4AF37] rounded-lg transition-colors text-left flex items-center gap-2"
             >
               <Heart className="w-4 h-4" />
               Meus Favoritos ({totalFavorites})
             </button>
-          </nav>
+          </div>
         </div>
       )}
     </header>
