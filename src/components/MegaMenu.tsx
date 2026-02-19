@@ -130,9 +130,9 @@ export function MegaMenu({ categories, onCategoryClick, isMobile, onMobileClose 
 
                     {/* Dropdown Menu */}
                     {category.children.length > 0 && activeCategory === category.id && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-[260px] bg-white shadow-xl rounded-b-lg border-t-2 border-[#D4AF37] py-4 z-50 animate-fade-in-up">
+                        <div className="absolute top-full left-0 w-[260px] bg-white shadow-xl rounded-b-lg border-t-2 border-[#D4AF37] py-4 z-50 animate-fade-in-up">
                             {/* Triangle pointer */}
-                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-t border-l border-gray-100 rotate-45 transform -z-10 opacity-0" />
+                            <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-t border-l border-gray-100 rotate-45 transform -z-10 opacity-0" />
 
                             <ul className="flex flex-col">
                                 {category.children.map(child => (
