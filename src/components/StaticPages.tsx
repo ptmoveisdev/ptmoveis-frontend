@@ -194,7 +194,7 @@ export function WorkWithUs({ onBack }: { onBack: () => void }) {
                     </ul>
 
                     <p className="text-sm text-gray-600">
-                        Envie o seu CV para <span className="font-bold text-[#1E3A5F]">recrutamento@ptmoveis.pt</span> com o assunto "Candidatura Espontânea".
+                        Envie o seu CV para <span className="font-bold text-[#1E3A5F]">ptmoveisgeral@gmail.com</span> com o assunto "Candidatura Espontânea".
                     </p>
                 </div>
             </div>

@@ -587,7 +587,7 @@ function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-xs text-gray-4400">
-            <p>©2026 PT MÓVEIS. TODOS OS DIREITOS RESERVADOS.</p>
+            <p>©2026 PT Móveis. Todos os direitos reservados. Desenvolvido por <a href="https://vvtrafficdata.com/" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white">VV Traffic Data</a></p>
           </div>
         </div>
       </div>
