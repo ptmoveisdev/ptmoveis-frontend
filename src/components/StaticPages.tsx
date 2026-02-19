@@ -36,19 +36,117 @@ function StaticPageLayout({ onBack, title, children }: StaticPageProps) {
 export function TermsConditions({ onBack }: { onBack: () => void }) {
     return (
         <StaticPageLayout onBack={onBack} title="Termos e Condições">
-            <p>Bem-vindo à PT Móveis. Ao aceder e utilizar o nosso website, concorda com os seguintes termos e condições:</p>
+            <h3 className="text-xl font-bold text-[#1E3A5F]">I - A SUA ENCOMENDA</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> É da responsabilidade do cliente verificar se os artigos que selecionou se destinam à utilização que lhes pretende dar, certificar-se que têm as condições que espera, que têm as dimensões e disposição adequadas ao espaço onde os pretende colocar e se os acessos ao local de destino possibilitam a sua entrega.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> Os tons das cores dos artigos podem parecer diferentes da realidade em resultado de fatores como a iluminação da loja e as características particulares dos seus materiais.
+                </p>
+                <p className="text-justify">
+                    <strong>c)</strong> Para produtos de pronta entrega: O Cliente só poderá pedir o cancelamento, sem encargos, da sua compra, se o efetuar nas 24 horas seguintes à sua realização. Este cancelamento só poderá ser efetuado junto da loja onde se realizou a encomenda e desde que os artigos não tenham sido entregues. O encargo para cancelamento de encomendas no prazo superior a 24 horas é de 50€ (cinquenta euros).
+                </p>
+                <p className="text-justify">
+                    <strong>d)</strong> Para produtos de encomenda: O Cliente só poderá pedir o cancelamento da sua encomenda, se o efetuar nas 24 horas seguintes à sua realização. O valor pago no ato da encomenda será creditado na sua conta de cliente, podendo assim utilizar o crédito para posterior compra.
+                </p>
+            </div>
 
-            <h3 className="text-xl font-bold text-[#1E3A5F]">1. Condições Gerais</h3>
-            <p>A PT Móveis dedica-se à venda de mobiliário e artigos de decoração. Todos os produtos apresentados estão sujeitos à disponibilidade de stock.</p>
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">II - PREÇO</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> Os preços apresentados para o fornecimento, entrega ou montagem, não incluem a utilização de meios de transporte ou de acesso especiais, como sejam escadas externas ou gruas, ou alterações necessárias de construção civil em portas, janelas, escadas ou outras estruturas do imóvel.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> Os preços de venda indicados nesta encomenda são válidos entre a data da encomenda e a data de entrega efetiva, independentemente das possíveis variações positivas ou negativas dos Preços de venda e das campanhas praticadas na loja para os mesmos artigos, nesse mesmo intervalo de tempo.
+                </p>
+            </div>
 
-            <h3 className="text-xl font-bold text-[#1E3A5F]">2. Preços e Pagamentos</h3>
-            <p>Todos os preços incluem IVA à taxa legal em vigor. O pagamento é realizado preferencialmente no ato da entrega, garantindo a total segurança do cliente. Aceitamos numerário e referências multibanco (quando disponibilizadas previamente).</p>
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">III - DATA DA DISPONIBILIDADE DOS ARTIGOS</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> As datas de entrega indicadas na Encomenda são meramente previsionais e estão condicionadas à verificação de fatores logísticos e de produção, que podemos apenas estimar porque dependem da atuação de terceiros.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> Quando os artigos estiverem disponíveis, o cliente será contactado pelos nossos serviços para receber a entrega contratada no domicílio, ficando, entretanto, os artigos à disposição e cativos em stock, pelo prazo máximo de 15 dias. Findo este prazo, caso o cliente não se disponibilize para receber o mesmo, a PT MÓVEIS , reserva-se no direito de colocar os artigos em causa de novo à venda e de fazer seu o sinal entregue por considerar que o cliente incumpriu definitivamente e por desistência, a sua obrigação e por causa que lhe era imputável.
+                </p>
+            </div>
 
-            <h3 className="text-xl font-bold text-[#1E3A5F]">3. Entregas e Montagem</h3>
-            <p>Realizamos entregas em Portugal Continental. O serviço de montagem está incluído em produtos selecionados ou pode ser requisitado sob orçamento. Os prazos de entrega são estimados e podem sofrer alterações alheias à nossa vontade.</p>
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">IV - SERVIÇOS: Entrega e Montagem</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> Por razões que se prendem com a organização dos transportes e dos imponderáveis que, diariamente, ocorrem nas rotas dos nossos motoristas parceiros, não efetuamos a marcação horária da sua entrega. No entanto, sempre que possível e quando as rotas o permitem, as entregas marcadas são efetuadas entre as 9:00h e às 20:00h. As entregas efetuam-se de Segunda a sábado, exceto feriados.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> O cliente deverá garantir que o espaço onde se vai efetuar a montagem está limpo e desimpedido. O serviço de entrega e montagem não inclui qualquer tipo de desmontagem de mobiliário existente no local, e também não inclui recolha de mobiliário antigo.
+                </p>
+                <p className="text-justify">
+                    <strong>c)</strong> Os técnicos de entrega podem desaconselhar a entrega e/ou montagem caso se depararem, no local definido, com problemas nos acessos e a possibilidade séria de ocorrência de danos nos artigos. Neste caso específico, se o cliente pretender, mesmo assim, o transporte, entrega e montagem, tal executar- se-á mas sob sua responsabilidade e risco, mediante assinatura do termo.
+                </p>
+                <p className="text-justify">
+                    <strong>d)</strong> O Cliente deve verificar todos os artigos e, em caso de montagem pelos nossos serviços, se esta ficou em conformidade. No caso de existirem anomalias, ou inconformidades, devem as mesmas ser devidamente registadas com evidência visual (fotografia ou vídeo), de imediato e em documento próprio.
+                </p>
+                <p className="text-justify">
+                    <strong>e)</strong> No caso de entrega em kit (onde o cliente se responsabiliza pela montagem), se o cliente não conseguir efetuar a montagem do(s) produto(s), será cobrado uma nova taxa de deslocação e montagem.
+                </p>
+                <p className="text-justify">
+                    <strong>f)</strong> O cliente, em comum acordo com a loja, será informado da data agendada de entrega da sua encomenda. O mesmo deverá indicar uma morada de entrega, onde esteja presente na data combinada. Se a entrega não for concretizada, por responsabilidade do cliente, o mesmo terá que pagar uma nova taxa de entrega.
+                </p>
+                <p className="text-justify">
+                    <strong>g)</strong> Para alterações da data de entrega, deverá ser comunicado com 48 (quarenta e oito) horas de antecedência através de um de nossos canais de comunicação. As alterações feitas após este período estão sujeitas a nova cobrança de deslocação.
+                </p>
+                <p className="text-justify">
+                    <strong>h)</strong> Na receção da encomenda pelo cliente, este último deverá indicar por telefone ou correio eletrónico junto da PT MÓVEIS a reclamação de não conformidade dos produtos em tipo, qualidade ou quantidade em comparação com os dados da encomenda efetuada.
+                </p>
+                <p className="text-justify">
+                    <strong>I)</strong> A Reclamação de não conformidade deve ser efetuada no prazo máximo de 24 horas à entrega da encomenda. As reclamações não efetuadas de acordo com as regras acima definidas e nos prazos indicados, não serão aceites pela PT MÓVEIS .
+                </p>
+            </div>
 
-            <h3 className="text-xl font-bold text-[#1E3A5F]">4. Devoluções e Garantia</h3>
-            <p>O cliente tem direito à livre resolução do contrato no prazo de 14 dias após a receção, desde que o produto se encontre na embalagem original e sem sinais de uso. Todos os produtos têm garantia de 2 anos nos termos da lei.</p>
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">V - GARANTIA</h3>
+            <div className="space-y-4 mt-4">
+                <p className="font-semibold text-red-600">
+                    - O COLCHÃO ORIGINAL ORTOPÉDICO SEM MOLAS (SIMPLEX) FAZ PARTE DE UM PACK ECONÔMICO E NÃO POSSUI GARANTIA.
+                </p>
+                <p className="text-justify">
+                    <strong>a)</strong> Os artigos comercializados pela PT MÓVEIS beneficiam de uma garantia de 2 anos para o consumidor final de defeito de fabrico. Se verificar alguma anomalia no artigo durante o período de garantia deverá transmitir essa informação ao nosso Apoio ao Cliente, exclusivamente por telefone ou e-mail.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> No caso de entrega em kit, o cliente se responsabiliza pela boa montagem, estando ciente que qualquer dano feito após a entrega e durante a montagem, não será coberto pela garantia. O cliente tem a liberdade de conferir o material na presença de nossos técnicos.
+                </p>
+                <p className="text-justify">
+                    <strong>c)</strong> No caso de levantamento de produtos em nossos armazéns , o cliente se responsabiliza pelo transporte adequado e pela boa montagem, estando ciente que qualquer dano feito após o levantamento, não será coberto pela garantia. O cliente tem a liberdade de conferir o material antes de sair do local, se responsabilizará também pelas caixas abertas e está ciente que não fornecemos fita cola para lacrar novamente a(s) embalagem(ens).
+                </p>
+            </div>
+
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">VI - DEVOLUÇÃO E TROCA DE ARTIGOS</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> Nos primeiros 15 dias após a aquisição e caso não esteja totalmente satisfeito com a sua compra, poderá efetuar a troca por outros artigos do nosso catálogo, apresentando os documentos de compra e desde que o artigo não tenha sido montado ou utilizado e se encontre devidamente acondicionado na embalagem de origem. O valor será creditado na sua conta de cliente. Nesta situação, e caso se aplique, os custos inerentes ao transporte serão sempre da responsabilidade do cliente.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> Não são aceites trocas de artigos de exposição e colchões, em que a embalagem se encontre aberta, bem como mobiliário feito por medida e a pedido do cliente.
+                </p>
+            </div>
+
+            <h3 className="text-xl font-bold text-[#1E3A5F] mt-8">VIII - RECOMENDAÇÕES DE USO</h3>
+            <div className="space-y-4 mt-4">
+                <p className="text-justify">
+                    <strong>a)</strong> Não utilizar produtos de limpeza como: corrosivos, solvente, ácidos ou álcool.
+                </p>
+                <p className="text-justify">
+                    <strong>b)</strong> Não expor os produtos a fontes de calor como: raios solares, aquecedores ou radiadores.
+                </p>
+                <p className="text-justify">
+                    <strong>c)</strong> Em caso de nódoas, remover com papel absorvente ou um pano branco, utilizando posteriormente um pano humedecido com detergente neutro.
+                </p>
+                <p className="text-justify">
+                    <strong>d)</strong> Não exercer pressão superior ao peso indicado nas superfícies dos móveis, como: saltos, pulos ou empilhamento de materiais.
+                </p>
+                <p className="text-justify">
+                    <strong>e)</strong> Em caso de necessidade de mudança de local da cama, o cliente deve elevar a cama na totalidade ou fazer a desmontagem total e correta remontagem, não sendo responsabilidade da fábrica ou da loja caso haja qualquer dano no produto por mal manuseio por parte do cliente.
+                </p>
+            </div>
         </StaticPageLayout>
     );
 }
