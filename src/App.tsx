@@ -288,7 +288,6 @@ function TrustBar() {
 
 
 // Category Grid Component
-// Category Grid Component
 function CategoryGrid({
   categories,
   onCategoryClick
@@ -300,14 +299,20 @@ function CategoryGrid({
     return null;
   }
 
+  const activeCategories = categories.filter(category => category.count > 0);
+
+  if (activeCategories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-[#1E3A5F] mb-6" style={{ fontFamily: 'Montserrat' }}>
           Categorias
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {categories.map((category, index) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {activeCategories.map((category, index) => (
             <div
               key={category.id}
               className="group relative rounded-xl overflow-hidden cursor-pointer animate-fade-in-up h-40 sm:h-48 md:h-56"
@@ -630,7 +635,8 @@ function App() {
     hide_empty: true,
     per_page: 20,
     order: 'desc',
-    orderby: 'count'
+    orderby: 'count',
+    parent: 0
   });
 
   return (
