@@ -133,12 +133,12 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
             {/* Content */}
             <div className="p-3 sm:p-4">
                 {/* Category */}
-                <p className="text-[10px] sm:text-xs font-semibold text-[#D4AF37] uppercase tracking-wider mb-1 sm:mb-2">
+                <p className="text-[10px] sm:text-xs font-medium text-[#D4AF37] uppercase tracking-wider mb-1 sm:mb-2">
                     {product.category}
                 </p>
 
                 {/* Product Name */}
-                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] leading-tight" style={{ fontFamily: 'Montserrat' }}>
+                <h3 className="text-sm sm:text-md font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] leading-tight uppercase" style={{ fontFamily: 'Montserrat' }}>
                     {product.name}
                 </h3>
 
