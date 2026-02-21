@@ -69,14 +69,15 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
         setSearchQuery(initialSearchQuery);
     }, [initialSearchQuery]);
 
-    // Fetch Categories
     const {
         data: categories,
         loading: categoriesLoading
     } = useProductCategories({
-        per_page: 20,
+        per_page: 100,
         hide_empty: true
     });
+
+    const subcategories = categories.filter(category => category.parent !== 0);
 
     // Fetch Products
     const {
@@ -172,7 +173,7 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
                                         <div className="h-8 bg-gray-100 rounded animate-pulse" />
                                     </div>
                                 ) : (
-                                    categories.map(category => (
+                                    subcategories.map(category => (
                                         <button
                                             key={category.id}
                                             onClick={() => setSelectedCategoryId(category.id)}
@@ -304,7 +305,7 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
                             >
                                 Todas as Categorias
                             </button>
-                            {categories.map(category => (
+                            {subcategories.map(category => (
                                 <button
                                     key={category.id}
                                     onClick={() => {
