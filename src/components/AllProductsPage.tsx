@@ -3,7 +3,7 @@ import { useProductCategories, useProducts } from '@/hooks/useWordPress';
 import { ProductCard } from '@/components/ProductCard';
 import type { Product } from '@/data/products';
 import type { WooCommerceProduct } from '@/types/wordpress';
-import { Filter, X, ChevronLeft } from 'lucide-react';
+import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AllProductsPageProps {
     onBack: () => void;
@@ -82,9 +82,13 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
     const {
         data: wpProducts,
         loading: productsLoading,
-        error: productsError
+        error: productsError,
+        currentPage,
+        totalPages,
+        nextPage,
+        prevPage
     } = useProducts({
-        per_page: 50, // Fetch a good amount
+        per_page: 24, // 24 products per page (4 columns * 6 rows)
         category: selectedCategoryId ? selectedCategoryId.toString() : undefined,
         search: searchQuery || undefined,
         orderby: 'date', // Or 'title'
@@ -228,16 +232,48 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-                                {localProducts.map((product, index) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                        index={index}
-                                        onViewDetails={onProductClick}
-                                    />
-                                ))}
-                            </div>
+                            <>
+                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                                    {localProducts.map((product, index) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            product={product}
+                                            index={index}
+                                            onViewDetails={onProductClick}
+                                        />
+                                    ))}
+                                </div>
+
+                                {totalPages > 1 && (
+                                    <div className="flex justify-center items-center mt-12 gap-4">
+                                        <button
+                                            onClick={() => {
+                                                prevPage();
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            disabled={currentPage === 1}
+                                            className="p-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label="Página anterior"
+                                        >
+                                            <ChevronLeft className="w-5 h-5 text-gray-700" />
+                                        </button>
+                                        <span className="text-gray-600 font-medium">
+                                            Página {currentPage} de {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                nextPage();
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label="Próxima página"
+                                        >
+                                            <ChevronRight className="w-5 h-5 text-gray-700" />
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

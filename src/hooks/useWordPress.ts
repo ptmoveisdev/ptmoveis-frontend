@@ -77,7 +77,7 @@ export function usePosts(params: {
     });
 
     const fetchData = useCallback(async (page: number) => {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, currentPage: page }));
         try {
             const result = await getPosts({ ...params, page });
             setState({
@@ -101,7 +101,7 @@ export function usePosts(params: {
     }, [params.per_page, params.categories, params.tags, params.search, params._embed]);
 
     useEffect(() => {
-        fetchData(state.currentPage);
+        fetchData(params.page || 1);
     }, [fetchData]);
 
     return {
@@ -199,7 +199,7 @@ export function useCategories(params: {
     });
 
     const fetchData = useCallback(async (page: number) => {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, currentPage: page }));
         try {
             const result = await getCategories({ ...params, page });
             setState({
@@ -223,7 +223,7 @@ export function useCategories(params: {
     }, [params.per_page, params.hide_empty]);
 
     useEffect(() => {
-        fetchData(state.currentPage);
+        fetchData(params.page || 1);
     }, [fetchData]);
 
     return {
@@ -310,7 +310,7 @@ export function useProducts(
     });
 
     const fetchData = useCallback(async (page: number) => {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, currentPage: page }));
         try {
             const result = await getProducts({ ...params, page });
             setState({
@@ -334,7 +334,7 @@ export function useProducts(
     }, [JSON.stringify(params)]);
 
     useEffect(() => {
-        fetchData(state.currentPage);
+        fetchData(params.page || 1);
     }, [fetchData]);
 
     return {
@@ -449,7 +449,7 @@ export function useProductCategories(
     });
 
     const fetchData = useCallback(async (page: number) => {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, currentPage: page }));
         try {
             const result = await getProductCategories({ ...params, page });
             setState({
@@ -473,7 +473,7 @@ export function useProductCategories(
     }, [JSON.stringify(params)]);
 
     useEffect(() => {
-        fetchData(state.currentPage);
+        fetchData(params.page || 1);
     }, [fetchData]);
 
     return {
