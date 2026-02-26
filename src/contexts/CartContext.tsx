@@ -17,7 +17,7 @@ export interface CartItem {
 
 interface CartContextType {
     items: CartItem[];
-    addToCart: (product: Omit<CartItem, 'quantity'>) => void;
+    addToCart: (product: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
@@ -30,7 +30,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
 
-    const addToCart = (product: Omit<CartItem, 'quantity'>) => {
+    const addToCart = (product: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         setItems(prevItems => {
             // Criar um ID único para o item no carrinho
             // Se tiver variação, o ID será "PRODUTO-VARIACAO", se não, apenas "PRODUTO"
@@ -42,13 +42,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 item.selectedAttributes === product.selectedAttributes // Comparação extra por segurança
             );
 
+            const qtyToAdd = product.quantity || 1;
+
             if (existingItemIndex > -1) {
                 const newItems = [...prevItems];
-                newItems[existingItemIndex].quantity += 1;
+                newItems[existingItemIndex].quantity += qtyToAdd;
                 return newItems;
             }
 
-            return [...prevItems, { ...product, quantity: 1 }];
+            // Remove a propriedade quantity do produto antes de espalhar se ele existir
+            const { quantity, ...productWithoutQuantity } = product as any;
+            return [...prevItems, { ...productWithoutQuantity, quantity: qtyToAdd }];
         });
     };
 

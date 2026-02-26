@@ -17,17 +17,18 @@ import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { CartSidebar } from '@/components/CartSidebar';
 import { FavoritesSidebar } from '@/components/FavoritesSidebar';
+import { ProductDetailModal } from '@/components/ProductDetailModal';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
-import ProductPage from '@/pages/ProductPage';
-import CheckoutPage from '@/pages/CheckoutPage';
-import OrderSuccessPage from '@/pages/OrderSuccessPage';
 
 import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
 import type { WooCommerceCategory } from '@/types/wordpress';
 import { MegaMenu } from '@/components/MegaMenu';
-import { Toaster } from '@/components/ui/sonner';// Navigation Header Component
+
+
+
+// Navigation Header Component
 function NavigationHeader({
   onCartClick,
   onFavoritesClick,
@@ -502,7 +503,7 @@ function Testimonials() {
 }
 
 // Footer Component
-function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
+function Footer({ onNavigate }: { onNavigate: (view: any) => void }) {
   return (
     <footer className="bg-[#1A1A1A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -540,10 +541,10 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
           <div className="animate-fade-in-up delay-100">
             <h4 className="font-semibold text-white mb-4">Minha Conta</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><button onClick={() => onNavigate('/checkout')} className="hover:text-[#D4AF37] transition-colors text-left">Carrinho</button></li>
-              <li><button onClick={() => onNavigate('/checkout')} className="hover:text-[#D4AF37] transition-colors text-left">Finalizar Compra</button></li>
-              <li><button onClick={() => onNavigate('/termos')} className="hover:text-[#D4AF37] transition-colors text-left">Termos e Condições</button></li>
-              <li><button onClick={() => onNavigate('/privacidade')} className="hover:text-[#D4AF37] transition-colors text-left">Política de Privacidade</button></li>
+              <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Carrinho</a></li>
+              <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Finalizar Compra</a></li>
+              <li><button onClick={() => onNavigate('terms')} className="hover:text-[#D4AF37] transition-colors text-left">Termos e Condições</button></li>
+              <li><button onClick={() => onNavigate('privacy')} className="hover:text-[#D4AF37] transition-colors text-left">Política de Privacidade</button></li>
             </ul>
           </div>
 
@@ -551,10 +552,10 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
           <div className="animate-fade-in-up delay-200">
             <h4 className="font-semibold text-white mb-4">Institucional</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><button onClick={() => onNavigate('/trabalhe-connosco')} className="hover:text-[#D4AF37] transition-colors text-left">Trabalhe Connosco</button></li>
-              <li><button onClick={() => onNavigate('/contato')} className="hover:text-[#D4AF37] transition-colors text-left">Dúvidas e Contato</button></li>
-              {/* <li><button onClick={() => onNavigate('/reclamacoes')} className="hover:text-[#D4AF37] transition-colors text-left">Livro de Reclamações</button></li> */}
-              <li><button onClick={() => onNavigate('/pagamentos')} className="hover:text-[#D4AF37] transition-colors text-left">Pagamentos</button></li>
+              <li><button onClick={() => onNavigate('work')} className="hover:text-[#D4AF37] transition-colors text-left">Trabalhe Connosco</button></li>
+              <li><button onClick={() => onNavigate('contact')} className="hover:text-[#D4AF37] transition-colors text-left">Dúvidas e Contato</button></li>
+              {/* <li><button onClick={() => onNavigate('complaints')} className="hover:text-[#D4AF37] transition-colors text-left">Livro de Reclamações</button></li> */}
+              <li><button onClick={() => onNavigate('payments')} className="hover:text-[#D4AF37] transition-colors text-left">Pagamentos</button></li>
             </ul>
           </div>
 
@@ -599,47 +600,35 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
   );
 }
 
-import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
-
-function CollectionRouteWrapper({ onProductClick }: { onProductClick: (product: Product) => void }) {
-  const [searchParams] = useSearchParams();
-  const categoryId = searchParams.get('category') ? parseInt(searchParams.get('category')!) : null;
-  const searchQuery = searchParams.get('search') || '';
-  const navigate = useNavigate();
-
-  return (
-    <AllProductsPage
-      initialCategoryId={categoryId}
-      initialSearchQuery={searchQuery}
-      onBack={() => {
-        navigate('/');
-        window.scrollTo(0, 0);
-      }}
-      onProductClick={onProductClick}
-    />
-  );
-}
-
 // Main App Component
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const navigate = useNavigate();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [currentView, setCurrentView] = useState<'home' | 'collection' | 'terms' | 'privacy' | 'work' | 'contact' | 'complaints' | 'payments'>('home');
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleCategoryClick = (categoryId: number) => {
-    navigate(`/produtos?category=${categoryId}`);
+    setSelectedCategoryId(categoryId);
+    setSearchQuery('');
+    setCurrentView('collection');
     window.scrollTo(0, 0);
   };
 
   const handleSearch = (query: string) => {
-    navigate(`/produtos?search=${encodeURIComponent(query)}`);
+    setSearchQuery(query);
+    setSelectedCategoryId(null);
+    setCurrentView('collection');
     window.scrollTo(0, 0);
   };
 
-  const handleNavigate = (path: string) => {
-    navigate(path);
+  const handleNavigate = (view: any) => {
+    setCurrentView(view);
     window.scrollTo(0, 0);
   };
+
 
   // Fetch categories here to pass to CategoryGrid
   const { data: categories } = useProductCategories({
@@ -650,53 +639,61 @@ function App() {
     parent: 0
   });
 
-  // Temporarily handle product clicks to go to product page instead of modal. We'll do a simple navigate.
-  // We'll replace this once we have the ProductPage.
-  const handleProductClick = (product: Product) => {
-    navigate(`/produto/${product.slug}`);
-    window.scrollTo(0, 0);
-  };
-
   return (
     <div className="min-h-screen bg-white">
+
       <NavigationHeader
         onCartClick={() => setIsCartOpen(true)}
         onFavoritesClick={() => setIsFavoritesOpen(true)}
-        onNavigateHome={() => handleNavigate('/')}
+        onNavigateHome={() => {
+          setCurrentView('home');
+          setSelectedCategoryId(null);
+          setSearchQuery('');
+          window.scrollTo(0, 0);
+        }}
         onCategoryClick={handleCategoryClick}
         onSearch={handleSearch}
       />
       <main>
-        <Routes>
-          <Route path="/" element={
-            <>
-              <HeroSection onViewCollection={() => handleNavigate('/produtos')} />
-              <TrustBar />
-              <FeaturedProducts onProductClick={handleProductClick} />
-              <AboutSection />
-              <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
-              <DeliveryBanner />
-              <Testimonials />
-            </>
-          } />
+        {currentView === 'home' && (
+          <>
+            <HeroSection onViewCollection={() => {
+              setSelectedCategoryId(null);
+              setSearchQuery('');
+              setCurrentView('collection');
+              window.scrollTo(0, 0);
+            }} />
+            <TrustBar />
 
-          <Route path="/produtos" element={
-            <CollectionRouteWrapper onProductClick={handleProductClick} />
-          } />
+            <FeaturedProducts onProductClick={setSelectedProduct} />
+            <AboutSection />
+            <CategoryGrid categories={categories} onCategoryClick={handleCategoryClick} />
+            <DeliveryBanner />
+            <Testimonials />
+          </>
+        )}
 
-          <Route path="/produto/:slug" element={<ProductPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/encomenda-concluida" element={<OrderSuccessPage />} />
+        {currentView === 'collection' && (
+          <AllProductsPage
+            initialCategoryId={selectedCategoryId}
+            initialSearchQuery={searchQuery}
+            onBack={() => {
+              setCurrentView('home');
+              setSelectedCategoryId(null);
+              setSearchQuery('');
+              window.scrollTo(0, 0);
+            }}
+            onProductClick={setSelectedProduct}
+          />
+        )}
 
-          <Route path="/termos" element={<TermsConditions onBack={() => handleNavigate('/')} />} />
-          <Route path="/privacidade" element={<PrivacyPolicy onBack={() => handleNavigate('/')} />} />
-          <Route path="/trabalhe-connosco" element={<WorkWithUs onBack={() => handleNavigate('/')} />} />
-          <Route path="/contato" element={<ContactFAQ onBack={() => handleNavigate('/')} />} />
-          <Route path="/reclamacoes" element={<ComplaintsBook onBack={() => handleNavigate('/')} />} />
-          <Route path="/pagamentos" element={<Payments onBack={() => handleNavigate('/')} />} />
-        </Routes>
+        {currentView === 'terms' && <TermsConditions onBack={() => handleNavigate('home')} />}
+        {currentView === 'privacy' && <PrivacyPolicy onBack={() => handleNavigate('home')} />}
+        {currentView === 'work' && <WorkWithUs onBack={() => handleNavigate('home')} />}
+        {currentView === 'contact' && <ContactFAQ onBack={() => handleNavigate('home')} />}
+        {currentView === 'complaints' && <ComplaintsBook onBack={() => handleNavigate('home')} />}
+        {currentView === 'payments' && <Payments onBack={() => handleNavigate('home')} />}
       </main>
-
       <Footer onNavigate={handleNavigate} />
 
       <CookieConsent />
@@ -707,17 +704,12 @@ function App() {
       {/* Favorites Sidebar */}
       <FavoritesSidebar isOpen={isFavoritesOpen} onClose={() => setIsFavoritesOpen(false)} />
 
-      {/* Keep the ProductDetailModal temporarily just in case before deleting it, or wait we don't call it anymore, we navigate. Let's comment or let it be but hidden since selectedProduct is null. */}
-      {/*
       <ProductDetailModal
         product={selectedProduct}
         isOpen={selectedProduct !== null}
         onClose={() => setSelectedProduct(null)}
       />
-      */}
-
       <FloatingWhatsApp />
-      <Toaster />
     </div>
   );
 }

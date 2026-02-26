@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -9,6 +10,7 @@ interface CartSidebarProps {
 
 export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     const { items, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
+    const navigate = useNavigate();
 
     return (
         <>
@@ -168,13 +170,25 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                 </span>
                             </div>
 
-                            {/* Checkout Button */}
+                            {/* Online Checkout Button */}
+                            <Button
+                                onClick={() => {
+                                    onClose();
+                                    navigate('/checkout');
+                                }}
+                                className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-base font-bold py-6 rounded-lg shadow-lg transition-transform hover:scale-[1.02]"
+                            >
+                                <ShoppingBag className="w-5 h-5 mr-2" />
+                                IR PARA O PAGAMENTO ONLINE
+                            </Button>
+
+                            {/* WhatsApp Checkout Button */}
                             <Button
                                 onClick={() => {
                                     const message = `Olá! Gostaria de finalizar a compra dos seguintes itens:\n\n${items.map(item => `- ${item.name} (${item.quantity}x) - ${item.price.toFixed(2)}€`).join('\n')}\n\n*Total: ${totalPrice.toFixed(2)}€*`;
                                     window.open(`https://wa.me/351939076117?text=${encodeURIComponent(message)}`, '_blank');
                                 }}
-                                className="btn-premium w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white text-base font-bold py-6 rounded-lg"
+                                className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white text-base font-bold py-6 rounded-lg"
                             >
                                 FINALIZAR COMPRA NO WHATSAPP
                             </Button>

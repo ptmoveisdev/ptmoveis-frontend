@@ -1,0 +1,351 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import { Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard, ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { ProductVariations } from '@/components/ProductVariations';
+import { useProductBySlug } from '@/hooks/useWordPress';
+import { convertWPProductToLocal } from '@/utils/productUtils';
+import type { WooCommerceVariation } from '@/types/wordpress';
+import { toast } from 'sonner';
+
+export default function ProductPage() {
+    const { slug } = useParams<{ slug: string }>();
+    const navigate = useNavigate();
+
+    const [selectedImage, setSelectedImage] = useState(0);
+    const [quantity, setQuantity] = useState(1);
+    const [isLiked, setIsLiked] = useState(false);
+    const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
+    const { addToCart } = useCart();
+
+    // Fetch from WordPress
+    const { data: wpProduct, loading, error } = useProductBySlug(slug || '');
+
+    // Reset state on slug change
+    useEffect(() => {
+        setSelectedVariation(null);
+        setSelectedImage(0);
+        setQuantity(1);
+        setIsLiked(false);
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+                <div className="animate-pulse space-y-4">
+                    <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-gray-500">Carregando produto...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !wpProduct) {
+        return (
+            <div className="min-h-screen bg-white pt-20 flex flex-col items-center justify-center p-4 text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Produto não encontrado</h2>
+                <p className="text-gray-500 mb-6">Não foi possível carregar as informações deste produto.</p>
+                <Button onClick={() => navigate('/produtos')} className="bg-[#1E3A5F] hover:bg-[#2E5A8F]">
+                    Ver todos os produtos
+                </Button>
+            </div>
+        );
+    }
+
+    const product = convertWPProductToLocal(wpProduct);
+
+    // Image resolving logic
+    const variationImage = selectedVariation?.image?.src;
+    const productImages = product.images || [product.image];
+    const images = variationImage ? [variationImage, ...productImages] : productImages;
+    const displayImage = images[0];
+
+    // Price resolving logic
+    const displayPrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
+    const displayOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
+
+    // Stock availability
+    const isInStock = selectedVariation
+        ? selectedVariation.stock_status === 'instock'
+        : product.inStock;
+
+    const handleAddToCart = () => {
+        if (product.hasVariations && !selectedVariation) return;
+
+        let selectedAttributesString = '';
+        if (selectedVariation) {
+            selectedAttributesString = selectedVariation.attributes
+                .map(attr => `${attr.name}: ${attr.option}`)
+                .join(', ');
+        }
+
+        const cartItemId = selectedVariation ? `${product.id}-${selectedVariation.id}` : product.id;
+
+        addToCart({
+            id: cartItemId,
+            productId: product.id,
+            name: product.name,
+            price: displayPrice,
+            oldPrice: displayOldPrice,
+            image: displayImage,
+            badge: product.badge,
+            badgeColor: product.badgeColor,
+            selectedAttributes: selectedAttributesString,
+            variationId: selectedVariation?.id,
+            quantity: quantity,
+        });
+
+        // Feedback in UI
+        if (selectedVariation) {
+            toast.success('Adicionado ao carrinho!', {
+                description: `${quantity}x ${product.name} - ${selectedAttributesString}`,
+            });
+        } else {
+            toast.success('Adicionado ao carrinho!', {
+                description: `${quantity}x ${product.name}`,
+            });
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 pt-20 pb-16">
+            <Helmet>
+                <title>{`${product.name} | PT Móveis`}</title>
+                <meta name="description" content={product.description.substring(0, 160)} />
+                <meta property="og:title" content={`${product.name} | PT Móveis`} />
+                <meta property="og:description" content={product.description.substring(0, 160)} />
+                <meta property="og:image" content={displayImage} />
+                <meta property="product:price:amount" content={displayPrice.toString()} />
+                <meta property="product:price:currency" content="EUR" />
+            </Helmet>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-gray-500 hover:text-[#D4AF37] transition-colors mb-6"
+                >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Voltar
+                </button>
+
+                <div className="bg-white rounded-2xl shadow-sm p-6 md:p-12">
+                    <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
+                        {/* Left Column - Images */}
+                        <div className="space-y-4">
+                            {/* Main Image */}
+                            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 shadow-md">
+                                <img
+                                    src={images[selectedImage]}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover animate-image-zoom"
+                                />
+
+                                {product.badge && (
+                                    <Badge
+                                        className={`absolute top-4 left-4 ${product.badgeColor} text-white text-sm font-bold px-4 py-2 shadow-lg`}
+                                    >
+                                        {product.badge}
+                                    </Badge>
+                                )}
+
+                                <button
+                                    onClick={() => setIsLiked(!isLiked)}
+                                    className="absolute top-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                                >
+                                    <Heart
+                                        className={`w-6 h-6 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                                            }`}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* Thumbnail Gallery */}
+                            {images.length > 1 && (
+                                <div className="grid grid-cols-4 gap-3">
+                                    {images.map((image, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setSelectedImage(index)}
+                                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
+                                                ? 'border-[#D4AF37] shadow-md'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <img
+                                                src={image}
+                                                alt={`${product.name} - ${index + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Column - Details */}
+                        <div className="space-y-8">
+                            <div>
+                                <p className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider mb-2">
+                                    {product.category}
+                                </p>
+                                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Montserrat' }}>
+                                    {product.name}
+                                </h1>
+                                {/* Rating */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                className={`w-5 h-5 ${i < Math.floor(product.rating)
+                                                    ? 'fill-[#D4AF37] text-[#D4AF37]'
+                                                    : 'text-gray-300'
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <span className="text-sm text-gray-600">
+                                        {product.rating} ({product.reviewCount} avaliações)
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Price */}
+                            <div className="flex items-end gap-4 py-6 border-y border-gray-100">
+                                <div className="flex flex-col gap-1">
+                                    {displayOldPrice && !isNaN(displayOldPrice) && (
+                                        <span className="text-lg text-gray-400 line-through font-medium">
+                                            {displayOldPrice.toFixed(2)} €
+                                        </span>
+                                    )}
+                                    <span className="text-4xl lg:text-5xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                                        {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
+                                    </span>
+                                </div>
+
+                                {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
+                                    <div className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg mb-2">
+                                        POUPE {(displayOldPrice - displayPrice).toFixed(2)} €
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
+                                <p className="text-gray-600 leading-relaxed text-base">
+                                    {product.description}
+                                </p>
+                            </div>
+
+                            {/* Features */}
+                            {product.features && product.features.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Características</h3>
+                                    <ul className="space-y-3">
+                                        {product.features.map((feature, index) => (
+                                            <li key={index} className="flex items-start gap-3 text-gray-600">
+                                                <Check className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+                                                <span className="text-base">{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Product Variations */}
+                            {product.hasVariations && wpProduct && wpProduct.attributes && (
+                                <ProductVariations
+                                    productId={parseInt(product.id)}
+                                    attributes={wpProduct.attributes}
+                                    onVariationChange={setSelectedVariation}
+                                />
+                            )}
+
+                            {/* Quantity Selector */}
+                            <div>
+                                <label className="text-sm font-semibold text-gray-900 mb-3 block">
+                                    Quantidade
+                                </label>
+                                <div className="flex items-center border border-gray-300 rounded-xl w-fit overflow-hidden bg-white">
+                                    <button
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="w-14 h-14 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                    >
+                                        <span className="text-2xl font-semibold text-gray-400 hover:text-gray-600">−</span>
+                                    </button>
+                                    <span className="w-16 h-14 flex items-center justify-center text-xl font-bold text-gray-900 border-x border-gray-200">
+                                        {quantity}
+                                    </span>
+                                    <button
+                                        onClick={() => setQuantity(quantity + 1)}
+                                        className="w-14 h-14 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                    >
+                                        <span className="text-2xl font-semibold text-gray-400 hover:text-gray-600">+</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Add to Cart Button */}
+                            <Button
+                                onClick={handleAddToCart}
+                                disabled={!isInStock || (product.hasVariations && !selectedVariation)}
+                                className="w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white text-lg font-bold py-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all"
+                            >
+                                <ShoppingCart className="w-6 h-6 mr-3" />
+                                {!isInStock
+                                    ? 'ESGOTADO'
+                                    : product.hasVariations && !selectedVariation
+                                        ? 'SELECIONE AS OPÇÕES'
+                                        : 'ADICIONAR AO CARRINHO'
+                                }
+                            </Button>
+
+                            {/* Trust Badges */}
+                            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
+                                <div className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center">
+                                        <Truck className="w-7 h-7 text-[#D4AF37]" />
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-gray-600 font-medium">Entrega em todo Portugal</p>
+                                </div>
+                                <div className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center">
+                                        <Shield className="w-7 h-7 text-[#D4AF37]" />
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-gray-600 font-medium">Garantia de 2 anos</p>
+                                </div>
+                                <div className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center">
+                                        <CreditCard className="w-7 h-7 text-[#D4AF37]" />
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-gray-600 font-medium">Pagamento Seguro</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Specifications Section */}
+                    {product.specifications && product.specifications.length > 0 && (
+                        <div className="mt-16 pt-16 border-t border-gray-100">
+                            <h3 className="text-2xl font-bold text-[#1E3A5F] mb-8" style={{ fontFamily: 'Montserrat' }}>
+                                Especificações Técnicas
+                            </h3>
+                            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {product.specifications.map((spec, index) => (
+                                    <div key={index} className="bg-gray-50 rounded-xl p-5 border border-gray-100 hover:border-[#D4AF37]/30 transition-colors">
+                                        <p className="text-sm text-gray-500 mb-2 uppercase tracking-wide font-medium">{spec.label}</p>
+                                        <p className="text-base font-bold text-gray-900">{spec.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
