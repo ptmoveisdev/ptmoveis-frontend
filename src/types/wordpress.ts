@@ -277,6 +277,64 @@ export interface WooCommerceProduct {
     _links: any;
 }
 
+// WooCommerce Order Payload Types
+export interface WooCommerceOrderPayload {
+    payment_method: string;
+    payment_method_title: string;
+    set_paid: boolean;
+    billing: {
+        first_name: string;
+        last_name: string;
+        address_1: string;
+        city: string;
+        postcode: string;
+        country: string;
+        email: string;
+        phone: string;
+    };
+    shipping: {
+        first_name: string;
+        last_name: string;
+        address_1: string;
+        city: string;
+        postcode: string;
+        country: string;
+    };
+    line_items: Array<{
+        product_id: number;
+        variation_id?: number;
+        quantity: number;
+    }>;
+    shipping_lines: Array<{
+        method_id: string;
+        method_title: string;
+        total: string;
+    }>;
+    meta_data?: Array<{
+        key: string;
+        value: any;
+    }>;
+}
+
+export interface WooCommerceOrderResponse {
+    id: number;
+    parent_id: number;
+    status: string;
+    currency: string;
+    version: string;
+    prices_include_tax: boolean;
+    date_created: string;
+    date_modified: string;
+    discount_total: string;
+    discount_tax: string;
+    shipping_total: string;
+    shipping_tax: string;
+    cart_tax: string;
+    total: string;
+    total_tax: string;
+    order_key: string;
+}
+
 // Parâmetros de consulta para produtos
 export interface ProductQueryParams {
     page?: number;

@@ -16,6 +16,8 @@ import type {
     CategoryQueryParams,
     WPPaginatedResponse,
     WPError,
+    WooCommerceOrderPayload,
+    WooCommerceOrderResponse,
 } from '../types/wordpress';
 
 // Configuração da API
@@ -91,19 +93,26 @@ async function fetchWordPress<T>(
  */
 async function fetchWooCommerce<T>(
     endpoint: string,
-    params: Record<string, any> = {}
+    params: Record<string, any> = {},
+    options: RequestInit = {}
 ): Promise<{ data: T; headers: Headers }> {
     try {
-        // Converte parâmetros para query string
-        const queryParams = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                queryParams.append(key, value.toString());
-            }
-        });
+        // Converte parâmetros para query string (apenas se for GET)
+        const isGet = !options.method || options.method.toUpperCase() === 'GET';
+        let url = `${WOOCOMMERCE_API_URL}${endpoint}`;
 
-        const queryString = queryParams.toString();
-        const url = `${WOOCOMMERCE_API_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
+        if (isGet && Object.keys(params).length > 0) {
+            const queryParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+            const queryString = queryParams.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+        }
 
         // Cria Basic Auth header
         const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
@@ -111,14 +120,17 @@ async function fetchWooCommerce<T>(
         console.log('🔍 Fazendo requisição WooCommerce:', {
             url: url.replace(WOOCOMMERCE_CONSUMER_KEY, 'KEY_HIDDEN').replace(WOOCOMMERCE_CONSUMER_SECRET, 'SECRET_HIDDEN'),
             endpoint,
-            params
+            method: options.method || 'GET',
+            ...(isGet ? { params } : { body: options.body ? JSON.parse(options.body as string) : undefined })
         });
 
         const response = await fetch(url, {
+            ...options,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Basic ${auth}`,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                ...options.headers,
             },
         });
 
@@ -408,6 +420,23 @@ export async function getProductCategoryById(id: number): Promise<WooCommerceCat
 export async function getProductCategoryBySlug(slug: string): Promise<WooCommerceCategory | null> {
     const { data } = await fetchWooCommerce<WooCommerceCategory[]>('/products/categories', { slug });
     return data.length > 0 ? data[0] : null;
+}
+
+// ============================================
+// ORDERS DO WOOCOMMERCE
+// ============================================
+
+/**
+ * Cria uma nova encomenda no WooCommerce
+ */
+export async function createWooCommerceOrder(
+    orderData: WooCommerceOrderPayload
+): Promise<WooCommerceOrderResponse> {
+    const { data } = await fetchWooCommerce<WooCommerceOrderResponse>('/orders', {}, {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+    });
+    return data;
 }
 
 // ============================================

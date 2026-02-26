@@ -4,9 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { ChevronLeft, CreditCard, ShoppingBag, Truck } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
+import { createWooCommerceOrder } from '@/services/wordpress';
+import type { WooCommerceOrderPayload } from '@/types/wordpress';
 
 // Schema de validação
 const checkoutSchema = z.object({
@@ -58,18 +61,66 @@ export default function CheckoutPage() {
 
         setIsSubmitting(true);
         try {
-            // Simular chamada de API para processar pedido
-            console.log('Dados do Pedido:', data);
-            console.log('Itens:', items);
-            console.log('TotalPago:', finalTotal);
+            // Mapeando dados do formulário para o formato do WooCommerce API
+            const orderPayload: WooCommerceOrderPayload = {
+                payment_method: data.paymentMethod,
+                payment_method_title: data.paymentMethod === 'mbway' ? 'MB WAY' :
+                    data.paymentMethod === 'multibanco' ? 'Multibanco' :
+                        data.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 'Transferência Bancária',
+                set_paid: false,
+                billing: {
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    address_1: data.address,
+                    city: data.city,
+                    postcode: data.postalCode,
+                    country: 'PT',
+                    email: data.email,
+                    phone: data.phone
+                },
+                shipping: {
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    address_1: data.address,
+                    city: data.city,
+                    postcode: data.postalCode,
+                    country: 'PT'
+                },
+                line_items: items.map(item => ({
+                    product_id: parseInt(item.productId),
+                    variation_id: item.variationId,
+                    quantity: item.quantity
+                })),
+                shipping_lines: [
+                    {
+                        method_id: 'flat_rate',
+                        method_title: 'Entrega Padrão',
+                        total: shippingCost.toString()
+                    }
+                ]
+            };
 
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Adicionar NIF como metadata se fornecido
+            if (data.nif) {
+                orderPayload.meta_data = [
+                    {
+                        key: '_billing_nif',
+                        value: data.nif
+                    }
+                ];
+            }
+
+            const response = await createWooCommerceOrder(orderPayload);
 
             clearCart();
-            navigate('/encomenda-concluida', { state: { orderId: Math.floor(Math.random() * 1000000).toString(), total: finalTotal } });
+            // Redireciona com o Order ID fornecido pelo WooCommerce
+            navigate('/encomenda-concluida', { state: { orderId: response.id.toString(), total: parseFloat(response.total) } });
+
         } catch (error) {
             console.error('Erro ao processar pedido', error);
-            alert('Ocorreu um erro ao processar seu pedido. Tente novamente.');
+            toast.error('Ocorreu um erro ao processar seu pedido. Verifique os dados e tente novamente.', {
+                description: error instanceof Error ? error.message : 'Erro desconhecido'
+            });
         } finally {
             setIsSubmitting(false);
         }
