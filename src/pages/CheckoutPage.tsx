@@ -8,8 +8,6 @@ import { toast } from 'sonner';
 import { ChevronLeft, ShoppingBag, Truck } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { createWooCommerceOrder } from '@/services/wordpress';
-import type { WooCommerceOrderPayload } from '@/types/wordpress';
 
 // Schema de validação
 const checkoutSchema = z.object({
@@ -23,7 +21,7 @@ const checkoutSchema = z.object({
     address: z.string().min(5, 'Endereço inválido'),
     city: z.string().min(2, 'Cidade inválida'),
     postalCode: z.string().regex(/^[0-9]{4}-[0-9]{3}$/, 'Formato inválido (XXXX-XXX)'),
-    paymentMethod: z.enum(['ppcp'])
+    paymentMethod: z.enum(['ppcp', 'whatsapp']).optional()
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -41,7 +39,7 @@ export default function CheckoutPage() {
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
         defaultValues: {
-            paymentMethod: 'ppcp'
+            paymentMethod: 'whatsapp'
         }
     });
 
@@ -86,64 +84,37 @@ export default function CheckoutPage() {
 
         setIsSubmitting(true);
         try {
-            // Mapeando dados do formulário para o formato do WooCommerce API
-            const orderPayload: WooCommerceOrderPayload = {
-                payment_method: 'ppcp',
-                payment_method_title: 'PayPal',
-                set_paid: false,
-                billing: {
-                    first_name: data.firstName,
-                    last_name: data.lastName,
-                    address_1: data.address,
-                    city: data.city,
-                    postcode: data.postalCode,
-                    country: 'PT',
-                    email: data.email,
-                    phone: data.phone
-                },
-                shipping: {
-                    first_name: data.firstName,
-                    last_name: data.lastName,
-                    address_1: data.address,
-                    city: data.city,
-                    postcode: data.postalCode,
-                    country: 'PT'
-                },
-                line_items: items.map(item => ({
-                    product_id: parseInt(item.productId),
-                    variation_id: item.variationId,
-                    quantity: item.quantity
-                })),
-                shipping_lines: [
-                    {
-                        method_id: 'flat_rate',
-                        method_title: 'Entrega Padrão',
-                        total: shippingCost.toString()
-                    }
-                ]
-            };
+            // WHATSAPP CHECKOUT LOGIC (TEMPORARY)
+            const phoneNumber = '351910000000'; // FIXME: Add actual phone number
 
-            // Adicionar NIF como metadata se fornecido
-            if (data.nif) {
-                orderPayload.meta_data = [
-                    {
-                        key: '_billing_nif',
-                        value: data.nif
-                    }
-                ];
-            }
+            let message = `*NOVA ENCOMENDA - PT Móveis*\n\n`;
+            message += `*DADOS DO CLIENTE*\n`;
+            message += `Nome: ${data.firstName} ${data.lastName}\n`;
+            message += `Email: ${data.email}\n`;
+            message += `Telefone: ${data.phone}\n`;
+            if (data.nif) message += `NIF: ${data.nif}\n`;
 
-            const response = await createWooCommerceOrder(orderPayload);
+            message += `\n*MORADA DE ENTREGA*\n`;
+            message += `${data.address}\n`;
+            message += `${data.postalCode} ${data.city}\n`;
+
+            message += `\n*ARTIGOS*\n`;
+            items.forEach(item => {
+                message += `- ${item.quantity}x ${item.name}`;
+                if (item.selectedAttributes) message += ` (${item.selectedAttributes})`;
+                message += ` - ${item.price.toFixed(2)} €\n`;
+            });
+
+            message += `\n*RESUMO*\n`;
+            message += `Subtotal: ${totalPrice.toFixed(2)} €\n`;
+            message += `Portes: ${shippingCost === 0 ? 'Grátis' : `${shippingCost.toFixed(2)} €`}\n`;
+            message += `*TOTAL: ${finalTotal.toFixed(2)} €*\n`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
             clearCart();
-
-            // Redireciona para o gateway do PayPal do WooCommerce
-            if (response.payment_url) {
-                window.location.href = response.payment_url;
-            } else {
-                // Caso não retorne URL, cai em fallback
-                navigate('/encomenda-concluida', { state: { orderId: response.id.toString(), total: parseFloat(response.total) } });
-            }
+            window.location.href = whatsappUrl;
 
         } catch (error) {
             console.error('Erro ao processar pedido', error);
@@ -318,9 +289,8 @@ export default function CheckoutPage() {
                                 </div>
                             </section>
 
+                            {/* Método de Pagamento - TEMPORARILY DISABLED 
                             <hr className="border-gray-100" />
-
-                            {/* Método de Pagamento */}
                             <section>
                                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">3</span>
@@ -328,24 +298,10 @@ export default function CheckoutPage() {
                                 </h2>
 
                                 <div className="grid grid-cols-1 gap-4">
-                                    <Controller
-                                        name="paymentMethod"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <>
-                                                <label className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 cursor-pointer transition-all border-[#D4AF37] bg-yellow-50/50`}>
-                                                    <input type="radio" value="ppcp" className="sr-only" checked={field.value === 'ppcp'} onChange={() => field.onChange('ppcp')} />
-                                                    <div className="flex items-center justify-center mb-2">
-                                                        <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-8" />
-                                                    </div>
-                                                    <span className="font-semibold text-gray-900">PayPal ou Cartão de Crédito</span>
-                                                    <p className="text-xs text-gray-500 text-center mt-2">Pagamento seguro processado através do standard PayPal Checkout.</p>
-                                                </label>
-                                            </>
-                                        )}
-                                    />
+                                ...
                                 </div>
                             </section>
+                            */}
                         </form>
                     </div>
 
@@ -399,7 +355,7 @@ export default function CheckoutPage() {
                                 type="submit"
                                 form="checkout-form"
                                 disabled={isSubmitting}
-                                className="w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
+                                className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
                             >
                                 {isSubmitting ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -407,7 +363,12 @@ export default function CheckoutPage() {
                                         A processar...
                                     </span>
                                 ) : (
-                                    'Confirmar Pedido'
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
+                                        </svg>
+                                        Finalizar no WhatsApp
+                                    </span>
                                 )}
                             </Button>
 
