@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard } from 'lucide-react';
+import { X, Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import InnerImageZoom from 'react-inner-image-zoom';
+import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
 import { ProductVariations } from '@/components/ProductVariations';
 import { useProductBySlug } from '@/hooks/useWordPress';
@@ -114,12 +116,23 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                             {/* Left Column - Images */}
                             <div className="space-y-4">
                                 {/* Main Image */}
-                                <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 shadow-lg">
-                                    <img
+                                <div className="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-lg group border border-gray-100 flex items-center justify-center">
+                                    <InnerImageZoom
                                         src={images[selectedImage]}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover animate-image-zoom"
+                                        zoomSrc={images[selectedImage]}
+                                        className="w-full h-full object-cover rounded-2xl"
+                                        zoomType="hover"
+                                        moveType="pan"
+                                        zoomPreload={true}
+                                        hideHint={true}
                                     />
+
+                                    {/* Overlay icon for zooming affordance */}
+                                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                        <div className="bg-white/50 backdrop-blur-sm p-4 rounded-full shadow-lg">
+                                            <ZoomIn className="w-8 h-8 text-[#1E3A5F]" />
+                                        </div>
+                                    </div>
 
                                     {product.badge && (
                                         <Badge
@@ -131,7 +144,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
 
                                     <button
                                         onClick={() => setIsLiked(!isLiked)}
-                                        className="absolute top-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                                        className="absolute top-4 right-4 z-20 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
                                     >
                                         <Heart
                                             className={`w-6 h-6 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'

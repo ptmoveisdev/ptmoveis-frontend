@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard, ChevronLeft } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard, ChevronLeft, Maximize, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import InnerImageZoom from 'react-inner-image-zoom';
+import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
 import { ProductVariations } from '@/components/ProductVariations';
 import { useProductBySlug } from '@/hooks/useWordPress';
@@ -18,6 +21,7 @@ export default function ProductPage() {
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isLiked, setIsLiked] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
     const { addToCart } = useCart();
 
@@ -30,6 +34,7 @@ export default function ProductPage() {
         setSelectedImage(0);
         setQuantity(1);
         setIsLiked(false);
+        setIsFullscreen(false);
     }, [slug]);
 
     if (loading) {
@@ -136,12 +141,23 @@ export default function ProductPage() {
                         {/* Left Column - Images */}
                         <div className="space-y-4">
                             {/* Main Image */}
-                            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 shadow-md">
-                                <img
+                            <div className="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-md group border border-gray-100 flex items-center justify-center">
+                                <InnerImageZoom
                                     src={images[selectedImage]}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover animate-image-zoom"
+                                    zoomSrc={images[selectedImage]}
+                                    className="w-full h-full object-cover rounded-2xl"
+                                    zoomType="hover"
+                                    moveType="pan"
+                                    zoomPreload={true}
+                                    hideHint={true}
                                 />
+
+                                {/* Overlay icon for zooming affordance */}
+                                <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-white/50 backdrop-blur-sm p-4 rounded-full shadow-lg">
+                                        <ZoomIn className="w-8 h-8 text-[#1E3A5F]" />
+                                    </div>
+                                </div>
 
                                 {product.badge && (
                                     <Badge
@@ -153,12 +169,20 @@ export default function ProductPage() {
 
                                 <button
                                     onClick={() => setIsLiked(!isLiked)}
-                                    className="absolute top-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                                    className="absolute top-4 right-4 z-10 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
                                 >
                                     <Heart
                                         className={`w-6 h-6 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'
                                             }`}
                                     />
+                                </button>
+
+                                <button
+                                    onClick={() => setIsFullscreen(true)}
+                                    className="absolute bottom-4 right-4 z-10 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Tela Cheia"
+                                >
+                                    <Maximize className="w-5 h-5 text-gray-700" />
                                 </button>
                             </div>
 
@@ -346,6 +370,26 @@ export default function ProductPage() {
                     )}
                 </div>
             </div>
+
+            {/* Fullscreen Dialog */}
+            <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+                <DialogContent className="max-w-5xl w-[95vw] p-2 bg-white border-none shadow-2xl rounded-2xl flex flex-col items-center justify-center focus-visible:outline-none">
+                    <DialogTitle className="sr-only">Visualização Completa</DialogTitle>
+                    <DialogDescription className="sr-only">Veja detalhes da imagem do produto com a lupa.</DialogDescription>
+
+                    <div className="relative w-full aspect-square md:aspect-[4/3] bg-gray-50 rounded-xl flex items-center justify-center mt-6">
+                        <InnerImageZoom
+                            src={images[selectedImage]}
+                            zoomSrc={images[selectedImage]}
+                            className="max-h-[80vh] w-auto mx-auto object-contain rounded-xl"
+                            zoomType="click"
+                            moveType="pan"
+                            zoomScale={1.5}
+                            hideHint={false}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
