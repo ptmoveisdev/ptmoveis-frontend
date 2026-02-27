@@ -56,6 +56,31 @@ export default function CheckoutPage() {
         return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}`;
     };
 
+    // Format phone automatically (+351 XXX XXX XXX or XXX XXX XXX)
+    const formatPhone = (value: string) => {
+        let cleaned = value.replace(/[^\d+]/g, '');
+        if (cleaned.indexOf('+') > 0) {
+            cleaned = cleaned.replace(/\+/g, '');
+        }
+
+        if (cleaned.startsWith('+351')) {
+            const rest = cleaned.slice(4);
+            if (rest.length === 0) return '+351 ';
+            if (rest.length <= 3) return `+351 ${rest}`;
+            if (rest.length <= 6) return `+351 ${rest.slice(0, 3)} ${rest.slice(3)}`;
+            return `+351 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6, 9)}`;
+        }
+
+        if (!cleaned.startsWith('+')) {
+            const rest = cleaned;
+            if (rest.length <= 3) return rest;
+            if (rest.length <= 6) return `${rest.slice(0, 3)} ${rest.slice(3)}`;
+            return `${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6, 9)}`;
+        }
+
+        return cleaned;
+    };
+
     const onSubmit = async (data: CheckoutFormData) => {
         if (items.length === 0) return;
 
@@ -207,10 +232,18 @@ export default function CheckoutPage() {
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Telefone *</label>
-                                        <input
-                                            {...register('phone')}
-                                            className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="+351 912 345 678"
+                                        <Controller
+                                            name="phone"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <input
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                                                    maxLength={16}
+                                                    className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                    placeholder="+351 912 345 678"
+                                                />
+                                            )}
                                         />
                                         {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                                     </div>
