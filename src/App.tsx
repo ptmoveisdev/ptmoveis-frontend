@@ -357,23 +357,26 @@ function AboutSection() {
         <div className="bg-[#1E3A5F] p-8 lg:p-16 flex flex-col justify-center">
           <div className="max-w-lg">
             <span className="text-[#D4AF37] text-sm font-semibold tracking-[0.2em] mb-4 block animate-fade-in">
-              SOMOS FABRICANTE
+
+
             </span>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6 animate-fade-in-up delay-100" style={{ fontFamily: 'Montserrat' }}>
-              Qualidade que se sente
+              Sobre a PT Móveis
             </h2>
             <p className="text-white/80 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">
-              Na PT Móveis, produzimos camas e sofás com estruturas resistentes, espumas de qualidade
-              e rigor no controlo de fabrico, garantindo conforto, durabilidade e excelente relação
-              qualidade-preço para o uso diário.
+              Na PT Móveis, acreditamos que cada espaço deve refletir conforto, personalidade e qualidade. Selecionamos peças que combinam design contemporâneo, funcionalidade e acabamentos de excelência, pensadas para elevar o ambiente da sua casa.
             </p>
-            <Button
+            <p className="text-white/80 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">
+              Valorizamos o detalhe, a durabilidade e um atendimento próximo e profissional, garantindo um processo simples, seguro e eficiente — desde a escolha até à entrega.
+            </p>
+            <p className="text-white/80 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">Entregamos em todo o país, com o compromisso de oferecer não apenas mobiliário, mas soluções que transformam espaços em verdadeiros lares.</p>
+            {/* <Button
               variant="outline"
               className="bg-transparent border-white text-white hover:bg-white hover:text-[#1E3A5F] px-6 py-5 animate-fade-in-up delay-300"
             >
               Sobre a PT Móveis
               <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
+            </Button> */}
           </div>
         </div>
 
