@@ -333,6 +333,7 @@ export interface WooCommerceOrderResponse {
     total: string;
     total_tax: string;
     order_key: string;
+    payment_url?: string;
 }
 
 // Parâmetros de consulta para produtos

@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { ChevronLeft, CreditCard, ShoppingBag, Truck } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, Truck } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder } from '@/services/wordpress';
@@ -23,7 +23,7 @@ const checkoutSchema = z.object({
     address: z.string().min(5, 'Endereço inválido'),
     city: z.string().min(2, 'Cidade inválida'),
     postalCode: z.string().regex(/^[0-9]{4}-[0-9]{3}$/, 'Formato inválido (XXXX-XXX)'),
-    paymentMethod: z.enum(['mbway', 'multibanco', 'credit_card', 'bank_transfer'])
+    paymentMethod: z.enum(['ppcp'])
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
         defaultValues: {
-            paymentMethod: 'mbway'
+            paymentMethod: 'ppcp'
         }
     });
 
@@ -88,10 +88,8 @@ export default function CheckoutPage() {
         try {
             // Mapeando dados do formulário para o formato do WooCommerce API
             const orderPayload: WooCommerceOrderPayload = {
-                payment_method: data.paymentMethod,
-                payment_method_title: data.paymentMethod === 'mbway' ? 'MB WAY' :
-                    data.paymentMethod === 'multibanco' ? 'Multibanco' :
-                        data.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 'Transferência Bancária',
+                payment_method: 'ppcp',
+                payment_method_title: 'PayPal',
                 set_paid: false,
                 billing: {
                     first_name: data.firstName,
@@ -138,8 +136,14 @@ export default function CheckoutPage() {
             const response = await createWooCommerceOrder(orderPayload);
 
             clearCart();
-            // Redireciona com o Order ID fornecido pelo WooCommerce
-            navigate('/encomenda-concluida', { state: { orderId: response.id.toString(), total: parseFloat(response.total) } });
+
+            // Redireciona para o gateway do PayPal do WooCommerce
+            if (response.payment_url) {
+                window.location.href = response.payment_url;
+            } else {
+                // Caso não retorne URL, cai em fallback
+                navigate('/encomenda-concluida', { state: { orderId: response.id.toString(), total: parseFloat(response.total) } });
+            }
 
         } catch (error) {
             console.error('Erro ao processar pedido', error);
@@ -323,36 +327,19 @@ export default function CheckoutPage() {
                                     Método de Pagamento
                                 </h2>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <Controller
                                         name="paymentMethod"
                                         control={control}
                                         render={({ field }) => (
                                             <>
-                                                <label className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === 'mbway' ? 'border-[#D4AF37] bg-yellow-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
-                                                    <input type="radio" value="mbway" className="sr-only" checked={field.value === 'mbway'} onChange={() => field.onChange('mbway')} />
-                                                    <div className="w-12 h-8 bg-[#00A1A7] text-white flex items-center justify-center font-bold italic rounded mb-2 text-xs leading-none">MB WAY</div>
-                                                    <span className="font-semibold text-gray-900">MB WAY</span>
-                                                </label>
-
-                                                <label className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === 'multibanco' ? 'border-[#D4AF37] bg-yellow-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
-                                                    <input type="radio" value="multibanco" className="sr-only" checked={field.value === 'multibanco'} onChange={() => field.onChange('multibanco')} />
-                                                    <div className="w-12 h-8 bg-[#0065B3] text-white flex items-center justify-center font-bold rounded mb-2 text-xs leading-none">MB</div>
-                                                    <span className="font-semibold text-gray-900">Multibanco</span>
-                                                </label>
-
-                                                <label className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === 'credit_card' ? 'border-[#D4AF37] bg-yellow-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
-                                                    <input type="radio" value="credit_card" className="sr-only" checked={field.value === 'credit_card'} onChange={() => field.onChange('credit_card')} />
-                                                    <CreditCard className="w-8 h-8 text-gray-600 mb-2" />
-                                                    <span className="font-semibold text-gray-900">Cartão de Crédito</span>
-                                                </label>
-
-                                                <label className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === 'bank_transfer' ? 'border-[#D4AF37] bg-yellow-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
-                                                    <input type="radio" value="bank_transfer" className="sr-only" checked={field.value === 'bank_transfer'} onChange={() => field.onChange('bank_transfer')} />
-                                                    <svg className="w-8 h-8 text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                                                    </svg>
-                                                    <span className="font-semibold text-gray-900">Transferência B.</span>
+                                                <label className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 cursor-pointer transition-all border-[#D4AF37] bg-yellow-50/50`}>
+                                                    <input type="radio" value="ppcp" className="sr-only" checked={field.value === 'ppcp'} onChange={() => field.onChange('ppcp')} />
+                                                    <div className="flex items-center justify-center mb-2">
+                                                        <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-8" />
+                                                    </div>
+                                                    <span className="font-semibold text-gray-900">PayPal ou Cartão de Crédito</span>
+                                                    <p className="text-xs text-gray-500 text-center mt-2">Pagamento seguro processado através do standard PayPal Checkout.</p>
                                                 </label>
                                             </>
                                         )}
