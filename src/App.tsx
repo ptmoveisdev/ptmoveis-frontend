@@ -418,7 +418,7 @@ function DeliveryBanner() {
               {['MONTAGENS', 'Pagamento Seguro', 'QUALIDADE DE FABRICANTE', 'ATENDIMENTO PERSONALIZADO'].map((item, index) => (
                 <li
                   key={item}
-                  className="flex items-center gap-3 text-white animate-fade-in-left"
+                  className="flex items-center gap-3 text-white animate-fade-in-left uppercase"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="w-2 h-2 bg-[#D4AF37] rounded-full" />
