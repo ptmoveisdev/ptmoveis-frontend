@@ -372,10 +372,10 @@ export default function CheckoutPage() {
                                 )}
                             </Button>
 
-                            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
+                            {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
                                 <Truck className="w-4 h-4" />
                                 <span>Portes grátis em compras superiores a 500€</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
