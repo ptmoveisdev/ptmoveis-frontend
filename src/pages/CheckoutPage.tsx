@@ -11,7 +11,15 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
 
-// Helper component for gateway icons
+// Dialog (Modal) Components for the Iframe Payment
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+
 const GatewayIcon = ({ id }: { id: string }) => {
     if (id.includes('paypal')) {
         return (
@@ -51,6 +59,8 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [gateways, setGateways] = useState<any[]>([]);
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
 
@@ -84,6 +94,19 @@ export default function CheckoutPage() {
             }
         };
         fetchGateways();
+
+        // Listener for Iframe messages (e.g. from WooCommerce custom scripts)
+        const handleIframeMessage = (event: MessageEvent) => {
+            if (event.data === 'payment_complete') {
+                setPaymentModalOpen(false);
+                toast.success('Pagamento concluído com sucesso!');
+                clearCart();
+                navigate('/');
+            }
+        };
+
+        window.addEventListener('message', handleIframeMessage);
+        return () => window.removeEventListener('message', handleIframeMessage);
     }, []);
 
     const {
@@ -101,6 +124,22 @@ export default function CheckoutPage() {
     });
 
     const selectedPaymentMethod = watch('paymentMethod');
+
+    // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
+    const getPayPalFundingSource = (gatewayId: string): string | null => {
+        switch (gatewayId) {
+            case 'ppcp-credit-card-gateway': return "card";
+            case 'ppcp-gateway':
+            case 'paypal':
+                return "paypal";
+            default:
+                // Pagamentos como Multibanco, MBWay, MyBank ou Google/Apple Pay
+                // usarão o fluxo padrão do WooCommerce (criação da encomenda e redirecionamento para o gateway de pagamento)
+                // Isto previne falhas no SDK Native Checkout do PayPal.
+                return null;
+        }
+    };
+    const currentFundingSource = getPayPalFundingSource(selectedPaymentMethod);
 
     // Calculate totals
     const shippingCost = totalPrice > 500 ? 0 : 39.90;
@@ -188,8 +227,9 @@ export default function CheckoutPage() {
             const formData = watch();
 
             const orderData = {
-                payment_method: 'paypal',
-                payment_method_title: 'PayPal',
+                payment_method: selectedPaymentMethod,
+                payment_method_title: selectedPaymentMethod === 'ppcp-multibanco' ? 'Multibanco' :
+                    selectedPaymentMethod === 'ppcp-credit-card-gateway' ? 'Cartões Bancários' : 'PayPal',
                 set_paid: true,
                 billing: {
                     first_name: formData.firstName,
@@ -252,8 +292,8 @@ export default function CheckoutPage() {
     const onSubmit = async (data: CheckoutFormData) => {
         if (items.length === 0) return;
 
-        if (data.paymentMethod === 'paypal') {
-            toast.info("Por favor, clique no botão do PayPal para concluir o pagamento.");
+        if (currentFundingSource) {
+            toast.info("Por favor, clique no botão do PayPal/Cartão para concluir o pagamento.");
             return;
         }
 
@@ -348,13 +388,14 @@ export default function CheckoutPage() {
             };
 
             const response = await createWooCommerceOrder(orderData);
-            clearCart();
 
-            // If WooCommerce returns a payment URL (standard gateway flow), navigate there
+            // For fallback gateways (Multibanco, etc.), load the WooCommerce payment URL in an Iframe Modal
             if (response.payment_url) {
-                window.location.href = response.payment_url;
+                setPaymentUrl(response.payment_url);
+                setPaymentModalOpen(true);
             } else {
-                // Otherwise fallback to success routing
+                // Otherwise fallback to success routing directly
+                clearCart();
                 toast.success('Encomenda criada com sucesso!');
                 navigate('/');
             }
@@ -392,310 +433,349 @@ export default function CheckoutPage() {
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center text-gray-500 hover:text-[#D4AF37] transition-colors mb-6"
-                >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Voltar
-                </button>
+            <PayPalScriptProvider options={{
+                clientId: paypalClientId,
+                currency: "EUR",
+                intent: "capture",
+                components: "buttons,funding-eligibility"
+            }}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center text-gray-500 hover:text-[#D4AF37] transition-colors mb-6"
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Voltar
+                    </button>
 
-                <h1 className="text-3xl font-bold text-[#1E3A5F] mb-8" style={{ fontFamily: 'Montserrat' }}>Finalizar Compra</h1>
+                    <h1 className="text-3xl font-bold text-[#1E3A5F] mb-8" style={{ fontFamily: 'Montserrat' }}>Finalizar Compra</h1>
 
-                <div className="grid lg:grid-cols-12 gap-8 items-start">
+                    <div className="grid lg:grid-cols-12 gap-8 items-start">
 
-                    {/* Formulário Principal */}
-                    <div className="lg:col-span-7 xl:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
-                        <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                        {/* Formulário Principal */}
+                        <div className="lg:col-span-7 xl:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
+                            <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
-                            {/* Informações Pessoais */}
-                            <section>
-                                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">1</span>
-                                    Dados Pessoais
-                                </h2>
+                                {/* Informações Pessoais */}
+                                <section>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">1</span>
+                                        Dados Pessoais
+                                    </h2>
 
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Nome *</label>
-                                        <input
-                                            {...register('firstName')}
-                                            className={`w-full p-3 rounded-xl border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="João"
-                                        />
-                                        {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Sobrenome *</label>
-                                        <input
-                                            {...register('lastName')}
-                                            className={`w-full p-3 rounded-xl border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="Silva"
-                                        />
-                                        {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2 sm:col-span-2">
-                                        <label className="text-sm font-medium text-gray-700">Email *</label>
-                                        <input
-                                            {...register('email')}
-                                            type="email"
-                                            className={`w-full p-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="joao.silva@exemplo.pt"
-                                        />
-                                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Telefone *</label>
-                                        <Controller
-                                            name="phone"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <input
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(formatPhone(e.target.value))}
-                                                    maxLength={16}
-                                                    className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                                    placeholder="+351 912 345 678"
-                                                />
-                                            )}
-                                        />
-                                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            NIF
-                                            <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">Opcional</span>
-                                        </label>
-                                        <input
-                                            {...register('nif')}
-                                            maxLength={9}
-                                            className={`w-full p-3 rounded-xl border ${errors.nif ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="123456789"
-                                        />
-                                        {errors.nif && <p className="text-red-500 text-xs mt-1">{errors.nif.message}</p>}
-                                    </div>
-                                </div>
-                            </section>
-
-                            <hr className="border-gray-100" />
-
-                            {/* Endereço de Entrega */}
-                            <section>
-                                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">2</span>
-                                    Morada de Entrega
-                                </h2>
-
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2 sm:col-span-2">
-                                        <label className="text-sm font-medium text-gray-700">Endereço Completo *</label>
-                                        <input
-                                            {...register('address')}
-                                            className={`w-full p-3 rounded-xl border ${errors.address ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="Rua da Alegria, nº 123, 4º Esq"
-                                        />
-                                        {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Localidade *</label>
-                                        <input
-                                            {...register('city')}
-                                            className={`w-full p-3 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                            placeholder="Porto"
-                                        />
-                                        {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Código Postal *</label>
-                                        <Controller
-                                            name="postalCode"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <input
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(formatPostalCode(e.target.value))}
-                                                    maxLength={8}
-                                                    className={`w-full p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                                    placeholder="4000-123"
-                                                />
-                                            )}
-                                        />
-                                        {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode.message}</p>}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Método de Pagamento */}
-                            <hr className="border-gray-100" />
-                            <section>
-                                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">3</span>
-                                    Método de Pagamento
-                                </h2>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {isLoadingGateways ? (
-                                        <div className="col-span-full py-8 flex justify-center text-gray-400">
-                                            <span className="w-8 h-8 border-4 border-gray-200 border-t-[#D4AF37] rounded-full animate-spin" />
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Nome *</label>
+                                            <input
+                                                {...register('firstName')}
+                                                className={`w-full p-3 rounded-xl border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="João"
+                                            />
+                                            {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
                                         </div>
-                                    ) : (
-                                        gateways.map((gateway) => (
-                                            <label key={gateway.id} className={`cursor-pointer rounded-xl border p-4 flex flex-col items-center justify-center gap-2 transition-all ${selectedPaymentMethod === gateway.id ? 'border-[#1E3A5F] bg-[#1E3A5F]/5 ring-2 ring-[#1E3A5F]/20' : 'border-gray-200 hover:border-gray-300'}`}>
-                                                <input type="radio" value={gateway.id} {...register('paymentMethod')} className="sr-only" />
-                                                <div className="text-[#1E3A5F]">
-                                                    {gateway.id === 'whatsapp' ? (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                                                            <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
-                                                        </svg>
-                                                    ) : (
-                                                        <GatewayIcon id={gateway.id} />
-                                                    )}
-                                                </div>
-                                                <span className="font-semibold text-gray-900 font-montserrat text-center">{gateway.title}</span>
-                                                <span className="text-xs text-gray-500 text-center">{gateway.method_title || 'Pagamento seguro'}</span>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Sobrenome *</label>
+                                            <input
+                                                {...register('lastName')}
+                                                className={`w-full p-3 rounded-xl border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="Silva"
+                                            />
+                                            {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <label className="text-sm font-medium text-gray-700">Email *</label>
+                                            <input
+                                                {...register('email')}
+                                                type="email"
+                                                className={`w-full p-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="joao.silva@exemplo.pt"
+                                            />
+                                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Telefone *</label>
+                                            <Controller
+                                                name="phone"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <input
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                                                        maxLength={16}
+                                                        className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                        placeholder="+351 912 345 678"
+                                                    />
+                                                )}
+                                            />
+                                            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                NIF
+                                                <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">Opcional</span>
                                             </label>
-                                        ))
-                                    )}
-                                </div>
-                            </section>
-                        </form>
-                    </div>
-
-                    {/* Resumo do Pedido */}
-                    <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
-                        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6">
-                            <h2 className="text-xl font-bold text-gray-900 font-montserrat">Resumo do Pedido</h2>
-
-                            <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                                {items.map((item) => (
-                                    <div key={item.id} className="flex gap-4 items-center">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
-                                            {item.selectedAttributes && (
-                                                <p className="text-xs text-gray-500 truncate">{item.selectedAttributes}</p>
-                                            )}
-                                            <p className="text-sm text-gray-600 mt-0.5">{item.quantity} × {item.price.toFixed(2)} €</p>
+                                            <input
+                                                {...register('nif')}
+                                                maxLength={9}
+                                                className={`w-full p-3 rounded-xl border ${errors.nif ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="123456789"
+                                            />
+                                            {errors.nif && <p className="text-red-500 text-xs mt-1">{errors.nif.message}</p>}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                </section>
 
-                            <hr className="border-gray-100" />
+                                <hr className="border-gray-100" />
 
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span className="font-medium text-gray-900">{totalPrice.toFixed(2)} €</span>
+                                {/* Endereço de Entrega */}
+                                <section>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">2</span>
+                                        Morada de Entrega
+                                    </h2>
+
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <label className="text-sm font-medium text-gray-700">Endereço Completo *</label>
+                                            <input
+                                                {...register('address')}
+                                                className={`w-full p-3 rounded-xl border ${errors.address ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="Rua da Alegria, nº 123, 4º Esq"
+                                            />
+                                            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Localidade *</label>
+                                            <input
+                                                {...register('city')}
+                                                className={`w-full p-3 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                placeholder="Porto"
+                                            />
+                                            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Código Postal *</label>
+                                            <Controller
+                                                name="postalCode"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <input
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(formatPostalCode(e.target.value))}
+                                                        maxLength={8}
+                                                        className={`w-full p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                        placeholder="4000-123"
+                                                    />
+                                                )}
+                                            />
+                                            {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode.message}</p>}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Método de Pagamento */}
+                                <hr className="border-gray-100" />
+                                <section>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white flex items-center justify-center text-sm">3</span>
+                                        Método de Pagamento
+                                    </h2>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {isLoadingGateways ? (
+                                            <div className="col-span-full py-8 flex justify-center text-gray-400">
+                                                <span className="w-8 h-8 border-4 border-gray-200 border-t-[#D4AF37] rounded-full animate-spin" />
+                                            </div>
+                                        ) : (
+                                            gateways.map((gateway) => (
+                                                <label key={gateway.id} className={`cursor-pointer rounded-xl border p-4 flex flex-col items-center justify-center gap-2 transition-all ${selectedPaymentMethod === gateway.id ? 'border-[#1E3A5F] bg-[#1E3A5F]/5 ring-2 ring-[#1E3A5F]/20' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                    <input type="radio" value={gateway.id} {...register('paymentMethod')} className="sr-only" />
+                                                    <div className="text-[#1E3A5F]">
+                                                        {gateway.id === 'whatsapp' ? (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                                                <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
+                                                            </svg>
+                                                        ) : (
+                                                            <GatewayIcon id={gateway.id} />
+                                                        )}
+                                                    </div>
+                                                    <span className="font-semibold text-gray-900 font-montserrat text-center">{gateway.title}</span>
+                                                    <span className="text-xs text-gray-500 text-center">{gateway.method_title || 'Pagamento seguro'}</span>
+                                                </label>
+                                            ))
+                                        )}
+                                    </div>
+                                </section>
+                            </form>
+                        </div>
+
+                        {/* Resumo do Pedido */}
+                        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
+                            <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6">
+                                <h2 className="text-xl font-bold text-gray-900 font-montserrat">Resumo do Pedido</h2>
+
+                                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                                    {items.map((item) => (
+                                        <div key={item.id} className="flex gap-4 items-center">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
+                                                {item.selectedAttributes && (
+                                                    <p className="text-xs text-gray-500 truncate">{item.selectedAttributes}</p>
+                                                )}
+                                                <p className="text-sm text-gray-600 mt-0.5">{item.quantity} × {item.price.toFixed(2)} €</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Portes de Envio</span>
-                                    <span className="font-medium text-gray-900">
-                                        {shippingCost === 0 ? <span className="text-green-600 font-bold"> </span> : `${shippingCost.toFixed(2)} €`}
+
+                                <hr className="border-gray-100" />
+
+                                <div className="space-y-3 text-sm">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal</span>
+                                        <span className="font-medium text-gray-900">{totalPrice.toFixed(2)} €</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Portes de Envio</span>
+                                        <span className="font-medium text-gray-900">
+                                            {shippingCost === 0 ? <span className="text-green-600 font-bold"> </span> : `${shippingCost.toFixed(2)} €`}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <hr className="border-gray-100" />
+
+                                <div className="flex justify-between items-end">
+                                    <span className="text-gray-900 font-bold text-lg">Total</span>
+                                    <span className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                                        {finalTotal.toFixed(2)} €
                                     </span>
                                 </div>
-                            </div>
 
-                            <hr className="border-gray-100" />
-
-                            <div className="flex justify-between items-end">
-                                <span className="text-gray-900 font-bold text-lg">Total</span>
-                                <span className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
-                                    {finalTotal.toFixed(2)} €
-                                </span>
-                            </div>
-
-                            {selectedPaymentMethod === 'whatsapp' ? (
-                                <Button
-                                    type="submit"
-                                    form="checkout-form"
-                                    disabled={isSubmitting}
-                                    className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
-                                >
-                                    {isSubmitting ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            A processar...
-                                        </span>
-                                    ) : (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
-                                            </svg>
-                                            Finalizar no WhatsApp
-                                        </span>
-                                    )}
-                                </Button>
-                            ) : selectedPaymentMethod === 'paypal' || selectedPaymentMethod === 'ppcp-gateway' ? (
-                                <div className="mt-4">
-                                    {isSubmitting && (
-                                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-xl">
-                                            <span className="w-8 h-8 border-4 border-[#00457C]/30 border-t-[#00457C] rounded-full animate-spin" />
-                                        </div>
-                                    )}
-                                    {!isValid ? (
-                                        <Button
-                                            type="button"
-                                            onClick={() => {
-                                                // Try to submit just to show validation errors
-                                                handleSubmit(onSubmit)();
-                                            }}
-                                            className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
-                                        >
+                                {selectedPaymentMethod === 'whatsapp' ? (
+                                    <Button
+                                        type="submit"
+                                        form="checkout-form"
+                                        disabled={isSubmitting}
+                                        className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
+                                    >
+                                        {isSubmitting ? (
                                             <span className="flex items-center justify-center gap-2">
-                                                Preencha os dados para pagar com PayPal
+                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                A processar...
                                             </span>
-                                        </Button>
-                                    ) : (
-                                        <PayPalScriptProvider options={{ clientId: paypalClientId, currency: "EUR", intent: "capture", "disable-funding": "card" }}>
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
+                                                </svg>
+                                                Finalizar no WhatsApp
+                                            </span>
+                                        )}
+                                    </Button>
+                                ) : currentFundingSource ? (
+                                    <div className="mt-4">
+                                        {isSubmitting && (
+                                            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-xl">
+                                                <span className="w-8 h-8 border-4 border-[#00457C]/30 border-t-[#00457C] rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                        {!isValid ? (
+                                            <Button
+                                                type="button"
+                                                onClick={() => {
+                                                    // Try to submit just to show validation errors
+                                                    handleSubmit(onSubmit)();
+                                                }}
+                                                className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
+                                            >
+                                                <span className="flex items-center justify-center gap-2">
+                                                    Preencha os dados para pagar com {currentFundingSource === 'multibanco' ? 'Multibanco' : currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
+                                                </span>
+                                            </Button>
+                                        ) : (
                                             <PayPalButtons
-                                                fundingSource="paypal"
-                                                style={{ layout: "vertical", shape: "rect", label: "pay", color: "gold" }}
+                                                key={currentFundingSource} // Force remount on method change to prevent paypal state issues
+                                                fundingSource={currentFundingSource as any}
+                                                style={{ layout: "vertical", shape: "rect", label: "pay" }}
                                                 createOrder={createOrder}
                                                 onApprove={onApprove}
                                                 disabled={isSubmitting || !isValid}
+                                                forceReRender={[currentFundingSource, finalTotal, isValid]}
                                             />
-                                        </PayPalScriptProvider>
-                                    )}
-                                </div>
-                            ) : (
-                                <Button
-                                    type="submit"
-                                    form="checkout-form"
-                                    disabled={isSubmitting || !selectedPaymentMethod}
-                                    className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-6 rounded-xl text-lg mt-2 relative transition-all"
-                                >
-                                    {isSubmitting ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            A processar...
-                                        </span>
-                                    ) : (
-                                        <span className="flex items-center justify-center gap-2">
-                                            Finalizar Encomenda
-                                        </span>
-                                    )}
-                                </Button>
-                            )}
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        form="checkout-form"
+                                        disabled={isSubmitting || !selectedPaymentMethod}
+                                        className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-6 rounded-xl text-lg mt-2 relative transition-all"
+                                    >
+                                        {isSubmitting ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                A processar...
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                Finalizar Encomenda
+                                            </span>
+                                        )}
+                                    </Button>
+                                )}
 
-                            {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
+                                {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
                                 <Truck className="w-4 h-4" />
                                 <span>Portes   em compras superiores a 500€</span>
                             </div> */}
+                            </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
-            </div>
+            </PayPalScriptProvider>
+
+            {/* Modal de Pagamento WooCommerce */}
+            <Dialog open={paymentModalOpen} onOpenChange={(open) => {
+                if (!open) {
+                    // Se o utilizador fechar o modal, alertar que a encomenda ficou pendente
+                    toast.warning("Atenção: fechou a janela de pagamento. A sua encomenda ficou pendente.");
+                    clearCart();
+                    navigate('/');
+                }
+                setPaymentModalOpen(open);
+            }}>
+                <DialogContent className="sm:max-w-4xl w-[95vw] h-[90vh] p-0 flex flex-col overflow-hidden bg-gray-50">
+                    <DialogHeader className="p-4 bg-white border-b border-gray-100 flex-shrink-0">
+                        <DialogTitle className="text-[#1E3A5F] font-montserrat flex items-center justify-between">
+                            <span>Pagamento Seguro</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-gray-500 text-sm">
+                            Siga as instruções para concluir o pagamento na segurança da PT Móveis.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 w-full bg-white relative">
+                        {paymentUrl && (
+                            <iframe
+                                src={paymentUrl}
+                                className="w-full h-full border-0 absolute inset-0"
+                                allow="payment *"
+                                title="Checkout Secure Payment"
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
