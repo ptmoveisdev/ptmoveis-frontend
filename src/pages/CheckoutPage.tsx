@@ -71,6 +71,9 @@ export default function CheckoutPage() {
                 // Fetch dynamic gateways
                 let gw = await getPaymentGateways();
 
+                // Filter out the standard card button if advanced card processing is also enabled to prevent duplicates
+                gw = gw.filter((g: any) => g.id !== 'ppcp-card-button-gateway');
+
                 // Keep WhatsApp as fallback/manual option if desired, or rely entirely on woo woo.
                 // We'll append WhatsApp manually if needed, or stick to Woo's strictly.
                 // The user's store seems to have "ppcp-gateway" (PayPal) and others.
