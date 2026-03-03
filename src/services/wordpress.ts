@@ -440,6 +440,18 @@ export async function createWooCommerceOrder(
 }
 
 // ============================================
+// PAYMENT GATEWAYS DO WOOCOMMERCE
+// ============================================
+
+/**
+ * Busca os métodos de pagamento ativos no WooCommerce
+ */
+export async function getPaymentGateways(): Promise<any[]> {
+    const { data } = await fetchWooCommerce<any[]>('/payment_gateways', {});
+    return data.filter((gateway) => gateway.enabled);
+}
+
+// ============================================
 // UTILITÁRIOS
 // ============================================
 
