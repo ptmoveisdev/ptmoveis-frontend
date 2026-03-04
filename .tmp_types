@@ -336,28 +336,6 @@ export interface WooCommerceOrderResponse {
     payment_url?: string;
 }
 
-export interface WooCommerceShippingZone {
-    id: number;
-    name: string;
-    order: number;
-}
-
-export interface WooCommerceShippingLocation {
-    code: string;
-    type: string;
-}
-
-export interface WooCommerceShippingMethod {
-    id: number;
-    title: string;
-    enabled: boolean;
-    settings: {
-        cost: {
-            value: string;
-        };
-    };
-}
-
 // Parâmetros de consulta para produtos
 export interface ProductQueryParams {
     page?: number;

@@ -18,6 +18,9 @@ import type {
     WPError,
     WooCommerceOrderPayload,
     WooCommerceOrderResponse,
+    WooCommerceShippingZone,
+    WooCommerceShippingLocation,
+    WooCommerceShippingMethod,
 } from '../types/wordpress';
 
 // Configuração da API
@@ -449,6 +452,34 @@ export async function createWooCommerceOrder(
 export async function getPaymentGateways(): Promise<any[]> {
     const { data } = await fetchWooCommerce<any[]>('/payment_gateways', {});
     return data.filter((gateway) => gateway.enabled);
+}
+
+// ============================================
+// SHIPPING ZONES DO WOOCOMMERCE
+// ============================================
+
+/**
+ * Busca zonas de entrega
+ */
+export async function getShippingZones(): Promise<WooCommerceShippingZone[]> {
+    const { data } = await fetchWooCommerce<WooCommerceShippingZone[]>('/shipping/zones', {});
+    return data;
+}
+
+/**
+ * Busca locais de uma zona
+ */
+export async function getShippingZoneLocations(zoneId: number): Promise<WooCommerceShippingLocation[]> {
+    const { data } = await fetchWooCommerce<WooCommerceShippingLocation[]>(`/shipping/zones/${zoneId}/locations`, {});
+    return data;
+}
+
+/**
+ * Busca métodos de entrega de uma zona
+ */
+export async function getShippingZoneMethods(zoneId: number): Promise<WooCommerceShippingMethod[]> {
+    const { data } = await fetchWooCommerce<WooCommerceShippingMethod[]>(`/shipping/zones/${zoneId}/methods`, {});
+    return data;
 }
 
 // ============================================

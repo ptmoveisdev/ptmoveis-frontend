@@ -5,11 +5,12 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { ChevronLeft, ShoppingBag, CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, CreditCard, Smartphone, Banknote, Search, Loader2 } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
+import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
 // Dialog (Modal) Components for the Iframe Payment
 import {
@@ -61,6 +62,8 @@ export default function CheckoutPage() {
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+    const [isLoadingCep, setIsLoadingCep] = useState(false);
+    const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
 
@@ -98,6 +101,12 @@ export default function CheckoutPage() {
         };
         fetchGateways();
 
+        const fetchZones = async () => {
+            const zones = await fetchAllShippingZones();
+            setShippingZones(zones);
+        };
+        fetchZones();
+
         // Listener for Iframe messages (e.g. from WooCommerce custom scripts)
         const handleIframeMessage = (event: MessageEvent) => {
             if (event.data === 'payment_complete') {
@@ -117,6 +126,7 @@ export default function CheckoutPage() {
         handleSubmit,
         control,
         watch,
+        setValue,
         formState: { errors, isValid }
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
@@ -127,6 +137,7 @@ export default function CheckoutPage() {
     });
 
     const selectedPaymentMethod = watch('paymentMethod');
+    const currentPostalCode = watch('postalCode');
 
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
@@ -144,9 +155,12 @@ export default function CheckoutPage() {
     };
     const currentFundingSource = getPayPalFundingSource(selectedPaymentMethod);
 
-    // Calculate totals
-    const shippingCost = totalPrice > 500 ? 0 : 39.90;
-    const finalTotal = totalPrice + shippingCost;
+    // Calculate dynamic shipping based on postal code
+    const matchedShippingMethod = matchShippingZoneWithMethod(currentPostalCode, shippingZones);
+    const dynamicShippingCost = matchedShippingMethod && matchedShippingMethod.settings.cost ? parseFloat(matchedShippingMethod.settings.cost.value) : null;
+    const isShippingCalculated = dynamicShippingCost !== null;
+
+    const finalTotal = totalPrice + (dynamicShippingCost || 0);
 
     // Format postal code automatically (e.g., 4000123 -> 4000-123)
     const formatPostalCode = (value: string) => {
@@ -178,6 +192,67 @@ export default function CheckoutPage() {
         }
 
         return cleaned;
+    };
+
+    const handleCepSearch = async () => {
+        const cep = watch('postalCode');
+        if (!cep || cep.length < 8) {
+            toast.error('Por favor, insira um código postal válido (XXXX-XXX).');
+            return;
+        }
+
+        setIsLoadingCep(true);
+        try {
+            const response = await fetch(`https://json.geoapi.pt/cp/${cep}`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar o código postal.');
+            }
+            const data = await response.json();
+
+            // Check for rate limit message or errors
+            if (data.msg?.includes('limit') || data.Erro || data.Error || (typeof data === 'string' && data.includes('Error')) || (Array.isArray(data) && data.length === 0)) {
+                throw new Error('Limite de uso da API atingido ou CEP não encontrado.');
+            }
+
+            const street = data.arteria || (data.ruas && data.ruas.length > 0 ? data.ruas[0] : '') || data['Designação Postal'] || '';
+            const city = data.Localidade || data.municipio || data.Concelho || '';
+
+            if (!street && !city) {
+                throw new Error('Detalhes do código postal não encontrados na base principal.');
+            }
+
+            if (street) {
+                setValue('address', street, { shouldValidate: true, shouldDirty: true });
+            }
+            if (city) {
+                setValue('city', city, { shouldValidate: true, shouldDirty: true });
+            }
+
+            toast.success('Morada preenchida com sucesso!');
+        } catch (error) {
+            console.warn('GeoAPI falhou. Tentando fallback para Zippopotam.us...', error);
+
+            // Fallback to Zippopotam.us
+            try {
+                const fallbackResponse = await fetch(`https://api.zippopotam.us/PT/${cep}`);
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    if (fallbackData.places && fallbackData.places.length > 0) {
+                        const city = fallbackData.places[0]['place name'];
+                        setValue('city', city, { shouldValidate: true, shouldDirty: true });
+                        // We only have city, not street
+                        toast.success('Localidade preenchida. Por favor, digite o restante da morada manualmente.', { duration: 5000 });
+                        return; // Exit successfully from fallback
+                    }
+                }
+            } catch (fallbackError) {
+                console.error('Fallback Zippopotamus falhou:', fallbackError);
+            }
+
+            toast.error('Não foi possível encontrar a morada automaticamente. Por favor, preencha manualmente os campos.');
+        } finally {
+            setIsLoadingCep(false);
+        }
     };
 
     const createOrder = (_data: any, actions: any) => {
@@ -258,9 +333,9 @@ export default function CheckoutPage() {
                 })),
                 shipping_lines: [
                     {
-                        method_id: 'flat_rate',
-                        method_title: 'Envio',
-                        total: shippingCost.toFixed(2),
+                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                        total: (dynamicShippingCost || 0).toFixed(2),
                     }
                 ],
                 meta_data: [
@@ -326,7 +401,7 @@ export default function CheckoutPage() {
 
                 message += `\n*RESUMO*\n`;
                 message += `Subtotal: ${totalPrice.toFixed(2)} €\n`;
-                message += `Portes: ${shippingCost === 0 ? ' ' : `${shippingCost.toFixed(2)} €`}\n`;
+                message += `Portes: ${dynamicShippingCost === null ? 'A calcular' : `${dynamicShippingCost.toFixed(2)} €`}\n`;
                 message += `*TOTAL: ${finalTotal.toFixed(2)} €*\n`;
 
                 const encodedMessage = encodeURIComponent(message);
@@ -377,9 +452,9 @@ export default function CheckoutPage() {
                 })),
                 shipping_lines: [
                     {
-                        method_id: 'flat_rate',
-                        method_title: 'Envio',
-                        total: shippingCost.toFixed(2),
+                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                        total: (dynamicShippingCost || 0).toFixed(2),
                     }
                 ],
                 meta_data: [
@@ -543,6 +618,42 @@ export default function CheckoutPage() {
 
                                     <div className="grid sm:grid-cols-2 gap-4">
                                         <div className="space-y-2 sm:col-span-2">
+                                            <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl mb-2 flex items-start gap-3">
+                                                <Search className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                                <div>
+                                                    <p className="text-sm font-medium text-blue-900">Verifique a taxa de entrega</p>
+                                                    <p className="text-sm text-blue-700 mt-1">Busque pelo seu código postal primeiro para preencher sua morada e calcular a taxa de envio da sua região.</p>
+                                                </div>
+                                            </div>
+                                            <label className="text-sm font-medium text-gray-700">Código Postal *</label>
+                                            <Controller
+                                                name="postalCode"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(formatPostalCode(e.target.value))}
+                                                            maxLength={8}
+                                                            className={`w-full p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                            placeholder="4000-123"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            onClick={handleCepSearch}
+                                                            disabled={isLoadingCep}
+                                                            className="bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white whitespace-nowrap px-6 rounded-xl shrink-0 h-[50px]"
+                                                        >
+                                                            {isLoadingCep ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+                                                            Buscar morada
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            />
+                                            {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2 sm:col-span-2">
                                             <label className="text-sm font-medium text-gray-700">Endereço Completo *</label>
                                             <input
                                                 {...register('address')}
@@ -552,7 +663,7 @@ export default function CheckoutPage() {
                                             {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
                                         </div>
 
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 sm:col-span-2">
                                             <label className="text-sm font-medium text-gray-700">Localidade *</label>
                                             <input
                                                 {...register('city')}
@@ -560,24 +671,6 @@ export default function CheckoutPage() {
                                                 placeholder="Porto"
                                             />
                                             {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700">Código Postal *</label>
-                                            <Controller
-                                                name="postalCode"
-                                                control={control}
-                                                render={({ field }) => (
-                                                    <input
-                                                        {...field}
-                                                        onChange={(e) => field.onChange(formatPostalCode(e.target.value))}
-                                                        maxLength={8}
-                                                        className={`w-full p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                                        placeholder="4000-123"
-                                                    />
-                                                )}
-                                            />
-                                            {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode.message}</p>}
                                         </div>
                                     </div>
                                 </section>
@@ -650,7 +743,11 @@ export default function CheckoutPage() {
                                     <div className="flex justify-between text-gray-600">
                                         <span>Portes de Envio</span>
                                         <span className="font-medium text-gray-900">
-                                            {shippingCost === 0 ? <span className="text-green-600 font-bold"> </span> : `${shippingCost.toFixed(2)} €`}
+                                            {!isShippingCalculated ? (
+                                                <span className="text-red-500 text-xs font-semibold">Informe o código postal</span>
+                                            ) : (
+                                                `${(dynamicShippingCost || 0).toFixed(2)} €`
+                                            )}
                                         </span>
                                     </div>
                                 </div>
@@ -668,8 +765,8 @@ export default function CheckoutPage() {
                                     <Button
                                         type="submit"
                                         form="checkout-form"
-                                        disabled={isSubmitting}
-                                        className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
+                                        disabled={isSubmitting || !isShippingCalculated}
+                                        className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? (
                                             <span className="flex items-center justify-center gap-2">
@@ -712,8 +809,8 @@ export default function CheckoutPage() {
                                                 style={{ layout: "vertical", shape: "rect", label: "pay" }}
                                                 createOrder={createOrder}
                                                 onApprove={onApprove}
-                                                disabled={isSubmitting || !isValid}
-                                                forceReRender={[currentFundingSource, finalTotal, isValid]}
+                                                disabled={isSubmitting || !isValid || !isShippingCalculated}
+                                                forceReRender={[currentFundingSource, finalTotal, isValid, dynamicShippingCost]}
                                             />
                                         )}
                                     </div>
@@ -721,13 +818,17 @@ export default function CheckoutPage() {
                                     <Button
                                         type="submit"
                                         form="checkout-form"
-                                        disabled={isSubmitting || !selectedPaymentMethod}
-                                        className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-6 rounded-xl text-lg mt-2 relative transition-all"
+                                        disabled={isSubmitting || !selectedPaymentMethod || !isShippingCalculated}
+                                        className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-6 rounded-xl text-lg mt-2 relative transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                 A processar...
+                                            </span>
+                                        ) : !isShippingCalculated ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                Calcule a taxa de envio
                                             </span>
                                         ) : (
                                             <span className="flex items-center justify-center gap-2">
