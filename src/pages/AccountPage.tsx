@@ -185,7 +185,7 @@ export default function AccountPage() {
                                             {/* Items Preview */}
                                             <div className="p-4 bg-white">
                                                 <div className="flex flex-wrap gap-4">
-                                                    {order.line_items?.map((item: any, index: number) => (
+                                                    {order.line_items?.map((item: any) => (
                                                         <div key={item.id} className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
                                                             <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
                                                                 {item.image?.src ? (
