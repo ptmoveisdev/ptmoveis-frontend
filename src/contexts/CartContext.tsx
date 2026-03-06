@@ -13,6 +13,7 @@ export interface CartItem {
     badgeColor?: string;
     selectedAttributes?: string; // Ex: "Cor: Azul, Tecido: T1"
     variationId?: number;
+    customOptions?: { name: string; value: string; price: number }[];
 }
 
 interface CartContextType {
@@ -50,7 +51,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const existingItemIndex = prevItems.findIndex(item =>
                 item.productId === product.productId &&
                 item.variationId === product.variationId &&
-                item.selectedAttributes === product.selectedAttributes // Comparação extra por segurança
+                item.selectedAttributes === product.selectedAttributes &&
+                JSON.stringify(item.customOptions || []) === JSON.stringify(product.customOptions || [])
             );
 
             const qtyToAdd = product.quantity || 1;

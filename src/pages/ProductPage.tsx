@@ -9,6 +9,7 @@ import InnerImageZoom from 'react-inner-image-zoom';
 import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
 import { ProductVariations } from '@/components/ProductVariations';
+import { ProductCustomOptions } from '@/components/ProductCustomOptions';
 import { useProductBySlug } from '@/hooks/useWordPress';
 import { convertWPProductToLocal } from '@/utils/productUtils';
 import type { WooCommerceVariation } from '@/types/wordpress';
@@ -23,6 +24,8 @@ export default function ProductPage() {
     const [isLiked, setIsLiked] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
+    const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number }[]>([]);
+    const [customOptionsExtraPrice, setCustomOptionsExtraPrice] = useState(0);
     const { addToCart } = useCart();
 
     // Fetch from WordPress
@@ -31,6 +34,8 @@ export default function ProductPage() {
     // Reset state on slug change
     useEffect(() => {
         setSelectedVariation(null);
+        setCustomOptionsSelection([]);
+        setCustomOptionsExtraPrice(0);
         setSelectedImage(0);
         setQuantity(1);
         setIsLiked(false);
@@ -69,8 +74,10 @@ export default function ProductPage() {
     const displayImage = images[0];
 
     // Price resolving logic
-    const displayPrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
-    const displayOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
+    const basePrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
+    const displayPrice = basePrice + customOptionsExtraPrice;
+    const baseOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
+    const displayOldPrice = baseOldPrice ? baseOldPrice + customOptionsExtraPrice : undefined;
 
     // Stock availability
     const isInStock = selectedVariation
@@ -87,6 +94,11 @@ export default function ProductPage() {
                 .join(', ');
         }
 
+        if (customOptionsSelection.length > 0) {
+            const extraStr = customOptionsSelection.map(opt => `${opt.name}: ${opt.value}`).join(', ');
+            selectedAttributesString = selectedAttributesString ? `${selectedAttributesString} | ${extraStr}` : extraStr;
+        }
+
         const cartItemId = selectedVariation ? `${product.id}-${selectedVariation.id}` : product.id;
 
         addToCart({
@@ -101,6 +113,7 @@ export default function ProductPage() {
             selectedAttributes: selectedAttributesString,
             variationId: selectedVariation?.id,
             quantity: quantity,
+            customOptions: customOptionsSelection,
         });
 
         // Feedback in UI
@@ -286,6 +299,17 @@ export default function ProductPage() {
                                     productId={parseInt(product.id)}
                                     attributes={wpProduct.attributes}
                                     onVariationChange={setSelectedVariation}
+                                />
+                            )}
+
+                            {/* Custom Category Options plugin */}
+                            {wpProduct && (
+                                <ProductCustomOptions
+                                    productId={wpProduct.id}
+                                    onSelectionChange={(selections, extraPrice) => {
+                                        setCustomOptionsSelection(selections);
+                                        setCustomOptionsExtraPrice(extraPrice);
+                                    }}
                                 />
                             )}
 

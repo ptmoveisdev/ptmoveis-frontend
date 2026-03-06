@@ -204,6 +204,20 @@ export interface WooCommerceVariation {
     _links: any;
 }
 
+// Category Options Plugin Types
+export interface WCCOOptionChoice {
+    label: string;
+    price?: number | string;
+    image?: string;
+}
+
+export interface WCCOOptionField {
+    title: string;
+    type: 'select' | 'radio' | 'image_swatch';
+    required: boolean;
+    options: WCCOOptionChoice[];
+}
+
 export interface WooCommerceProduct {
     id: number;
     name: string;

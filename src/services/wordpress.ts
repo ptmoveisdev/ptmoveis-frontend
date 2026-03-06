@@ -388,6 +388,21 @@ export async function getProductsByCategory(
     return getProducts({ ...params, category: categorySlug });
 }
 
+/**
+ * Busca opções customizadas de categoria para um produto (Plugin WCCO)
+ */
+export async function getProductCategoryOptions(productId: number): Promise<any[]> {
+    try {
+        const url = `${WORDPRESS_BASE_URL}/wp-json/wcco/v1/options/${productId}`;
+        const response = await fetch(url);
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao buscar opções de categoria do produto:', error);
+        return [];
+    }
+}
+
 // ============================================
 // CATEGORIAS DO WOOCOMMERCE
 // ============================================

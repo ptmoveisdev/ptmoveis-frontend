@@ -327,10 +327,22 @@ export default function CheckoutPage() {
                     postcode: formData.postalCode,
                     country: 'PT',
                 },
-                line_items: items.map(item => ({
-                    product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                    quantity: item.quantity,
-                })),
+                line_items: items.map(item => {
+                    const line: any = {
+                        product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
+                        quantity: item.quantity,
+                    };
+                    if (item.variationId) {
+                        line.variation_id = item.variationId;
+                    }
+                    if (item.customOptions && item.customOptions.length > 0) {
+                        line.meta_data = item.customOptions.map(opt => ({
+                            key: opt.name,
+                            value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value
+                        }));
+                    }
+                    return line;
+                }),
                 shipping_lines: [
                     {
                         method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
@@ -446,10 +458,22 @@ export default function CheckoutPage() {
                     postcode: data.postalCode,
                     country: 'PT',
                 },
-                line_items: items.map(item => ({
-                    product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                    quantity: item.quantity,
-                })),
+                line_items: items.map(item => {
+                    const line: any = {
+                        product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
+                        quantity: item.quantity,
+                    };
+                    if (item.variationId) {
+                        line.variation_id = item.variationId;
+                    }
+                    if (item.customOptions && item.customOptions.length > 0) {
+                        line.meta_data = item.customOptions.map(opt => ({
+                            key: opt.name,
+                            value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value
+                        }));
+                    }
+                    return line;
+                }),
                 shipping_lines: [
                     {
                         method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
