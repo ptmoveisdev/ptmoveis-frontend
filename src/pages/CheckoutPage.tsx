@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { ChevronLeft, ShoppingBag, CreditCard, Smartphone, Banknote, Search, Loader2 } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
@@ -57,6 +58,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 export default function CheckoutPage() {
     const navigate = useNavigate();
     const { items, totalPrice, clearCart } = useCart();
+    const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [gateways, setGateways] = useState<any[]>([]);
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
@@ -135,6 +137,18 @@ export default function CheckoutPage() {
         },
         mode: 'onChange'
     });
+
+    React.useEffect(() => {
+        if (user) {
+            setValue('firstName', user.billing?.first_name || user.first_name || '', { shouldValidate: true });
+            setValue('lastName', user.billing?.last_name || user.last_name || '', { shouldValidate: true });
+            setValue('email', user.billing?.email || user.email || '', { shouldValidate: true });
+            if (user.billing?.phone) setValue('phone', user.billing.phone, { shouldValidate: true });
+            if (user.billing?.address_1) setValue('address', user.billing.address_1, { shouldValidate: true });
+            if (user.billing?.city) setValue('city', user.billing.city, { shouldValidate: true });
+            if (user.billing?.postcode) setValue('postalCode', user.billing.postcode, { shouldValidate: true });
+        }
+    }, [user, setValue]);
 
     const selectedPaymentMethod = watch('paymentMethod');
     const currentPostalCode = watch('postalCode');
@@ -366,8 +380,9 @@ export default function CheckoutPage() {
 
             toast.success(`Pagamento concluído com sucesso!`);
             clearCart();
-            // navigate('/api/payment-success') or similar. Here we'll route home for now and show toast.
-            navigate('/');
+
+            // Se logado e tem OrderSuccess melhorado, mandar state com o customerId, ideal seria com os dados da order gerada para o customer
+            navigate('/encomenda-concluida', { state: { orderId: details.id, total: finalTotal } });
 
         } catch (error) {
             console.error('Erro ao processar pedido', error);
@@ -499,7 +514,7 @@ export default function CheckoutPage() {
                 // Otherwise fallback to success routing directly
                 clearCart();
                 toast.success('Encomenda criada com sucesso!');
-                navigate('/');
+                navigate('/encomenda-concluida', { state: { orderId: String(response.id), total: parseFloat(response.total) } });
             }
 
         } catch (error) {

@@ -22,6 +22,11 @@ import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProduct
 import ProductPage from '@/pages/ProductPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
+import OrderTrackingPage from '@/pages/OrderTrackingPage';
+import AccountPage from '@/pages/AccountPage';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
@@ -46,7 +51,9 @@ function NavigationHeader({
   const [searchQuery, setSearchQuery] = useState('');
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
+  const { isAuthenticated, logout } = useAuth();
   const totalFavorites = favorites.length;
+  const navigate = useNavigate();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,10 +155,34 @@ function NavigationHeader({
                 </span>
               )}
             </button>
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors">
-              <User className="w-4 h-4" />
-              <span>ENTRAR</span>
-            </button>
+            {isAuthenticated ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  onClick={() => navigate('/minha-conta')}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Minha Conta</span>
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate('/');
+                  }}
+                  className="text-xs text-gray-500 hover:text-red-500"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>ENTRAR</span>
+              </button>
+            )}
             <button
               className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -543,8 +574,10 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
           <div className="animate-fade-in-up delay-100">
             <h4 className="font-semibold text-white mb-4">Minha Conta</h4>
             <ul className="space-y-2 text-sm text-gray-400">
+              <li><button onClick={() => onNavigate('/login')} className="hover:text-[#D4AF37] transition-colors text-left">Login / Registo</button></li>
+              <li><button onClick={() => onNavigate('/minha-conta')} className="hover:text-[#D4AF37] transition-colors text-left">Minha Conta</button></li>
+              <li><button onClick={() => onNavigate('/acompanhar-pedido')} className="hover:text-[#D4AF37] transition-colors text-left">Acompanhar Encomenda</button></li>
               <li><button onClick={() => onNavigate('/checkout')} className="hover:text-[#D4AF37] transition-colors text-left">Carrinho</button></li>
-              <li><button onClick={() => onNavigate('/checkout')} className="hover:text-[#D4AF37] transition-colors text-left">Finalizar Compra</button></li>
               <li><button onClick={() => onNavigate('/termos')} className="hover:text-[#D4AF37] transition-colors text-left">Termos e Condições</button></li>
               <li><button onClick={() => onNavigate('/privacidade')} className="hover:text-[#D4AF37] transition-colors text-left">Política de Privacidade</button></li>
             </ul>
@@ -690,6 +723,10 @@ function App() {
           <Route path="/produto/:slug" element={<ProductPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/encomenda-concluida" element={<OrderSuccessPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registo" element={<RegisterPage />} />
+          <Route path="/minha-conta" element={<AccountPage />} />
+          <Route path="/acompanhar-pedido" element={<OrderTrackingPage />} />
 
           <Route path="/termos" element={<TermsConditions onBack={() => handleNavigate('/')} />} />
           <Route path="/privacidade" element={<PrivacyPolicy onBack={() => handleNavigate('/')} />} />

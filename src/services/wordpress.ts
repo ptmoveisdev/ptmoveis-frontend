@@ -94,7 +94,7 @@ async function fetchWordPress<T>(
  * Função auxiliar para fazer requisições à API do WooCommerce
  * CORRIGIDA: Usa Basic Auth em vez de query parameters
  */
-async function fetchWooCommerce<T>(
+export async function fetchWooCommerce<T>(
     endpoint: string,
     params: Record<string, any> = {},
     options: RequestInit = {}
@@ -454,6 +454,14 @@ export async function createWooCommerceOrder(
         method: 'POST',
         body: JSON.stringify(orderData),
     });
+    return data;
+}
+
+/**
+ * Busca uma encomenda pelo ID
+ */
+export async function getOrderById(orderId: number) {
+    const { data } = await fetchWooCommerce<any>(`/orders/${orderId}`);
     return data;
 }
 

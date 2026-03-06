@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { CheckCircle2, Package, ArrowRight, ShoppingBag } from 'lucide-react';
+import { CheckCircle2, Package, ArrowRight, ShoppingBag, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getOrderById } from '@/services/wordpress';
 
 interface LocationState {
     orderId?: string;
@@ -13,15 +14,40 @@ export default function OrderSuccessPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const state = location.state as LocationState;
+    const [order, setOrder] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         // Redirecionar para home se acessar diretamente sem um pedido
         if (!state?.orderId) {
             navigate('/', { replace: true });
+            return;
         }
+
+        async function fetchOrder() {
+            try {
+                const data = await getOrderById(Number(state.orderId));
+                setOrder(data);
+            } catch (error) {
+                console.error("Erro ao procurar encomenda:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchOrder();
     }, [navigate, state]);
 
     if (!state?.orderId) return null;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center pt-20 px-4">
+                <Loader2 className="w-12 h-12 text-[#D4AF37] animate-spin mb-4" />
+                <p className="text-gray-600">A processar a sua encomenda...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
@@ -53,8 +79,16 @@ export default function OrderSuccessPage() {
                     </div>
                     <div>
                         <p className="text-sm text-gray-500 mb-1">Total</p>
-                        <p className="font-bold text-gray-900 text-lg">{state.total ? `${state.total.toFixed(2)} €` : 'N/A'}</p>
+                        <p className="font-bold text-gray-900 text-lg">
+                            {order ? `${order.total} ${order.currency}` : (state.total ? `${state.total.toFixed(2)} €` : 'N/A')}
+                        </p>
                     </div>
+                    {order && order.billing?.email && (
+                        <div className="sm:col-span-2 mt-2 pt-4 border-t border-gray-200">
+                            <p className="text-sm text-gray-500 mb-1">Pode acompanhar o estado da sua encomenda usando o email:</p>
+                            <p className="font-medium text-gray-900">{order.billing.email}</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
