@@ -29,6 +29,7 @@ const WORDPRESS_BASE_URL = import.meta.env.VITE_WORDPRESS_BASE_URL || 'http://lo
 const WOOCOMMERCE_API_URL = import.meta.env.VITE_WOOCOMMERCE_API_URL || 'http://localhost/wordpress/wp-json/wc/v3';
 const WOOCOMMERCE_CONSUMER_KEY = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_KEY || '';
 const WOOCOMMERCE_CONSUMER_SECRET = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_SECRET || '';
+const WCCO_API_URL = import.meta.env.VITE_WCCO_API_URL || '';
 
 /**
  * Classe de erro customizada para WordPress API
@@ -396,20 +397,48 @@ export async function getProductsByCategory(
  */
 export async function getProductCategoryOptions(productId: number): Promise<any[]> {
     try {
-        // Remove trailing slash if exists to avoid double slashes
-        const baseUrl = WORDPRESS_BASE_URL.replace(/\/$/, '');
+        // Cria Basic Auth header (mesmo que para WooCommerce)
+        const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
         
-        // Tenta múltiplos endpoints possíveis
+        console.log('🔍 Buscando opções de categoria WCCO para produto:', productId);
+        
+        // Se WCCO_API_URL está configurado, usa ele diretamente
+        if (WCCO_API_URL) {
+            const wccoUrl = `${WCCO_API_URL}/options/${productId}`;
+            console.log(`  Usando WCCO_API_URL: ${wccoUrl}`);
+            
+            try {
+                const response = await fetch(wccoUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${auth}`,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    },
+                });
+                
+                console.log(`  Status: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Opções WCCO recebidas:', data);
+                    return Array.isArray(data) ? data : [];
+                } else {
+                    console.warn(`⚠️ Endpoint WCCO retornou ${response.status}`);
+                }
+            } catch (error) {
+                console.error('❌ Erro ao buscar do WCCO_API_URL:', error);
+            }
+        }
+        
+        // Fallback: tenta múltiplos endpoints possíveis
+        const baseUrl = WORDPRESS_BASE_URL.replace(/\/$/, '');
         const possibleEndpoints = [
             `${baseUrl}/wp-json/wcco/v1/options/${productId}`,
             `${baseUrl}/wp-json/wc/v3/products/${productId}/category-options`,
             `${baseUrl}/wp-json/wp/v2/product-category-options/${productId}`,
         ];
         
-        // Cria Basic Auth header (mesmo que para WooCommerce)
-        const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
-        
-        console.log('🔍 Buscando opções de categoria WCCO para produto:', productId);
+        console.log('  Tentando endpoints fallback...');
         
         // Tenta cada endpoint
         for (const url of possibleEndpoints) {
@@ -429,7 +458,7 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Opções WCCO recebidas:', data);
-                    return data;
+                    return Array.isArray(data) ? data : [];
                 }
             } catch (endpointError) {
                 console.log(`  Erro neste endpoint:`, endpointError);
