@@ -390,15 +390,58 @@ export async function getProductsByCategory(
 
 /**
  * Busca opções customizadas de categoria para um produto (Plugin WCCO)
+ * 
+ * IMPORTANTE: Este endpoint depende do plugin WooCommerce Category Options estar instalado
+ * e configurado no WordPress. O plugin deve registrar o endpoint /wp-json/wcco/v1/options/{id}
  */
 export async function getProductCategoryOptions(productId: number): Promise<any[]> {
     try {
-        const url = `${WORDPRESS_BASE_URL}/wp-json/wcco/v1/options/${productId}`;
-        const response = await fetch(url);
-        if (!response.ok) return [];
-        return await response.json();
+        // Remove trailing slash if exists to avoid double slashes
+        const baseUrl = WORDPRESS_BASE_URL.replace(/\/$/, '');
+        
+        // Tenta múltiplos endpoints possíveis
+        const possibleEndpoints = [
+            `${baseUrl}/wp-json/wcco/v1/options/${productId}`,
+            `${baseUrl}/wp-json/wc/v3/products/${productId}/category-options`,
+            `${baseUrl}/wp-json/wp/v2/product-category-options/${productId}`,
+        ];
+        
+        // Cria Basic Auth header (mesmo que para WooCommerce)
+        const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
+        
+        console.log('🔍 Buscando opções de categoria WCCO para produto:', productId);
+        
+        // Tenta cada endpoint
+        for (const url of possibleEndpoints) {
+            try {
+                console.log(`  Tentando: ${url}`);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${auth}`,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    },
+                });
+                
+                console.log(`  Status: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Opções WCCO recebidas:', data);
+                    return data;
+                }
+            } catch (endpointError) {
+                console.log(`  Erro neste endpoint:`, endpointError);
+                continue;
+            }
+        }
+        
+        console.warn('⚠️ Nenhum endpoint WCCO funcionou. Plugin pode não estar instalado ou configurado.');
+        return [];
+        
     } catch (error) {
-        console.error('Erro ao buscar opções de categoria do produto:', error);
+        console.error('❌ Erro ao buscar opções de categoria do produto:', error);
         return [];
     }
 }
