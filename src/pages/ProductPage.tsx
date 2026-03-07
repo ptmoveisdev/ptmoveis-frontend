@@ -152,7 +152,7 @@ export default function ProductPage() {
                 <div className="bg-white rounded-2xl shadow-sm p-6 md:p-12">
                     <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
                         {/* Left Column - Images */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 md:sticky md:top-28 self-start">
                             {/* Main Image */}
                             <div className="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-md group border border-gray-100 flex items-center justify-center">
                                 <InnerImageZoom

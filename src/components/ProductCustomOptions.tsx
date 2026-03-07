@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getProductCategoryOptions } from '@/services/wordpress';
 import type { WCCOOptionField } from '@/types/wordpress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ProductCustomOptionsProps {
     productId: number;
@@ -85,6 +86,8 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                     return null;
                 }
                 
+                const selectedValue = selections[fieldIndex];
+                
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
                         <label className="text-sm font-semibold text-gray-900 mb-3 block">
@@ -92,31 +95,26 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                         </label>
 
                         {field.type === 'select' && (
-                            <select
-                                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all"
-                                value={selections[fieldIndex] !== undefined ? selections[fieldIndex] : ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === '') {
-                                        const newSelections = { ...selections };
-                                        delete newSelections[fieldIndex];
-                                        setSelections(newSelections);
-                                    } else {
-                                        setSelections({ ...selections, [fieldIndex]: parseInt(val, 10) });
-                                    }
+                            <Select
+                                value={selectedValue !== undefined ? String(selectedValue) : undefined}
+                                onValueChange={(val) => {
+                                    setSelections({ ...selections, [fieldIndex]: parseInt(val, 10) });
                                 }}
-                                required={field.required}
                             >
-                                <option value="">Escolha uma opção</option>
-                                {field.options.map((opt, optIndex) => {
-                                    const p = parsePrice(opt.price);
-                                    return (
-                                        <option key={optIndex} value={optIndex}>
-                                            {opt.label} {p > 0 ? `(+${p.toFixed(2)} €)` : ''}
-                                        </option>
-                                    );
-                                })}
-                            </select>
+                                <SelectTrigger className="w-full rounded-xl border border-gray-200 bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all">
+                                    <SelectValue placeholder="Escolha uma opção" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                                    {field.options.map((opt, optIndex) => {
+                                        const p = parsePrice(opt.price);
+                                        return (
+                                            <SelectItem key={optIndex} value={String(optIndex)}>
+                                                {opt.label} {p > 0 ? `(+${p.toFixed(2)} €)` : ''}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
                         )}
 
                         {field.type === 'radio' && (
