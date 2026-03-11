@@ -14,6 +14,7 @@ import { useProductBySlug } from '@/hooks/useWordPress';
 import { convertWPProductToLocal } from '@/utils/productUtils';
 import type { WooCommerceVariation } from '@/types/wordpress';
 import { toast } from 'sonner';
+import { ProductShippingCalculator } from '@/components/ProductShippingCalculator';
 
 export default function ProductPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -126,6 +127,11 @@ export default function ProductPage() {
                 description: `${quantity}x ${product.name}`,
             });
         }
+    };
+
+    const handleBuyNow = () => {
+        handleAddToCart();
+        navigate('/checkout');
     };
 
     return (
@@ -318,7 +324,7 @@ export default function ProductPage() {
                                 <label className="text-sm font-semibold text-gray-900 mb-3 block">
                                     Quantidade
                                 </label>
-                                <div className="flex items-center border border-gray-300 rounded-xl w-fit overflow-hidden bg-white">
+                                <div className="flex items-center border border-gray-300 rounded-xl w-fit overflow-hidden bg-white mb-6">
                                     <button
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                         className="w-14 h-14 flex items-center justify-center hover:bg-gray-50 transition-colors"
@@ -337,20 +343,34 @@ export default function ProductPage() {
                                 </div>
                             </div>
 
-                            {/* Add to Cart Button */}
-                            <Button
-                                onClick={handleAddToCart}
-                                disabled={!isInStock || (product.hasVariations && !selectedVariation)}
-                                className="w-full bg-[#D4AF37] hover:bg-[#B8960C] text-white text-lg font-bold py-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all"
-                            >
-                                <ShoppingCart className="w-6 h-6 mr-3" />
-                                {!isInStock
-                                    ? 'ESGOTADO'
-                                    : product.hasVariations && !selectedVariation
-                                        ? 'SELECIONE AS OPÇÕES'
-                                        : 'ADICIONAR AO CARRINHO'
-                                }
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                {/* Add to Cart Button */}
+                                <Button
+                                    onClick={handleAddToCart}
+                                    disabled={!isInStock || (product.hasVariations && !selectedVariation)}
+                                    className="flex-1 bg-white hover:bg-gray-50 text-[#1E3A5F] border-2 border-[#1E3A5F] text-base lg:text-lg font-bold py-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all"
+                                >
+                                    <ShoppingCart className="w-5 h-5 mr-2" />
+                                    CARRINHO
+                                </Button>
+
+                                {/* Buy Now Button */}
+                                <Button
+                                    onClick={handleBuyNow}
+                                    disabled={!isInStock || (product.hasVariations && !selectedVariation)}
+                                    className="flex-1 bg-[#D4AF37] hover:bg-[#B8960C] text-white text-base lg:text-lg font-bold py-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all"
+                                >
+                                    {!isInStock
+                                        ? 'ESGOTADO'
+                                        : product.hasVariations && !selectedVariation
+                                            ? 'SELECIONE OPÇÕES'
+                                            : 'COMPRAR AGORA'
+                                    }
+                                </Button>
+                            </div>
+
+                            {/* Shipping Calculator */}
+                            <ProductShippingCalculator />
 
                             {/* Trust Badges */}
                             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
