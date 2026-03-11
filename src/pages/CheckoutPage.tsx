@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
+import { KlarnaWidget } from '@/components/KlarnaWidget';
+import { useKlarnaPayments } from '@/hooks/useKlarnaPayments';
 
 // Dialog (Modal) Components for the Iframe Payment
 import {
@@ -66,6 +68,15 @@ export default function CheckoutPage() {
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
+    const pendingOrderRef = React.useRef<{ id: string, total: number } | null>(null);
+
+    const {
+        isLoading: isKlarnaLoading,
+        isReady: isKlarnaReady,
+        error: klarnaError,
+        initializeKlarna,
+        authorize: authorizeKlarna
+    } = useKlarnaPayments();
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
@@ -110,13 +121,16 @@ export default function CheckoutPage() {
         };
         fetchZones();
 
-        // Listener for Iframe messages (e.g. from WooCommerce custom scripts)
         const handleIframeMessage = (event: MessageEvent) => {
             if (event.data === 'payment_complete') {
                 setPaymentModalOpen(false);
                 toast.success('Pagamento concluído com sucesso!');
                 clearCart();
-                navigate('/');
+                if (pendingOrderRef.current) {
+                    navigate('/encomenda-concluida', { state: { orderId: pendingOrderRef.current.id, total: pendingOrderRef.current.total } });
+                } else {
+                    navigate('/encomenda-concluida', { state: { orderId: 'pending' } });
+                }
             }
         };
 
@@ -176,6 +190,12 @@ export default function CheckoutPage() {
     const isShippingCalculated = dynamicShippingCost !== null;
 
     const finalTotal = totalPrice + (dynamicShippingCost || 0);
+
+    React.useEffect(() => {
+        if (selectedPaymentMethod === 'klarna-payments' && finalTotal > 0 && isShippingCalculated) {
+            initializeKlarna(finalTotal);
+        }
+    }, [selectedPaymentMethod, finalTotal, isShippingCalculated, initializeKlarna]);
 
     // Format postal code automatically (e.g., 4000123 -> 4000-123)
     const formatPostalCode = (value: string) => {
@@ -403,11 +423,23 @@ export default function CheckoutPage() {
             return;
         }
 
-        // Fluxo Klarna — cria a ordem e redireciona para o checkout Klarna (hosted)
+        // Fluxo Klarna — via SDK
         if (data.paymentMethod === 'klarna-payments') {
             setIsSubmitting(true);
             try {
-                const orderData = {
+                // 1. Authorize klarna on frontend
+                const authToken = await authorizeKlarna({
+                    given_name: data.firstName,
+                    family_name: data.lastName,
+                    email: data.email,
+                    phone: data.phone,
+                    street_address: data.address,
+                    city: data.city,
+                    postal_code: data.postalCode,
+                    country: 'PT'
+                });
+
+                const orderData: any = {
                     payment_method: 'klarna_payments',
                     payment_method_title: 'Klarna',
                     set_paid: false,
@@ -450,25 +482,28 @@ export default function CheckoutPage() {
                     }],
                     meta_data: [
                         { key: '_nif', value: data.nif || '' },
+                        { key: '_klarna_authorization_token', value: authToken }
                     ],
+                    payment_data: [
+                        { key: 'authorization_token', value: authToken }
+                    ]
                 };
 
                 const response = await createWooCommerceOrder(orderData);
 
-                if (response.payment_url) {
-                    // Guarda dados da ordem no localStorage antes do redirect,
-                    // para que o OrderSuccessPage os recupere quando o Klarna devolver o utilizador
-                    localStorage.setItem('klarna_pending_order', JSON.stringify({
-                        orderId: String(response.id),
-                        total: parseFloat(response.total),
-                        orderKey: response.order_key || '',
-                    }));
+                if (response.payment_url && response.payment_url.includes('api.ptmoveis')) {
+                    // Force a local success if the plugin ignores authorization and returns pay_url anyway.
+                    // This circumvents the WP redirect.
                     clearCart();
-                    // Redireciona para WooCommerce order-pay → o plugin Klarna redireciona para pay.klarna.com
+                    toast.success('Encomenda Klarna processada com sucesso!');
+                    navigate('/encomenda-concluida', {
+                        state: { orderId: String(response.id), total: parseFloat(response.total) }
+                    });
+                } else if (response.payment_url) {
                     window.location.href = response.payment_url;
                 } else {
                     clearCart();
-                    toast.success('Encomenda criada! Aguardando processamento do Klarna.');
+                    toast.success('Encomenda Klarna criada com sucesso!');
                     navigate('/encomenda-concluida', {
                         state: { orderId: String(response.id), total: parseFloat(response.total) }
                     });
@@ -516,7 +551,8 @@ export default function CheckoutPage() {
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
                 clearCart();
-                window.location.href = whatsappUrl;
+                window.open(whatsappUrl, '_blank');
+                navigate('/encomenda-concluida', { state: { orderId: 'whatsapp', total: finalTotal } });
                 return;
 
             } catch (error) {
@@ -586,6 +622,7 @@ export default function CheckoutPage() {
             };
 
             const response = await createWooCommerceOrder(orderData);
+            pendingOrderRef.current = { id: String(response.id), total: parseFloat(response.total) };
 
             // For fallback gateways (Multibanco, etc.), load the WooCommerce payment URL in an Iframe Modal
             if (response.payment_url) {
@@ -908,27 +945,34 @@ export default function CheckoutPage() {
                                         )}
                                     </Button>
                                 ) : selectedPaymentMethod === 'klarna-payments' ? (
-                                    <Button
-                                        type="submit"
-                                        form="checkout-form"
-                                        disabled={isSubmitting || !isShippingCalculated}
-                                        className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                        style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
-                                    >
-                                        {isSubmitting ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <span className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
-                                                A redirecionar para Klarna…
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center justify-center gap-2 font-semibold">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a">
-                                                    <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
-                                                </svg>
-                                                Pagar com Klarna
-                                            </span>
-                                        )}
-                                    </Button>
+                                    <div className="mt-4">
+                                        <KlarnaWidget 
+                                            isLoading={isKlarnaLoading} 
+                                            isReady={isKlarnaReady} 
+                                            error={klarnaError} 
+                                        />
+                                        <Button
+                                            type="submit"
+                                            form="checkout-form"
+                                            disabled={isSubmitting || !isShippingCalculated || !isKlarnaReady}
+                                            className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
+                                        >
+                                            {isSubmitting ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                                                    A processar com Klarna…
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-2 font-semibold">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a">
+                                                        <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
+                                                    </svg>
+                                                    Pagar com Klarna
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </div>
                                 ) : currentFundingSource ? (
                                     <div className="mt-4">
                                         {isSubmitting && (
@@ -1002,7 +1046,11 @@ export default function CheckoutPage() {
                     // Se o utilizador fechar o modal, alertar que a encomenda ficou pendente
                     toast.warning("Atenção: fechou a janela de pagamento. A sua encomenda ficou pendente.");
                     clearCart();
-                    navigate('/');
+                    if (pendingOrderRef.current) {
+                        navigate('/encomenda-concluida', { state: { orderId: pendingOrderRef.current.id, total: pendingOrderRef.current.total } });
+                    } else {
+                        navigate('/encomenda-concluida', { state: { orderId: 'pending' } });
+                    }
                 }
                 setPaymentModalOpen(open);
             }}>

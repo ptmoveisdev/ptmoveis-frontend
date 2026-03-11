@@ -52,7 +52,10 @@ export default function OrderSuccessPage() {
     }, [routerState, searchParams, navigate]);
 
     useEffect(() => {
-        if (!resolvedState?.orderId) return;
+        if (!resolvedState?.orderId || resolvedState.orderId === 'whatsapp' || resolvedState.orderId === 'pending') {
+            setIsLoading(false);
+            return;
+        }
 
         async function fetchOrder() {
             try {
@@ -104,7 +107,7 @@ export default function OrderSuccessPage() {
                         <p className="text-sm text-gray-500 mb-1">Nº da Encomenda</p>
                         <p className="font-bold text-gray-900 flex items-center gap-2">
                             <Package className="w-4 h-4 text-[#D4AF37]" />
-                            #{resolvedState.orderId}
+                            {resolvedState.orderId === 'whatsapp' ? 'Aberto via WhatsApp' : resolvedState.orderId === 'pending' ? 'Pendente de Confirmação' : `#${resolvedState.orderId}`}
                         </p>
                     </div>
                     <div>
