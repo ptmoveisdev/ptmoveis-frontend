@@ -30,6 +30,30 @@ const WOOCOMMERCE_API_URL = import.meta.env.VITE_WOOCOMMERCE_API_URL || 'http://
 const WOOCOMMERCE_CONSUMER_KEY = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_KEY || '';
 const WOOCOMMERCE_CONSUMER_SECRET = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_SECRET || '';
 const WCCO_API_URL = import.meta.env.VITE_WCCO_API_URL || '';
+const KLARNA_TOKEN_URL = import.meta.env.VITE_KLARNA_TOKEN_URL || '';
+
+// ============================================
+// KLARNA PAYMENTS
+// ============================================
+
+/**
+ * Solicita ao WordPress um client_token para inicializar o Klarna Payments SDK.
+ * Requer o endpoint customizado `ptmoveis/v1/klarna-token` no WordPress.
+ */
+export async function createKlarnaSession(total: number): Promise<{ client_token: string; payment_method_categories?: unknown[] }> {
+    const response = await fetch(KLARNA_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ total }),
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `Erro ${response.status} ao criar sessão Klarna`);
+    }
+
+    return response.json();
+}
 
 /**
  * Classe de erro customizada para WordPress API
@@ -399,14 +423,14 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
     try {
         // Cria Basic Auth header (mesmo que para WooCommerce)
         const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
-        
+
         console.log('🔍 Buscando opções de categoria WCCO para produto:', productId);
-        
+
         // Se WCCO_API_URL está configurado, usa ele diretamente
         if (WCCO_API_URL) {
             const wccoUrl = `${WCCO_API_URL}/options/${productId}`;
             console.log(`  Usando WCCO_API_URL: ${wccoUrl}`);
-            
+
             try {
                 const response = await fetch(wccoUrl, {
                     headers: {
@@ -415,9 +439,9 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     },
                 });
-                
+
                 console.log(`  Status: ${response.status} ${response.statusText}`);
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Opções WCCO recebidas:', data);
@@ -429,7 +453,7 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                 console.error('❌ Erro ao buscar do WCCO_API_URL:', error);
             }
         }
-        
+
         // Fallback: tenta múltiplos endpoints possíveis
         const baseUrl = WORDPRESS_BASE_URL.replace(/\/$/, '');
         const possibleEndpoints = [
@@ -437,14 +461,14 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
             `${baseUrl}/wp-json/wc/v3/products/${productId}/category-options`,
             `${baseUrl}/wp-json/wp/v2/product-category-options/${productId}`,
         ];
-        
+
         console.log('  Tentando endpoints fallback...');
-        
+
         // Tenta cada endpoint
         for (const url of possibleEndpoints) {
             try {
                 console.log(`  Tentando: ${url}`);
-                
+
                 const response = await fetch(url, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -452,9 +476,9 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     },
                 });
-                
+
                 console.log(`  Status: ${response.status} ${response.statusText}`);
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Opções WCCO recebidas:', data);
@@ -465,10 +489,10 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                 continue;
             }
         }
-        
+
         console.warn('⚠️ Nenhum endpoint WCCO funcionou. Plugin pode não estar instalado ou configurado.');
         return [];
-        
+
     } catch (error) {
         console.error('❌ Erro ao buscar opções de categoria do produto:', error);
         return [];

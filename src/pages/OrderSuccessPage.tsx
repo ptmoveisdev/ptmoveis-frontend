@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { CheckCircle2, Package, ArrowRight, ShoppingBag, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getOrderById } from '@/services/wordpress';
 
-interface LocationState {
+interface OrderState {
     orderId?: string;
     total?: number;
 }
@@ -13,32 +13,62 @@ interface LocationState {
 export default function OrderSuccessPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const state = location.state as LocationState;
+    const [searchParams] = useSearchParams();
+    const routerState = location.state as OrderState | null;
     const [order, setOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [resolvedState, setResolvedState] = useState<OrderState | null>(null);
 
     useEffect(() => {
-        // Redirecionar para home se acessar diretamente sem um pedido
-        if (!state?.orderId) {
-            navigate('/', { replace: true });
+        // 1. Estado passado via React Router navigate() — PayPal, Multibanco, etc.
+        if (routerState?.orderId) {
+            setResolvedState(routerState);
             return;
         }
 
+        // 2. Retorno do Klarna — order_id na query string via snippet PHP return_url
+        const qOrderId = searchParams.get('order_id');
+        if (qOrderId) {
+            const stored = localStorage.getItem('klarna_pending_order');
+            const parsed: OrderState = stored ? JSON.parse(stored) : {};
+            setResolvedState({ orderId: qOrderId, total: parsed.total });
+            localStorage.removeItem('klarna_pending_order');
+            return;
+        }
+
+        // 3. Fallback: dados guardados no localStorage
+        const stored = localStorage.getItem('klarna_pending_order');
+        if (stored) {
+            const parsed: OrderState = JSON.parse(stored);
+            if (parsed.orderId) {
+                setResolvedState(parsed);
+                localStorage.removeItem('klarna_pending_order');
+                return;
+            }
+        }
+
+        // Sem dados — redireciona para home
+        navigate('/', { replace: true });
+    }, [routerState, searchParams, navigate]);
+
+    useEffect(() => {
+        if (!resolvedState?.orderId) return;
+
         async function fetchOrder() {
             try {
-                const data = await getOrderById(Number(state.orderId));
+                const data = await getOrderById(Number(resolvedState!.orderId));
                 setOrder(data);
             } catch (error) {
-                console.error("Erro ao procurar encomenda:", error);
+                console.error('Erro ao procurar encomenda:', error);
             } finally {
                 setIsLoading(false);
             }
         }
 
         fetchOrder();
-    }, [navigate, state]);
+    }, [resolvedState]);
 
-    if (!state?.orderId) return null;
+    if (!resolvedState?.orderId) return null;
 
     if (isLoading) {
         return (
@@ -74,13 +104,18 @@ export default function OrderSuccessPage() {
                         <p className="text-sm text-gray-500 mb-1">Nº da Encomenda</p>
                         <p className="font-bold text-gray-900 flex items-center gap-2">
                             <Package className="w-4 h-4 text-[#D4AF37]" />
-                            #{state.orderId}
+                            #{resolvedState.orderId}
                         </p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-500 mb-1">Total</p>
                         <p className="font-bold text-gray-900 text-lg">
-                            {order ? `${order.total} ${order.currency}` : (state.total ? `${state.total.toFixed(2)} €` : 'N/A')}
+                            {order
+                                ? `${order.total} ${order.currency}`
+                                : resolvedState.total
+                                    ? `${resolvedState.total.toFixed(2)} €`
+                                    : 'N/A'
+                            }
                         </p>
                     </div>
                     {order && order.billing?.email && (

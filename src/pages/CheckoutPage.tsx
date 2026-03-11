@@ -67,7 +67,7 @@ export default function CheckoutPage() {
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
 
-    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
+    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
     // Fetch payment gateways on mount
     import.meta.env.SSR === false && React.useEffect(() => {
@@ -79,13 +79,14 @@ export default function CheckoutPage() {
                 // Filter out the standard card button if advanced card processing is also enabled to prevent duplicates
                 gw = gw.filter((g: any) => g.id !== 'ppcp-card-button-gateway');
 
-                // Keep WhatsApp as fallback/manual option if desired, or rely entirely on woo woo.
-                // We'll append WhatsApp manually if needed, or stick to Woo's strictly.
-                // The user's store seems to have "ppcp-gateway" (PayPal) and others.
-
-                // Add whatsapp manually as a fallback for now to preserve functionality
+                // Add Klarna and WhatsApp manually alongside WooCommerce gateways
                 gw = [
                     ...gw,
+                    {
+                        id: 'klarna-payments',
+                        title: 'Klarna',
+                        method_title: 'Pague depois ou em prestações'
+                    },
                     {
                         id: 'whatsapp',
                         title: 'WhatsApp',
@@ -399,6 +400,86 @@ export default function CheckoutPage() {
 
         if (currentFundingSource) {
             toast.info("Por favor, clique no botão do PayPal/Cartão para concluir o pagamento.");
+            return;
+        }
+
+        // Fluxo Klarna — cria a ordem e redireciona para o checkout Klarna (hosted)
+        if (data.paymentMethod === 'klarna-payments') {
+            setIsSubmitting(true);
+            try {
+                const orderData = {
+                    payment_method: 'klarna_payments',
+                    payment_method_title: 'Klarna',
+                    set_paid: false,
+                    billing: {
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        address_1: data.address,
+                        city: data.city,
+                        postcode: data.postalCode,
+                        country: 'PT',
+                        email: data.email,
+                        phone: data.phone,
+                    },
+                    shipping: {
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        address_1: data.address,
+                        city: data.city,
+                        postcode: data.postalCode,
+                        country: 'PT',
+                    },
+                    line_items: items.map(item => {
+                        const line: any = {
+                            product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
+                            quantity: item.quantity,
+                        };
+                        if (item.variationId) line.variation_id = item.variationId;
+                        if (item.customOptions && item.customOptions.length > 0) {
+                            line.meta_data = item.customOptions.map(opt => ({
+                                key: opt.name,
+                                value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value,
+                            }));
+                        }
+                        return line;
+                    }),
+                    shipping_lines: [{
+                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                        total: (dynamicShippingCost || 0).toFixed(2),
+                    }],
+                    meta_data: [
+                        { key: '_nif', value: data.nif || '' },
+                    ],
+                };
+
+                const response = await createWooCommerceOrder(orderData);
+
+                if (response.payment_url) {
+                    // Guarda dados da ordem no localStorage antes do redirect,
+                    // para que o OrderSuccessPage os recupere quando o Klarna devolver o utilizador
+                    localStorage.setItem('klarna_pending_order', JSON.stringify({
+                        orderId: String(response.id),
+                        total: parseFloat(response.total),
+                        orderKey: response.order_key || '',
+                    }));
+                    clearCart();
+                    // Redireciona para WooCommerce order-pay → o plugin Klarna redireciona para pay.klarna.com
+                    window.location.href = response.payment_url;
+                } else {
+                    clearCart();
+                    toast.success('Encomenda criada! Aguardando processamento do Klarna.');
+                    navigate('/encomenda-concluida', {
+                        state: { orderId: String(response.id), total: parseFloat(response.total) }
+                    });
+                }
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Klarna.';
+                toast.error(msg);
+                console.error('❌ Klarna onSubmit:', err);
+            } finally {
+                setIsSubmitting(false);
+            }
             return;
         }
 
@@ -732,7 +813,12 @@ export default function CheckoutPage() {
                                                 <label key={gateway.id} className={`cursor-pointer rounded-xl border p-4 flex flex-col items-center justify-center gap-2 transition-all ${selectedPaymentMethod === gateway.id ? 'border-[#1E3A5F] bg-[#1E3A5F]/5 ring-2 ring-[#1E3A5F]/20' : 'border-gray-200 hover:border-gray-300'}`}>
                                                     <input type="radio" value={gateway.id} {...register('paymentMethod')} className="sr-only" />
                                                     <div className="text-[#1E3A5F]">
-                                                        {gateway.id === 'whatsapp' ? (
+                                                        {gateway.id === 'klarna-payments' ? (
+                                                            // Klarna official pink 'K' logo
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#FFB3C7">
+                                                                <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
+                                                            </svg>
+                                                        ) : gateway.id === 'whatsapp' ? (
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                                                                 <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
                                                             </svg>
@@ -818,6 +904,28 @@ export default function CheckoutPage() {
                                                     <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
                                                 </svg>
                                                 Finalizar no WhatsApp
+                                            </span>
+                                        )}
+                                    </Button>
+                                ) : selectedPaymentMethod === 'klarna-payments' ? (
+                                    <Button
+                                        type="submit"
+                                        form="checkout-form"
+                                        disabled={isSubmitting || !isShippingCalculated}
+                                        className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
+                                    >
+                                        {isSubmitting ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <span className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                                                A redirecionar para Klarna…
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2 font-semibold">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a">
+                                                    <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
+                                                </svg>
+                                                Pagar com Klarna
                                             </span>
                                         )}
                                     </Button>
