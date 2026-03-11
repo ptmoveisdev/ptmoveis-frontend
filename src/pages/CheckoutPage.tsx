@@ -81,7 +81,9 @@ export default function CheckoutPage() {
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
     // Fetch payment gateways on mount
-    import.meta.env.SSR === false && React.useEffect(() => {
+    React.useEffect(() => {
+        if (import.meta.env.SSR) return;
+
         const fetchGateways = async () => {
             try {
                 // Fetch dynamic gateways
@@ -136,7 +138,7 @@ export default function CheckoutPage() {
 
         window.addEventListener('message', handleIframeMessage);
         return () => window.removeEventListener('message', handleIframeMessage);
-    }, []);
+    }, [navigate, clearCart]);
 
     const {
         register,
