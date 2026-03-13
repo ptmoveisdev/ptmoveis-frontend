@@ -110,6 +110,14 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                             <Select
                                 value={selectedValue !== undefined ? String(selectedValue) : undefined}
                                 onValueChange={(val) => {
+                                    if (val === '__none__') {
+                                        setSelections((prev) => {
+                                            const updated = { ...prev };
+                                            delete updated[fieldIndex];
+                                            return updated;
+                                        });
+                                        return;
+                                    }
                                     setSelections({ ...selections, [fieldIndex]: parseInt(val, 10) });
                                 }}
                             >
@@ -117,6 +125,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                                     <SelectValue placeholder="Escolha uma opção" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                                    <SelectItem value="__none__">Nenhuma</SelectItem>
                                     {field.options.map((opt, optIndex) => {
                                         const p = parsePrice(opt.price);
                                         return (
