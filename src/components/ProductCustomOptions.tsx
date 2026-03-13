@@ -121,15 +121,26 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                             <div className="grid gap-2">
                                 {field.options.map((opt, optIndex) => {
                                     const p = parsePrice(opt.price);
+                                    const isSelected = selections[fieldIndex] === optIndex;
                                     return (
                                         <label key={optIndex} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:border-[#D4AF37] transition-all">
                                             <input
                                                 type="radio"
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
-                                                checked={selections[fieldIndex] === optIndex}
-                                                onChange={() => setSelections({ ...selections, [fieldIndex]: optIndex })}
-                                                required={field.required}
+                                                checked={isSelected}
+                                                onClick={() => {
+                                                    setSelections((prev) => {
+                                                        const current = prev[fieldIndex];
+                                                        const updated = { ...prev };
+                                                        if (current === optIndex) {
+                                                            delete updated[fieldIndex];
+                                                        } else {
+                                                            updated[fieldIndex] = optIndex;
+                                                        }
+                                                        return updated;
+                                                    });
+                                                }}
                                                 className="text-[#D4AF37] focus:ring-[#D4AF37]"
                                             />
                                             <span className="flex-1 text-gray-700">{opt.label}</span>
@@ -152,8 +163,18 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onChange={() => setSelections({ ...selections, [fieldIndex]: optIndex })}
-                                                required={field.required}
+                                                onClick={() => {
+                                                    setSelections((prev) => {
+                                                        const current = prev[fieldIndex];
+                                                        const updated = { ...prev };
+                                                        if (current === optIndex) {
+                                                            delete updated[fieldIndex];
+                                                        } else {
+                                                            updated[fieldIndex] = optIndex;
+                                                        }
+                                                        return updated;
+                                                    });
+                                                }}
                                                 className="sr-only"
                                             />
                                             <div className={`w-14 h-14 rounded-full overflow-hidden border-2 transition-all ${isSelected ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/20 shadow-md' : 'border-gray-200 group-hover:border-[#D4AF37]/50'}`}>
