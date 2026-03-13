@@ -424,7 +424,14 @@ export async function getProductsByCategory(
  * IMPORTANTE: Este endpoint depende do plugin WooCommerce Category Options estar instalado
  * e configurado no WordPress. O plugin deve registrar o endpoint /wp-json/wcco/v1/options/{id}
  */
+const wccoOptionsCache = new Map<number, any[]>();
+
 export async function getProductCategoryOptions(productId: number): Promise<any[]> {
+    // Cache simples em memória para evitar refetch em navegações dentro do SPA
+    if (wccoOptionsCache.has(productId)) {
+        return wccoOptionsCache.get(productId) as any[];
+    }
+
     try {
         // Cria Basic Auth header (mesmo que para WooCommerce)
         const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
@@ -449,8 +456,10 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Opções WCCO recebidas:', data);
-                    return Array.isArray(data) ? data : [];
+                    const normalized = Array.isArray(data) ? data : [];
+                    wccoOptionsCache.set(productId, normalized);
+                    console.log('✅ Opções WCCO recebidas:', normalized);
+                    return normalized;
                 } else {
                     console.warn(`⚠️ Endpoint WCCO retornou ${response.status}`);
                 }
@@ -486,8 +495,10 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Opções WCCO recebidas:', data);
-                    return Array.isArray(data) ? data : [];
+                    const normalized = Array.isArray(data) ? data : [];
+                    wccoOptionsCache.set(productId, normalized);
+                    console.log('✅ Opções WCCO recebidas:', normalized);
+                    return normalized;
                 }
             } catch (endpointError) {
                 console.log(`  Erro neste endpoint:`, endpointError);
