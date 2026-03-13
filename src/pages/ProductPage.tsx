@@ -10,6 +10,7 @@ import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
 import { ProductVariations } from '@/components/ProductVariations';
 import { ProductCustomOptions } from '@/components/ProductCustomOptions';
+import { WccoDynamicPrice } from '@/components/WccoDynamicPrice';
 import { useProductBySlug } from '@/hooks/useWordPress';
 import { convertWPProductToLocal } from '@/utils/productUtils';
 import type { WooCommerceVariation } from '@/types/wordpress';
@@ -25,8 +26,9 @@ export default function ProductPage() {
     const [isLiked, setIsLiked] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
-    const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number }[]>([]);
-    const [customOptionsExtraPrice, setCustomOptionsExtraPrice] = useState(0);
+    const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number; mode?: 'add' | 'replace' }[]>([]);
+    const [customOptionsExtras, setCustomOptionsExtras] = useState(0);
+    const [customOptionsBaseOverride, setCustomOptionsBaseOverride] = useState<number | null>(null);
     const { addToCart } = useCart();
 
     // Fetch from WordPress
@@ -36,7 +38,8 @@ export default function ProductPage() {
     useEffect(() => {
         setSelectedVariation(null);
         setCustomOptionsSelection([]);
-        setCustomOptionsExtraPrice(0);
+        setCustomOptionsExtras(0);
+        setCustomOptionsBaseOverride(null);
         setSelectedImage(0);
         setQuantity(1);
         setIsLiked(false);
@@ -76,9 +79,14 @@ export default function ProductPage() {
 
     // Price resolving logic
     const basePrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
-    const displayPrice = basePrice + customOptionsExtraPrice;
+    const effectiveBase = customOptionsBaseOverride && customOptionsBaseOverride > 0 ? customOptionsBaseOverride : basePrice;
+    const displayPrice = effectiveBase + customOptionsExtras;
     const baseOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
-    const displayOldPrice = baseOldPrice ? baseOldPrice + customOptionsExtraPrice : undefined;
+    // Se houve "replace", o preço antigo pode não fazer sentido; mantemos apenas quando não há override.
+    const displayOldPrice =
+        baseOldPrice && !(customOptionsBaseOverride && customOptionsBaseOverride > 0)
+            ? baseOldPrice + customOptionsExtras
+            : undefined;
 
     // Stock availability
     const isInStock = selectedVariation
@@ -276,6 +284,9 @@ export default function ProductPage() {
                                 )}
                             </div>
 
+                            {/* Plugin WCCO - preço dinâmico baseado em data-* */}
+                            <WccoDynamicPrice className="mt-4" />
+
                             {/* Description */}
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
@@ -312,9 +323,10 @@ export default function ProductPage() {
                             {wpProduct && (
                                 <ProductCustomOptions
                                     productId={wpProduct.id}
-                                    onSelectionChange={(selections, extraPrice) => {
+                                    onSelectionChange={(selections, pricing) => {
                                         setCustomOptionsSelection(selections);
-                                        setCustomOptionsExtraPrice(extraPrice);
+                                        setCustomOptionsExtras(pricing.totalExtras);
+                                        setCustomOptionsBaseOverride(pricing.effectiveBaseOverride ?? null);
                                     }}
                                 />
                             )}

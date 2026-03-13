@@ -49,8 +49,8 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
         per_page: 24, // 24 products per page (4 columns * 6 rows)
         category: selectedCategoryId ? selectedCategoryId.toString() : undefined,
         search: searchQuery || undefined,
-        orderby: 'date', // Or 'title'
-        order: 'desc'
+        orderby: 'menu_order',
+        order: 'asc'
     });
 
     const localProducts = wpProducts.map(convertWPProductToLocal);

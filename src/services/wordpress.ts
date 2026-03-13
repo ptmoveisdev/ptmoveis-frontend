@@ -358,14 +358,19 @@ export async function getMediaById(id: number): Promise<WPMedia> {
 export async function getProducts(
     params: ProductQueryParams = {}
 ): Promise<WPPaginatedResponse<WooCommerceProduct>> {
-    const { data, headers } = await fetchWooCommerce<WooCommerceProduct[]>('/products', params);
+    const mergedParams: ProductQueryParams = {
+        orderby: 'menu_order',
+        order: 'asc',
+        ...params,
+    };
+    const { data, headers } = await fetchWooCommerce<WooCommerceProduct[]>('/products', mergedParams);
     const { total, totalPages } = extractPaginationInfo(headers);
 
     return {
         data,
         total,
         totalPages,
-        currentPage: params.page || 1,
+        currentPage: mergedParams.page || 1,
     };
 }
 

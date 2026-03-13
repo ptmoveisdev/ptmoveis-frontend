@@ -69,8 +69,8 @@ export function WordPressProducts({
     const { data: wpProducts, loading, error, refetch } = useProducts({
         per_page: perPage,
         category: category || undefined,
-        orderby: 'date',
-        order: 'desc'
+        orderby: 'menu_order',
+        order: 'asc'
     });
 
     // Log para debug

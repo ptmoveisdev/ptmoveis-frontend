@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface ProductCustomOptionsProps {
     productId: number;
     onSelectionChange: (
-        selections: { name: string; value: string; price: number }[],
-        totalExtraPrice: number
+        selections: { name: string; value: string; price: number; mode?: 'add' | 'replace' }[],
+        pricing: { effectiveBaseOverride?: number; totalExtras: number }
     ) => void;
 }
 
@@ -35,29 +35,41 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
 
     useEffect(() => {
         if (!fields.length) {
-            onSelectionChange([], 0);
+            onSelectionChange([], { totalExtras: 0 });
             return;
         }
 
-        const currentSelections: { name: string; value: string; price: number }[] = [];
-        let totalExtraPrice = 0;
+        const currentSelections: { name: string; value: string; price: number; mode?: 'add' | 'replace' }[] = [];
+        let totalExtras = 0;
+        let effectiveBaseOverride: number | undefined = undefined;
 
         fields.forEach((field, index) => {
             const selectedOptIndex = selections[index];
             if (selectedOptIndex !== undefined && field.options[selectedOptIndex]) {
                 const opt = field.options[selectedOptIndex];
                 const price = typeof opt.price === 'string' ? parseFloat(opt.price) : (opt.price || 0);
+                const modeRaw = (opt.price_mode ?? opt.mode ?? 'add').toString().toLowerCase();
+                const mode: 'add' | 'replace' = modeRaw === 'replace' ? 'replace' : 'add';
+                const normalizedPrice = isNaN(price) ? 0 : price;
 
                 currentSelections.push({
                     name: field.title,
                     value: opt.label,
-                    price: isNaN(price) ? 0 : price
+                    price: normalizedPrice,
+                    mode
                 });
-                totalExtraPrice += isNaN(price) ? 0 : price;
+
+                if (mode === 'replace') {
+                    if (normalizedPrice > 0) {
+                        effectiveBaseOverride = Math.max(effectiveBaseOverride ?? 0, normalizedPrice);
+                    }
+                } else {
+                    totalExtras += normalizedPrice;
+                }
             }
         });
 
-        onSelectionChange(currentSelections, totalExtraPrice);
+        onSelectionChange(currentSelections, { effectiveBaseOverride, totalExtras });
     }, [selections, fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (loading) {

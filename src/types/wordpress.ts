@@ -208,6 +208,12 @@ export interface WooCommerceVariation {
 export interface WCCOOptionChoice {
     label: string;
     price?: number | string;
+    /**
+     * Modo de preço vindo do plugin (ex.: "add" ou "replace").
+     * Mantemos flexível porque o backend pode enviar como `mode` ou `price_mode`.
+     */
+    mode?: 'add' | 'replace' | string;
+    price_mode?: 'add' | 'replace' | string;
     image?: string;
 }
 
@@ -383,7 +389,7 @@ export interface ProductQueryParams {
     include?: number[];
     offset?: number;
     order?: 'asc' | 'desc';
-    orderby?: 'date' | 'id' | 'include' | 'title' | 'slug' | 'price' | 'popularity' | 'rating';
+    orderby?: 'date' | 'id' | 'include' | 'title' | 'slug' | 'price' | 'popularity' | 'rating' | 'menu_order';
     parent?: number[];
     parent_exclude?: number[];
     slug?: string;
