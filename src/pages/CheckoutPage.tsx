@@ -12,8 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
-import { KlarnaWidget } from '@/components/KlarnaWidget';
-import { useKlarnaPayments } from '@/hooks/useKlarnaPayments';
 
 // Dialog (Modal) Components for the Iframe Payment
 import {
@@ -69,14 +67,6 @@ export default function CheckoutPage() {
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
     const pendingOrderRef = React.useRef<{ id: string, total: number } | null>(null);
-
-    const {
-        isLoading: isKlarnaLoading,
-        isReady: isKlarnaReady,
-        error: klarnaError,
-        initializeKlarna,
-        authorize: authorizeKlarna
-    } = useKlarnaPayments();
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
@@ -192,12 +182,6 @@ export default function CheckoutPage() {
     const isShippingCalculated = dynamicShippingCost !== null;
 
     const finalTotal = totalPrice + (dynamicShippingCost || 0);
-
-    React.useEffect(() => {
-        if (selectedPaymentMethod === 'klarna-payments' && finalTotal > 0 && isShippingCalculated) {
-            initializeKlarna(finalTotal);
-        }
-    }, [selectedPaymentMethod, finalTotal, isShippingCalculated, initializeKlarna]);
 
     // Format postal code automatically (e.g., 4000123 -> 4000-123)
     const formatPostalCode = (value: string) => {
@@ -425,22 +409,10 @@ export default function CheckoutPage() {
             return;
         }
 
-        // Fluxo Klarna — via SDK
+        // Fluxo Klarna — usa o gateway configurado no WordPress (HPP/redirecionamento)
         if (data.paymentMethod === 'klarna-payments') {
             setIsSubmitting(true);
             try {
-                // 1. Authorize klarna on frontend
-                const authToken = await authorizeKlarna({
-                    given_name: data.firstName,
-                    family_name: data.lastName,
-                    email: data.email,
-                    phone: data.phone,
-                    street_address: data.address,
-                    city: data.city,
-                    postal_code: data.postalCode,
-                    country: 'PT'
-                });
-
                 const orderData: any = {
                     payment_method: 'klarna_payments',
                     payment_method_title: 'Klarna',
@@ -484,25 +456,25 @@ export default function CheckoutPage() {
                     }],
                     meta_data: [
                         { key: '_nif', value: data.nif || '' },
-                        { key: '_klarna_authorization_token', value: authToken }
-                    ],
-                    payment_data: [
-                        { key: 'authorization_token', value: authToken }
+                        { key: '_klarna_flow', value: 'hpp_redirect' }
                     ]
                 };
 
                 const response = await createWooCommerceOrder(orderData);
 
-                if (response.payment_url && response.payment_url.includes('api.ptmoveis')) {
-                    // Force a local success if the plugin ignores authorization and returns pay_url anyway.
-                    // This circumvents the WP redirect.
-                    clearCart();
-                    toast.success('Encomenda Klarna processada com sucesso!');
-                    navigate('/encomenda-concluida', {
-                        state: { orderId: String(response.id), total: parseFloat(response.total) }
-                    });
-                } else if (response.payment_url) {
-                    window.location.href = response.payment_url;
+                try {
+                    localStorage.setItem(
+                        'klarna_pending_order',
+                        JSON.stringify({ orderId: String(response.id), total: parseFloat(response.total) })
+                    );
+                } catch {
+                    // ignore storage errors
+                }
+
+                if (response.payment_url) {
+                    pendingOrderRef.current = { id: String(response.id), total: parseFloat(response.total) };
+                    setPaymentUrl(response.payment_url);
+                    setPaymentModalOpen(true);
                 } else {
                     clearCart();
                     toast.success('Encomenda Klarna criada com sucesso!');
@@ -947,16 +919,14 @@ export default function CheckoutPage() {
                                         )}
                                     </Button>
                                 ) : selectedPaymentMethod === 'klarna-payments' ? (
-                                    <div className="mt-4">
-                                        <KlarnaWidget 
-                                            isLoading={isKlarnaLoading} 
-                                            isReady={isKlarnaReady} 
-                                            error={klarnaError} 
-                                        />
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-xs text-gray-500 text-center">
+                                            Será redirecionado para a página segura da Klarna após confirmar a encomenda.
+                                        </p>
                                         <Button
                                             type="submit"
                                             form="checkout-form"
-                                            disabled={isSubmitting || !isShippingCalculated || !isKlarnaReady}
+                                            disabled={isSubmitting || !isShippingCalculated || !isValid}
                                             className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                                             style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
                                         >
