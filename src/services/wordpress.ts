@@ -557,6 +557,29 @@ export async function getProductCategoryBySlug(slug: string): Promise<WooCommerc
 // ============================================
 
 /**
+ * Obtém o URL direto do Klarna HPP para uma encomenda já criada.
+ * O endpoint WordPress chama process_payment() do plugin Klarna e devolve
+ * o URL https://pay.klarna.com/eu/hpp/payments/... sem passar pela página WC.
+ */
+export async function getKlarnaHppUrl(orderId: number): Promise<string> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/klarna-hpp-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId }),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Klarna HPP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.hpp_url) throw new Error('Klarna HPP URL não foi retornado pelo servidor.');
+    return data.hpp_url;
+}
+
+/**
  * Cria uma nova encomenda no WooCommerce
  */
 export async function createWooCommerceOrder(

@@ -10,7 +10,7 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { createWooCommerceOrder, getPaymentGateways } from '@/services/wordpress';
+import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
 // Dialog (Modal) Components for the Iframe Payment
@@ -485,10 +485,11 @@ export default function CheckoutPage() {
                     }],
                     meta_data: [
                         { key: '_nif', value: data.nif || '' },
-                        { key: '_klarna_flow', value: 'hpp_redirect' }
+                        { key: '_klarna_flow', value: 'hpp_redirect' },
                     ]
                 };
 
+                // 1. Criar encomenda WooCommerce
                 const response = await createWooCommerceOrder(orderData);
 
                 try {
@@ -500,17 +501,11 @@ export default function CheckoutPage() {
                     // ignore storage errors
                 }
 
-                if (response.payment_url) {
-                    pendingOrderRef.current = { id: String(response.id), total: parseFloat(response.total) };
-                    setPaymentUrl(response.payment_url);
-                    setPaymentModalOpen(true);
-                } else {
-                    clearCart();
-                    toast.success('Encomenda Klarna criada com sucesso!');
-                    navigate('/encomenda-concluida', {
-                        state: { orderId: String(response.id), total: parseFloat(response.total) }
-                    });
-                }
+                // 2. Obter URL direto do Klarna HPP (sem passar pela página WC)
+                const hppUrl = await getKlarnaHppUrl(response.id);
+
+                // 3. Redirecionar diretamente para https://pay.klarna.com/eu/hpp/payments/...
+                window.location.href = hppUrl;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Klarna.';
                 toast.error(msg);

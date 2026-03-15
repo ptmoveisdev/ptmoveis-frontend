@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { CheckCircle2, Package, ArrowRight, ShoppingBag, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getOrderById } from '@/services/wordpress';
+import { useCart } from '@/contexts/CartContext';
 
 interface OrderState {
     orderId?: string;
@@ -15,6 +16,7 @@ export default function OrderSuccessPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const routerState = location.state as OrderState | null;
+    const { clearCart } = useCart();
     const [order, setOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [resolvedState, setResolvedState] = useState<OrderState | null>(null);
@@ -26,13 +28,20 @@ export default function OrderSuccessPage() {
             return;
         }
 
-        // 2. Retorno do Klarna — order_id na query string via snippet PHP return_url
-        const qOrderId = searchParams.get('order_id');
+        // 2. Retorno do Klarna HPP — order_id na query string (hash ou root-level)
+        // Suporta ambos os formatos de URL:
+        //   /#/encomenda-concluida?order_id=123  (hash query — searchParams)
+        //   /encomenda-concluida?order_id=123    (root query — window.location.search, após redirect script)
+        const qOrderId =
+            searchParams.get('order_id') ||
+            new URLSearchParams(window.location.search).get('order_id');
+
         if (qOrderId) {
             const stored = localStorage.getItem('klarna_pending_order');
             const parsed: OrderState = stored ? JSON.parse(stored) : {};
             setResolvedState({ orderId: qOrderId, total: parsed.total });
             localStorage.removeItem('klarna_pending_order');
+            clearCart();
             return;
         }
 
@@ -49,7 +58,7 @@ export default function OrderSuccessPage() {
 
         // Sem dados — redireciona para home
         navigate('/', { replace: true });
-    }, [routerState, searchParams, navigate]);
+    }, [routerState, searchParams, navigate, clearCart]);
 
     useEffect(() => {
         if (!resolvedState?.orderId || resolvedState.orderId === 'whatsapp' || resolvedState.orderId === 'pending') {
