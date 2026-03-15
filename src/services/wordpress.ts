@@ -557,16 +557,35 @@ export async function getProductCategoryBySlug(slug: string): Promise<WooCommerc
 // ============================================
 
 /**
- * Obtém o URL direto do Klarna HPP para uma encomenda já criada.
- * O endpoint WordPress chama process_payment() do plugin Klarna e devolve
- * o URL https://pay.klarna.com/eu/hpp/payments/... sem passar pela página WC.
+ * Passo 1: Cria sessão Klarna no servidor com dados reais da encomenda.
+ * Devolve client_token (para o browser inicializar o SDK) + session_id.
  */
-export async function getKlarnaHppUrl(orderId: number): Promise<string> {
+export async function initKlarnaSession(orderId: number): Promise<{ client_token: string; session_id: string }> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/klarna-init-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId }),
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Klarna init session error: ${response.status}`);
+    }
+    const data = await response.json();
+    if (!data.client_token || !data.session_id) throw new Error('Resposta inválida do servidor Klarna.');
+    return data;
+}
+
+/**
+ * Passo 3: Cria sessão HPP usando a sessão já reclamada pelo browser.
+ * Devolve o URL https://pay.klarna.com/eu/hpp/payments/...
+ */
+export async function getKlarnaHppUrl(orderId: number, sessionId: string): Promise<string> {
     const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
     const response = await fetch(`${base}/wp-json/ptmoveis/v1/klarna-hpp-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId }),
+        body: JSON.stringify({ order_id: orderId, session_id: sessionId }),
     });
 
     if (!response.ok) {

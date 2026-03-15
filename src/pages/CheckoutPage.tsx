@@ -10,7 +10,7 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl } from '@/services/wordpress';
+import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, initKlarnaSession } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
 // Dialog (Modal) Components for the Iframe Payment
@@ -496,10 +496,33 @@ export default function CheckoutPage() {
                     // ignore storage errors
                 }
 
-                // 2. Obter URL direto do Klarna HPP (sem passar pela página WC)
-                const hppUrl = await getKlarnaHppUrl(response.id);
+                // 2. Criar sessão Klarna no servidor → obtém client_token + session_id
+                const { client_token, session_id } = await initKlarnaSession(response.id);
 
-                // 3. Redirecionar diretamente para https://pay.klarna.com/eu/hpp/payments/...
+                // 3. Browser inicializa o SDK Klarna com o client_token (reclama a sessão)
+                await new Promise<void>((resolve, reject) => {
+                    let attempts = 0;
+                    const poll = setInterval(() => {
+                        attempts++;
+                        if (window.Klarna?.Payments) {
+                            clearInterval(poll);
+                            try {
+                                window.Klarna!.Payments.init({ client_token });
+                                resolve();
+                            } catch (e) {
+                                reject(e);
+                            }
+                        } else if (attempts > 50) {
+                            clearInterval(poll);
+                            reject(new Error('Klarna SDK não carregou.'));
+                        }
+                    }, 100);
+                });
+
+                // 4. Obter URL HPP usando a sessão já reclamada pelo browser
+                const hppUrl = await getKlarnaHppUrl(response.id, session_id);
+
+                // 5. Redirecionar para https://pay.klarna.com/eu/hpp/payments/...
                 window.location.href = hppUrl;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Klarna.';
