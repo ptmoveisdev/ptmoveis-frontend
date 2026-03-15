@@ -38,6 +38,26 @@ const GatewayIcon = ({ id }: { id: string }) => {
     return <CreditCard size={32} />;
 };
 
+// Persistência de dados do checkout no localStorage
+const CHECKOUT_STORAGE_KEY = 'ptmoveis_checkout_data';
+
+const getSavedCheckoutData = (): Partial<CheckoutFormData> => {
+    try {
+        const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch {
+        return {};
+    }
+};
+
+const saveCheckoutData = (data: Partial<CheckoutFormData>) => {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { paymentMethod: _, ...rest } = data;
+        localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(rest));
+    } catch {}
+};
+
 // Schema de validação
 const checkoutSchema = z.object({
     firstName: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
@@ -140,6 +160,7 @@ export default function CheckoutPage() {
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
         defaultValues: {
+            ...getSavedCheckoutData(),
             paymentMethod: 'whatsapp'
         },
         mode: 'onChange'
@@ -156,6 +177,14 @@ export default function CheckoutPage() {
             if (user.billing?.postcode) setValue('postalCode', user.billing.postcode, { shouldValidate: true });
         }
     }, [user, setValue]);
+
+    // Salva os dados do formulário no localStorage sempre que mudam
+    React.useEffect(() => {
+        const subscription = watch((value) => {
+            saveCheckoutData(value as Partial<CheckoutFormData>);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch]);
 
     const selectedPaymentMethod = watch('paymentMethod');
     const currentPostalCode = watch('postalCode');
