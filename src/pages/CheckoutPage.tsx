@@ -86,37 +86,24 @@ export default function CheckoutPage() {
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
+    const [isLoadingShipping, setIsLoadingShipping] = useState(true);
     const pendingOrderRef = React.useRef<{ id: string, total: number } | null>(null);
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
-    // Fetch payment gateways on mount
+    // Fetch payment gateways once on mount
     React.useEffect(() => {
         if (import.meta.env.SSR) return;
 
         const fetchGateways = async () => {
             try {
-                // Fetch dynamic gateways
                 let gw = await getPaymentGateways();
-
-                // Filter out the standard card button if advanced card processing is also enabled to prevent duplicates
                 gw = gw.filter((g: any) => g.id !== 'ppcp-card-button-gateway');
-
-                // Add Klarna and WhatsApp manually alongside WooCommerce gateways
                 gw = [
                     ...gw,
-                    {
-                        id: 'klarna-payments',
-                        title: 'Klarna',
-                        method_title: 'Pague depois ou em prestações'
-                    },
-                    {
-                        id: 'whatsapp',
-                        title: 'WhatsApp',
-                        method_title: 'Pagamento manual via WhatsApp'
-                    }
+                    { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' },
+                    { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
-
                 setGateways(gw);
             } catch (error) {
                 console.error("Error fetching gateways:", error);
@@ -126,13 +113,21 @@ export default function CheckoutPage() {
             }
         };
         fetchGateways();
+    }, []);
 
+    // Fetch shipping zones once on mount
+    React.useEffect(() => {
         const fetchZones = async () => {
+            setIsLoadingShipping(true);
             const zones = await fetchAllShippingZones();
             setShippingZones(zones);
+            setIsLoadingShipping(false);
         };
         fetchZones();
+    }, []);
 
+    // Listen for iframe payment completion
+    React.useEffect(() => {
         const handleIframeMessage = (event: MessageEvent) => {
             if (event.data === 'payment_complete') {
                 setPaymentModalOpen(false);
@@ -903,7 +898,12 @@ export default function CheckoutPage() {
                                     <div className="flex justify-between text-gray-600">
                                         <span>Portes de Envio</span>
                                         <span className="font-medium text-gray-900">
-                                            {!isShippingCalculated ? (
+                                            {isLoadingShipping ? (
+                                                <span className="text-gray-400 text-xs flex items-center gap-1">
+                                                    <span className="w-3 h-3 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin inline-block" />
+                                                    A calcular...
+                                                </span>
+                                            ) : !isShippingCalculated ? (
                                                 <span className="text-red-500 text-xs font-semibold">Informe o código postal</span>
                                             ) : (
                                                 `${(dynamicShippingCost || 0).toFixed(2)} €`
@@ -925,7 +925,7 @@ export default function CheckoutPage() {
                                     <Button
                                         type="submit"
                                         form="checkout-form"
-                                        disabled={isSubmitting || !isShippingCalculated}
+                                        disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
                                         className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 rounded-xl text-lg mt-2 relative disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? (
@@ -950,7 +950,7 @@ export default function CheckoutPage() {
                                         <Button
                                             type="submit"
                                             form="checkout-form"
-                                            disabled={isSubmitting || !isShippingCalculated || !isValid}
+                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
                                             className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                                             style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
                                         >
@@ -996,7 +996,7 @@ export default function CheckoutPage() {
                                                 style={{ layout: "vertical", shape: "rect", label: "pay" }}
                                                 createOrder={createOrder}
                                                 onApprove={onApprove}
-                                                disabled={isSubmitting || !isValid || !isShippingCalculated}
+                                                disabled={isSubmitting || isLoadingShipping || !isValid || !isShippingCalculated}
                                                 forceReRender={[currentFundingSource, finalTotal, isValid, dynamicShippingCost]}
                                             />
                                         )}
@@ -1005,13 +1005,18 @@ export default function CheckoutPage() {
                                     <Button
                                         type="submit"
                                         form="checkout-form"
-                                        disabled={isSubmitting || !selectedPaymentMethod || !isShippingCalculated}
+                                        disabled={isSubmitting || isLoadingShipping || !selectedPaymentMethod || !isShippingCalculated}
                                         className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-6 rounded-xl text-lg mt-2 relative transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                 A processar...
+                                            </span>
+                                        ) : isLoadingShipping ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                A calcular envio...
                                             </span>
                                         ) : !isShippingCalculated ? (
                                             <span className="flex items-center justify-center gap-2">

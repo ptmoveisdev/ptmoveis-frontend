@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
 export interface CartItem {
@@ -42,12 +42,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('@ptmoveis:cart', JSON.stringify(items));
     }, [items]);
 
-    const addToCart = (product: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    const addToCart = useCallback((product: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         setItems(prevItems => {
-            // Criar um ID único para o item no carrinho
-            // Se tiver variação, o ID será "PRODUTO-VARIACAO", se não, apenas "PRODUTO"
-            // Mas para garantir compatibilidade, vamos usar a lógica de comparação
-
             const existingItemIndex = prevItems.findIndex(item =>
                 item.productId === product.productId &&
                 item.variationId === product.variationId &&
@@ -63,32 +59,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 return newItems;
             }
 
-            // Remove a propriedade quantity do produto antes de espalhar se ele existir
             const { quantity, ...productWithoutQuantity } = product as any;
             return [...prevItems, { ...productWithoutQuantity, quantity: qtyToAdd }];
         });
-    };
+    }, []);
 
-    const removeFromCart = (id: string) => {
+    const removeFromCart = useCallback((id: string) => {
         setItems(prevItems => prevItems.filter(item => item.id !== id));
-    };
+    }, []);
 
-    const updateQuantity = (id: string, quantity: number) => {
+    const updateQuantity = useCallback((id: string, quantity: number) => {
         if (quantity <= 0) {
-            removeFromCart(id);
+            setItems(prevItems => prevItems.filter(item => item.id !== id));
             return;
         }
-
         setItems(prevItems =>
             prevItems.map(item =>
                 item.id === id ? { ...item, quantity } : item
             )
         );
-    };
+    }, []);
 
-    const clearCart = () => {
+    const clearCart = useCallback(() => {
         setItems([]);
-    };
+    }, []);
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
