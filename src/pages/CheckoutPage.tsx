@@ -188,6 +188,17 @@ export default function CheckoutPage() {
     // Reset card fields visibility when payment method changes
     React.useEffect(() => { setShowCardFields(false); }, [selectedPaymentMethod]);
 
+    // Traduzir títulos dos gateways que vêm em inglês do plugin PayPal PPCP
+    const translateGateway = (gateway: any) => {
+        const titleMap: Record<string, { title: string; method_title: string }> = {
+            'ppcp-credit-card-gateway': { title: 'Cartão de Débito ou Crédito', method_title: 'Processamento Avançado de Cartões' },
+            'ppcp-gateway':             { title: 'PayPal', method_title: 'Pague com a sua conta PayPal' },
+        };
+        const override = titleMap[gateway.id];
+        if (!override) return gateway;
+        return { ...gateway, title: override.title, method_title: override.method_title };
+    };
+
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
         switch (gatewayId) {
@@ -877,8 +888,8 @@ export default function CheckoutPage() {
                                                             <GatewayIcon id={gateway.id} />
                                                         )}
                                                     </div>
-                                                    <span className="font-semibold text-gray-900 font-montserrat text-center">{gateway.title}</span>
-                                                    <span className="text-xs text-gray-500 text-center">{gateway.method_title || 'Pagamento seguro'}</span>
+                                                    <span className="font-semibold text-gray-900 font-montserrat text-center">{translateGateway(gateway).title}</span>
+                                                    <span className="text-xs text-gray-500 text-center">{translateGateway(gateway).method_title || 'Pagamento seguro'}</span>
                                                 </label>
                                             ))
                                         )}
