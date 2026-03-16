@@ -187,14 +187,13 @@ export default function CheckoutPage() {
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
         switch (gatewayId) {
-            case 'ppcp-credit-card-gateway': return "card";
             case 'ppcp-gateway':
             case 'paypal':
                 return "paypal";
             default:
-                // Pagamentos como Multibanco, MBWay, MyBank ou Google/Apple Pay
-                // usarão o fluxo padrão do WooCommerce (criação da encomenda e redirecionamento para o gateway de pagamento)
-                // Isto previne falhas no SDK Native Checkout do PayPal.
+                // ppcp-credit-card-gateway e outros (Multibanco, MBWay, etc.)
+                // usam o fluxo padrão do WooCommerce — cria encomenda e abre payment_url no modal iframe.
+                // Isto evita que os campos do cartão apareçam inline no resumo do pedido.
                 return null;
         }
     };
@@ -1009,7 +1008,7 @@ export default function CheckoutPage() {
                                                 className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
                                             >
                                                 <span className="flex items-center justify-center gap-2">
-                                                    Preencha os dados para pagar com {currentFundingSource === 'multibanco' ? 'Multibanco' : currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
+                                                    Preencha os dados para pagar com PayPal
                                                 </span>
                                             </Button>
                                         ) : (

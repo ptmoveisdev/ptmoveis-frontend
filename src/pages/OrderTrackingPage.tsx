@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, Package, ArrowRight, User } from 'lucide-react';
@@ -15,17 +16,39 @@ const trackingSchema = z.object({
 
 type TrackingFormValues = z.infer<typeof trackingSchema>;
 
+interface TrackingState {
+    orderId?: string;
+    email?: string;
+}
+
 export default function OrderTrackingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [order, setOrder] = useState<any | null>(null);
+    const location = useLocation();
+    const routerState = location.state as TrackingState | null;
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors }
     } = useForm<TrackingFormValues>({
-        resolver: zodResolver(trackingSchema)
+        resolver: zodResolver(trackingSchema),
+        defaultValues: {
+            orderId: routerState?.orderId || '',
+            email: routerState?.email || '',
+        }
     });
+
+    // Auto-fetch if navigated with both orderId and email
+    useEffect(() => {
+        if (routerState?.orderId && routerState?.email) {
+            setValue('orderId', routerState.orderId);
+            setValue('email', routerState.email);
+            onSubmit({ orderId: routerState.orderId, email: routerState.email });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onSubmit = async (data: TrackingFormValues) => {
         setIsLoading(true);
