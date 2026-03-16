@@ -687,7 +687,7 @@ export default function CheckoutPage() {
                 clientId: paypalClientId,
                 currency: "EUR",
                 intent: "capture",
-                components: "buttons,funding-eligibility"
+                components: "buttons,funding-eligibility,card-fields"
             }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <button
