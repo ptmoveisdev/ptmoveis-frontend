@@ -84,6 +84,7 @@ export default function CheckoutPage() {
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+    const [cardModalOpen, setCardModalOpen] = useState(false);
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
     const [isLoadingShipping, setIsLoadingShipping] = useState(true);
@@ -187,13 +188,12 @@ export default function CheckoutPage() {
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
         switch (gatewayId) {
+            case 'ppcp-credit-card-gateway': return "card";
             case 'ppcp-gateway':
             case 'paypal':
                 return "paypal";
             default:
-                // ppcp-credit-card-gateway e outros (Multibanco, MBWay, etc.)
-                // usam o fluxo padrão do WooCommerce — cria encomenda e abre payment_url no modal iframe.
-                // Isto evita que os campos do cartão apareçam inline no resumo do pedido.
+                // Multibanco, MBWay, etc. — fluxo padrão do WooCommerce (modal iframe)
                 return null;
         }
     };
@@ -993,27 +993,29 @@ export default function CheckoutPage() {
                                     </div>
                                 ) : currentFundingSource ? (
                                     <div className="mt-4">
-                                        {isSubmitting && (
-                                            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-xl">
-                                                <span className="w-8 h-8 border-4 border-[#00457C]/30 border-t-[#00457C] rounded-full animate-spin" />
-                                            </div>
-                                        )}
                                         {!isValid ? (
                                             <Button
                                                 type="button"
-                                                onClick={() => {
-                                                    // Try to submit just to show validation errors
-                                                    handleSubmit(onSubmit)();
-                                                }}
+                                                onClick={() => handleSubmit(onSubmit)()}
                                                 className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-6 rounded-xl text-lg mt-2 relative"
                                             >
                                                 <span className="flex items-center justify-center gap-2">
-                                                    Preencha os dados para pagar com PayPal
+                                                    Preencha os dados para pagar com {currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
                                                 </span>
+                                            </Button>
+                                        ) : currentFundingSource === 'card' ? (
+                                            <Button
+                                                type="button"
+                                                disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
+                                                onClick={() => setCardModalOpen(true)}
+                                                className="w-full bg-[#1C1E21] hover:bg-[#3a3d42] text-white font-bold py-6 rounded-xl text-lg mt-2 flex items-center justify-center gap-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            >
+                                                <CreditCard className="w-5 h-5" />
+                                                Pagar com Cartão
                                             </Button>
                                         ) : (
                                             <PayPalButtons
-                                                key={currentFundingSource} // Force remount on method change to prevent paypal state issues
+                                                key={currentFundingSource}
                                                 fundingSource={currentFundingSource as any}
                                                 style={{ layout: "vertical", shape: "rect", label: "pay" }}
                                                 createOrder={createOrder}
@@ -1061,6 +1063,35 @@ export default function CheckoutPage() {
 
                     </div>
                 </div>
+
+                {/* Modal de Pagamento com Cartão (PayPal Advanced Card Processing) */}
+                <Dialog open={cardModalOpen} onOpenChange={setCardModalOpen}>
+                    <DialogContent className="max-w-sm w-full">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-[#1E3A5F]">
+                                <CreditCard className="w-5 h-5 text-[#D4AF37]" />
+                                Pagar com Cartão
+                            </DialogTitle>
+                            <DialogDescription>
+                                Introduza os dados do seu cartão de débito ou crédito para concluir o pagamento.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="pt-2">
+                            <PayPalButtons
+                                key="card-modal"
+                                fundingSource={"card" as any}
+                                style={{ layout: "vertical", shape: "rect", label: "pay" }}
+                                createOrder={createOrder}
+                                onApprove={(data, actions) => {
+                                    setCardModalOpen(false);
+                                    return onApprove(data, actions);
+                                }}
+                                forceReRender={[finalTotal, dynamicShippingCost]}
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
             </PayPalScriptProvider>
 
             {/* Modal de Pagamento WooCommerce */}
