@@ -84,7 +84,7 @@ export default function CheckoutPage() {
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
-    const [cardModalOpen, setCardModalOpen] = useState(false);
+    const [showCardFields, setShowCardFields] = useState(false);
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
     const [isLoadingShipping, setIsLoadingShipping] = useState(true);
@@ -184,6 +184,9 @@ export default function CheckoutPage() {
 
     const selectedPaymentMethod = watch('paymentMethod');
     const currentPostalCode = watch('postalCode');
+
+    // Reset card fields visibility when payment method changes
+    React.useEffect(() => { setShowCardFields(false); }, [selectedPaymentMethod]);
 
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
@@ -999,11 +1002,11 @@ export default function CheckoutPage() {
                                                     Preencha os dados para pagar com {currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
                                                 </span>
                                             </Button>
-                                        ) : currentFundingSource === 'card' ? (
+                                        ) : currentFundingSource === 'card' && !showCardFields ? (
                                             <Button
                                                 type="button"
                                                 disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
-                                                onClick={() => setCardModalOpen(true)}
+                                                onClick={() => setShowCardFields(true)}
                                                 className="w-full bg-[#1C1E21] hover:bg-[#3a3d42] text-white font-bold py-6 rounded-xl text-lg mt-2 flex items-center justify-center gap-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                             >
                                                 <CreditCard className="w-5 h-5" />
@@ -1059,34 +1062,6 @@ export default function CheckoutPage() {
 
                     </div>
                 </div>
-
-                {/* Modal de Pagamento com Cartão (PayPal Advanced Card Processing) */}
-                <Dialog open={cardModalOpen} onOpenChange={setCardModalOpen}>
-                    <DialogContent className="max-w-sm w-full">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-[#1E3A5F]">
-                                <CreditCard className="w-5 h-5 text-[#D4AF37]" />
-                                Pagar com Cartão
-                            </DialogTitle>
-                            <DialogDescription>
-                                Introduza os dados do seu cartão de débito ou crédito para concluir o pagamento.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="pt-2">
-                            <PayPalButtons
-                                key="card-modal"
-                                fundingSource={"card" as any}
-                                style={{ layout: "vertical", shape: "rect", label: "pay" }}
-                                createOrder={createOrder}
-                                onApprove={(data, actions) => {
-                                    setCardModalOpen(false);
-                                    return onApprove(data, actions);
-                                }}
-                                forceReRender={[finalTotal, dynamicShippingCost]}
-                            />
-                        </div>
-                    </DialogContent>
-                </Dialog>
 
             </PayPalScriptProvider>
 
