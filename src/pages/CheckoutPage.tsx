@@ -302,9 +302,6 @@ export default function CheckoutPage() {
     const createOrder = (_data: any, actions: any) => {
         const formData = watch();
         return actions.order.create({
-            application_context: {
-                shipping_preference: 'SET_PROVIDED_ADDRESS',
-            },
             payer: {
                 name: {
                     given_name: formData.firstName,
@@ -406,13 +403,12 @@ export default function CheckoutPage() {
                 ]
             };
 
-            await createWooCommerceOrder(orderData);
+            const wooOrder = await createWooCommerceOrder(orderData);
 
             toast.success(`Pagamento concluído com sucesso!`);
             clearCart();
 
-            // Se logado e tem OrderSuccess melhorado, mandar state com o customerId, ideal seria com os dados da order gerada para o customer
-            navigate('/encomenda-concluida', { state: { orderId: details.id, total: finalTotal } });
+            navigate('/encomenda-concluida', { state: { orderId: String(wooOrder.id), total: finalTotal } });
 
         } catch (error) {
             console.error('Erro ao processar pedido', error);
