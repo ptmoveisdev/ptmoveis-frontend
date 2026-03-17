@@ -88,7 +88,8 @@ export default function CheckoutPage() {
         const fetchGateways = async () => {
             try {
                 let gw = await getPaymentGateways();
-                gw = gw.filter((g: any) => g.id !== 'ppcp-card-button-gateway');
+                // Remove gateways do plugin Klarna (substituídos pelo nosso fluxo HPP)
+                gw = gw.filter((g: any) => !['ppcp-card-button-gateway', 'klarna_payments', 'klarna-payments', 'kco'].includes(g.id));
                 gw = [
                     ...gw,
                     { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' },
