@@ -30,30 +30,7 @@ const WOOCOMMERCE_API_URL = import.meta.env.VITE_WOOCOMMERCE_API_URL || 'http://
 const WOOCOMMERCE_CONSUMER_KEY = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_KEY || '';
 const WOOCOMMERCE_CONSUMER_SECRET = import.meta.env.VITE_WOOCOMMERCE_CONSUMER_SECRET || '';
 const WCCO_API_URL = import.meta.env.VITE_WCCO_API_URL || '';
-const KLARNA_TOKEN_URL = import.meta.env.VITE_KLARNA_TOKEN_URL || '';
 
-// ============================================
-// KLARNA PAYMENTS
-// ============================================
-
-/**
- * Solicita ao WordPress um client_token para inicializar o Klarna Payments SDK.
- * Requer o endpoint customizado `ptmoveis/v1/klarna-token` no WordPress.
- */
-export async function createKlarnaSession(total: number): Promise<{ client_token: string; payment_method_categories?: unknown[] }> {
-    const response = await fetch(KLARNA_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ total }),
-    });
-
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Erro ${response.status} ao criar sessão Klarna`);
-    }
-
-    return response.json();
-}
 
 /**
  * Classe de erro customizada para WordPress API
@@ -557,35 +534,16 @@ export async function getProductCategoryBySlug(slug: string): Promise<WooCommerc
 // ============================================
 
 /**
- * Passo 1: Cria sessão Klarna no servidor com dados reais da encomenda.
- * Devolve client_token (para o browser inicializar o SDK) + session_id.
- */
-export async function initKlarnaSession(orderId: number): Promise<{ client_token: string; session_id: string }> {
-    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
-    const response = await fetch(`${base}/wp-json/ptmoveis/v1/klarna-init-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId }),
-    });
-    if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || `Klarna init session error: ${response.status}`);
-    }
-    const data = await response.json();
-    if (!data.client_token || !data.session_id) throw new Error('Resposta inválida do servidor Klarna.');
-    return data;
-}
-
-/**
- * Passo 3: Cria sessão HPP usando a sessão já reclamada pelo browser.
+ * Cria sessão HPP directamente no servidor com os dados da encomenda WooCommerce.
+ * Não usa sessão KP intermédia — evita o erro "same device" da Klarna.
  * Devolve o URL https://pay.klarna.com/eu/hpp/payments/...
  */
-export async function getKlarnaHppUrl(orderId: number, sessionId: string): Promise<string> {
+export async function getKlarnaHppUrl(orderId: number): Promise<string> {
     const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
     const response = await fetch(`${base}/wp-json/ptmoveis/v1/klarna-hpp-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId, session_id: sessionId }),
+        body: JSON.stringify({ order_id: orderId }),
     });
 
     if (!response.ok) {
