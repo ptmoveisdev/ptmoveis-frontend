@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
     CheckCircle2, Package, ArrowRight, ShoppingBag, Loader2,
-    Truck, Clock, MapPin, Mail, Search, RotateCcw, CreditCard
+    Truck, Clock, MapPin, Mail, Search, RotateCcw, CreditCard, Banknote, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getOrderById } from '@/services/wordpress';
@@ -141,6 +141,21 @@ export default function OrderSuccessPage() {
     const isWhatsApp = resolvedState.orderId === 'whatsapp';
     const isPending = resolvedState.orderId === 'pending';
     const isRealOrder = !isWhatsApp && !isPending;
+
+    // Detectar pagamento Multibanco / MBWay e extrair referência dos meta_data
+    const isMultibanco = order?.payment_method?.includes('multibanco');
+    const isMbway = order?.payment_method?.includes('mbway');
+    const getMeta = (keys: string[]) => {
+        if (!order?.meta_data) return null;
+        for (const key of keys) {
+            const found = order.meta_data.find((m: any) => m.key === key);
+            if (found?.value) return String(found.value);
+        }
+        return null;
+    };
+    const mbEntity    = getMeta(['_multibanco_entity', '_ppcp_multibanco_entity', 'multibanco_entity', '_ifthen_multibanco_entity']);
+    const mbReference = getMeta(['_multibanco_reference', '_ppcp_multibanco_reference', 'multibanco_reference', '_ifthen_multibanco_reference', '_eupago_multibanco_referencia']);
+    const mbDeadline  = getMeta(['_multibanco_deadline', '_ppcp_multibanco_deadline', 'multibanco_deadline', '_ifthen_multibanco_expiry']);
     const stepIndex = order ? getStepIndex(order.status) : 0;
     const statusColors = order ? getStatusColors(order.status) : getStatusColors('pending');
 
@@ -257,6 +272,72 @@ export default function OrderSuccessPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Instruções Multibanco */}
+                {isMultibanco && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-[#D4AF37]/30 overflow-hidden">
+                        <div className="bg-[#D4AF37]/10 px-6 py-4 flex items-center gap-3 border-b border-[#D4AF37]/20">
+                            <Banknote className="w-5 h-5 text-[#D4AF37]" />
+                            <h2 className="font-bold text-[#1E3A5F]">Instruções de Pagamento — Multibanco</h2>
+                        </div>
+                        <div className="p-6">
+                            {mbReference ? (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {mbEntity && (
+                                        <div className="bg-gray-50 rounded-xl p-4 text-center">
+                                            <p className="text-xs text-gray-500 mb-1">Entidade</p>
+                                            <p className="text-2xl font-bold text-[#1E3A5F] tracking-widest">{mbEntity}</p>
+                                        </div>
+                                    )}
+                                    <div className="bg-gray-50 rounded-xl p-4 text-center">
+                                        <p className="text-xs text-gray-500 mb-1">Referência</p>
+                                        <p className="text-2xl font-bold text-[#1E3A5F] tracking-widest">{mbReference}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4 text-center">
+                                        <p className="text-xs text-gray-500 mb-1">Montante</p>
+                                        <p className="text-2xl font-bold text-[#D4AF37]">
+                                            {order?.total ? `${parseFloat(order.total).toFixed(2)} €` : `${resolvedState.total?.toFixed(2)} €`}
+                                        </p>
+                                    </div>
+                                    {mbDeadline && (
+                                        <div className="bg-gray-50 rounded-xl p-4 text-center">
+                                            <p className="text-xs text-gray-500 mb-1">Válido até</p>
+                                            <p className="text-lg font-semibold text-gray-900">{mbDeadline}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-start gap-3 text-sm text-gray-600">
+                                    <AlertCircle className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold text-gray-900 mb-1">Referência Multibanco a ser gerada</p>
+                                        <p>As instruções de pagamento serão enviadas para o seu email em breve. Pode também consultar a referência na área <strong>A minha conta</strong> ou em <strong>Acompanhar encomenda</strong>.</p>
+                                    </div>
+                                </div>
+                            )}
+                            <p className="text-xs text-gray-400 mt-4 text-center">
+                                Pode efetuar o pagamento em qualquer caixa multibanco ou homebanking.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Instruções MBWay */}
+                {isMbway && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
+                        <div className="bg-blue-50 px-6 py-4 flex items-center gap-3 border-b border-blue-100">
+                            <CreditCard className="w-5 h-5 text-blue-600" />
+                            <h2 className="font-bold text-[#1E3A5F]">Instruções de Pagamento — MBWay</h2>
+                        </div>
+                        <div className="p-6 flex items-start gap-3 text-sm text-gray-600">
+                            <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-semibold text-gray-900 mb-1">Confirme o pagamento na app MBWay</p>
+                                <p>Deverá receber uma notificação no seu telemóvel para confirmar o pagamento de <strong>{order?.total ? `${parseFloat(order.total).toFixed(2)} €` : `${resolvedState.total?.toFixed(2)} €`}</strong>. Verifique a app MBWay.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Status Timeline — only for real orders */}
                 {isRealOrder && (

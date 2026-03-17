@@ -599,6 +599,30 @@ export async function getKlarnaHppUrl(orderId: number, sessionId: string): Promi
 }
 
 /**
+ * Processa o pagamento de uma encomenda APM (Multibanco, MBWay, etc.)
+ * e devolve o URL de redirect real (PayPal / PPRO) para onde o utilizador deve ser enviado.
+ *
+ * Requer endpoint WordPress: POST /wp-json/ptmoveis/v1/process-payment
+ * Body:    { order_id: number }
+ * Returns: { redirect_url: string }
+ */
+export async function getApmRedirectUrl(orderId: number): Promise<string> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/process-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId }),
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ao processar pagamento: ${response.status}`);
+    }
+    const data = await response.json();
+    if (!data.redirect_url) throw new Error('URL de pagamento não retornado pelo servidor.');
+    return data.redirect_url;
+}
+
+/**
  * Cria uma nova encomenda no WooCommerce
  */
 export async function createWooCommerceOrder(

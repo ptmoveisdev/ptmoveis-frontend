@@ -10,17 +10,9 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, initKlarnaSession } from '@/services/wordpress';
+import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, initKlarnaSession, getApmRedirectUrl } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
-// Dialog (Modal) Components for the Iframe Payment
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 
 const GatewayIcon = ({ id }: { id: string }) => {
     if (id.includes('paypal')) {
@@ -82,13 +74,10 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [gateways, setGateways] = useState<any[]>([]);
     const [isLoadingGateways, setIsLoadingGateways] = useState(true);
-    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-    const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [showCardFields, setShowCardFields] = useState(false);
     const [isLoadingCep, setIsLoadingCep] = useState(false);
     const [shippingZones, setShippingZones] = useState<EnrichedShippingZone[]>([]);
     const [isLoadingShipping, setIsLoadingShipping] = useState(true);
-    const pendingOrderRef = React.useRef<{ id: string, total: number } | null>(null);
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
@@ -127,24 +116,6 @@ export default function CheckoutPage() {
         fetchZones();
     }, []);
 
-    // Listen for iframe payment completion
-    React.useEffect(() => {
-        const handleIframeMessage = (event: MessageEvent) => {
-            if (event.data === 'payment_complete') {
-                setPaymentModalOpen(false);
-                toast.success('Pagamento concluído com sucesso!');
-                clearCart();
-                if (pendingOrderRef.current) {
-                    navigate('/encomenda-concluida', { state: { orderId: pendingOrderRef.current.id, total: pendingOrderRef.current.total } });
-                } else {
-                    navigate('/encomenda-concluida', { state: { orderId: 'pending' } });
-                }
-            }
-        };
-
-        window.addEventListener('message', handleIframeMessage);
-        return () => window.removeEventListener('message', handleIframeMessage);
-    }, [navigate, clearCart]);
 
     const {
         register,
@@ -193,11 +164,15 @@ export default function CheckoutPage() {
         const titleMap: Record<string, { title: string; method_title: string }> = {
             'ppcp-credit-card-gateway': { title: 'Cartão de Débito ou Crédito', method_title: 'Processamento Avançado de Cartões' },
             'ppcp-gateway':             { title: 'PayPal', method_title: 'Pague com a sua conta PayPal' },
+            'ppcp-multibanco':          { title: 'Multibanco', method_title: 'Referência gerada pelo PayPal' },
         };
         const override = titleMap[gateway.id];
         if (!override) return gateway;
         return { ...gateway, title: override.title, method_title: override.method_title };
     };
+
+    // APMs via PayPal SDK que não fazem capture imediato (pagamento diferido)
+    const APM_SOURCES = ['multibanco', 'mbway', 'mybank', 'blik', 'giropay', 'sofort', 'ideal', 'eps', 'bancontact', 'p24'];
 
     // Mapear os métodos de pagamento do WooCommerce (ppcp-*) para funding sources do react-paypal-js
     const getPayPalFundingSource = (gatewayId: string): string | null => {
@@ -207,7 +182,8 @@ export default function CheckoutPage() {
             case 'paypal':
                 return "paypal";
             default:
-                // Multibanco, MBWay, etc. — fluxo padrão do WooCommerce (modal iframe)
+                // ppcp-multibanco e outros APMs: fluxo WooCommerce (cria encomenda → sucesso)
+                // O plugin PPCP envia a referência Multibanco por email e/ou via webhook
                 return null;
         }
     };
@@ -353,17 +329,22 @@ export default function CheckoutPage() {
     };
 
     const onApprove = async (_data: any, actions: any) => {
+        // APMs (Multibanco, etc.) têm pagamento diferido — não fazem capture imediato
+        const isApm = APM_SOURCES.includes(_data.paymentSource ?? currentFundingSource ?? '');
+
         try {
             setIsSubmitting(true);
-            const details = await actions.order.capture();
+
+            // Só faz capture para pagamentos imediatos (cartão, PayPal wallet)
+            const captureId = isApm ? _data.orderID : (await actions.order.capture()).id;
 
             const formData = watch();
-
-            const orderData = {
+            const wooOrder = await createWooCommerceOrder({
                 payment_method: selectedPaymentMethod,
-                payment_method_title: selectedPaymentMethod === 'ppcp-multibanco' ? 'Multibanco' :
+                payment_method_title:
+                    selectedPaymentMethod === 'ppcp-multibanco' ? 'Multibanco' :
                     selectedPaymentMethod === 'ppcp-credit-card-gateway' ? 'Cartões Bancários' : 'PayPal',
-                set_paid: true,
+                set_paid: !isApm,
                 billing: {
                     first_name: formData.firstName,
                     last_name: formData.lastName,
@@ -387,41 +368,29 @@ export default function CheckoutPage() {
                         product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                         quantity: item.quantity,
                     };
-                    if (item.variationId) {
-                        line.variation_id = item.variationId;
-                    }
+                    if (item.variationId) line.variation_id = item.variationId;
                     if (item.customOptions && item.customOptions.length > 0) {
-                        line.meta_data = item.customOptions.map(opt => ({
+                        line.meta_data = item.customOptions.map((opt: any) => ({
                             key: opt.name,
                             value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value
                         }));
                     }
                     return line;
                 }),
-                shipping_lines: [
-                    {
-                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
-                        method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
-                        total: (dynamicShippingCost || 0).toFixed(2),
-                    }
-                ],
+                shipping_lines: [{
+                    method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                    method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                    total: (dynamicShippingCost || 0).toFixed(2),
+                }],
                 meta_data: [
-                    {
-                        key: '_nif',
-                        value: formData.nif || ''
-                    },
-                    {
-                        key: '_paypal_transaction_id',
-                        value: details.id
-                    }
+                    { key: '_nif', value: formData.nif || '' },
+                    { key: '_paypal_order_id', value: _data.orderID },
+                    ...(isApm ? [] : [{ key: '_paypal_transaction_id', value: captureId }]),
                 ]
-            };
+            });
 
-            const wooOrder = await createWooCommerceOrder(orderData);
-
-            toast.success(`Pagamento concluído com sucesso!`);
+            toast.success(isApm ? 'Referência gerada! Siga as instruções para concluir o pagamento.' : 'Pagamento concluído com sucesso!');
             clearCart();
-
             navigate('/encomenda-concluida', { state: { orderId: String(wooOrder.id), total: finalTotal } });
 
         } catch (error) {
@@ -647,18 +616,19 @@ export default function CheckoutPage() {
             };
 
             const response = await createWooCommerceOrder(orderData);
-            pendingOrderRef.current = { id: String(response.id), total: parseFloat(response.total) };
 
-            // For fallback gateways (Multibanco, etc.), load the WooCommerce payment URL in an Iframe Modal
             if (response.payment_url) {
-                setPaymentUrl(response.payment_url);
-                setPaymentModalOpen(true);
-            } else {
-                // Otherwise fallback to success routing directly
+                // Chamar endpoint WordPress que processa o pagamento e devolve o URL real (PayPal/PPRO)
+                // O utilizador é redirecionado diretamente para a página de pagamento, sem passar pelo WordPress
+                const redirectUrl = await getApmRedirectUrl(response.id);
                 clearCart();
-                toast.success('Encomenda criada com sucesso!');
-                navigate('/encomenda-concluida', { state: { orderId: String(response.id), total: parseFloat(response.total) } });
+                window.location.href = redirectUrl;
+                return;
             }
+
+            clearCart();
+            toast.success('Encomenda criada com sucesso!');
+            navigate('/encomenda-concluida', { state: { orderId: String(response.id), total: parseFloat(response.total) } });
 
         } catch (error) {
             console.error('Erro ao processar pedido', error);
@@ -1076,41 +1046,6 @@ export default function CheckoutPage() {
 
             </PayPalScriptProvider>
 
-            {/* Modal de Pagamento WooCommerce */}
-            <Dialog open={paymentModalOpen} onOpenChange={(open) => {
-                if (!open) {
-                    // Se o utilizador fechar o modal, alertar que a encomenda ficou pendente
-                    toast.warning("Atenção: fechou a janela de pagamento. A sua encomenda ficou pendente.");
-                    clearCart();
-                    if (pendingOrderRef.current) {
-                        navigate('/encomenda-concluida', { state: { orderId: pendingOrderRef.current.id, total: pendingOrderRef.current.total } });
-                    } else {
-                        navigate('/encomenda-concluida', { state: { orderId: 'pending' } });
-                    }
-                }
-                setPaymentModalOpen(open);
-            }}>
-                <DialogContent className="sm:max-w-4xl w-[95vw] h-[90vh] p-0 flex flex-col overflow-hidden bg-gray-50">
-                    <DialogHeader className="p-4 bg-white border-b border-gray-100 flex-shrink-0">
-                        <DialogTitle className="text-[#1E3A5F] font-montserrat flex items-center justify-between">
-                            <span>Pagamento Seguro</span>
-                        </DialogTitle>
-                        <DialogDescription className="text-gray-500 text-sm">
-                            Siga as instruções para concluir o pagamento na segurança da PT Móveis.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 w-full bg-white relative">
-                        {paymentUrl && (
-                            <iframe
-                                src={paymentUrl}
-                                className="w-full h-full border-0 absolute inset-0"
-                                allow="payment *"
-                                title="Checkout Secure Payment"
-                            />
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
