@@ -92,7 +92,7 @@ export default function CheckoutPage() {
                 gw = gw.filter((g: any) => !['ppcp-card-button-gateway', 'klarna_payments', 'klarna-payments', 'kco'].includes(g.id));
                 gw = [
                     ...gw,
-                    { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' },
+                    // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
