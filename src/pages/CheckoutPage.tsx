@@ -10,7 +10,7 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl } from '@/services/wordpress';
+import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
 
@@ -19,6 +19,14 @@ const GatewayIcon = ({ id }: { id: string }) => {
         return (
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a2.008 2.008 0 0 0-1.967 1.688l-1.385 8.784-.046.33a.64.64 0 0 0 .63.74H10.19a.636.636 0 0 0 .627-.541l.889-5.65c.081-.518.525-.9 1.05-.9h.244c4.332 0 7.625-1.742 8.604-6.756.241-1.229.074-2.731-.382-4.609z" />
+            </svg>
+        );
+    }
+    if (id.includes('scalapay')) {
+        return (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                <rect width="40" height="40" rx="8" fill="#00C480"/>
+                <text x="20" y="27" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="22" fill="white">S</text>
             </svg>
         );
     }
@@ -89,10 +97,11 @@ export default function CheckoutPage() {
             try {
                 let gw = await getPaymentGateways();
                 // Remove gateways do plugin Klarna (substituídos pelo nosso fluxo HPP)
-                gw = gw.filter((g: any) => !['ppcp-card-button-gateway', 'klarna_payments', 'klarna-payments', 'kco'].includes(g.id));
+                gw = gw.filter((g: any) => !['ppcp-card-button-gateway', 'klarna_payments', 'klarna-payments', 'kco', 'scalapay'].includes(g.id));
                 gw = [
                     ...gw,
                     // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
+                    { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' },
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
@@ -484,6 +493,80 @@ export default function CheckoutPage() {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Klarna.';
                 toast.error(msg);
                 console.error('❌ Klarna onSubmit:', err);
+            } finally {
+                setIsSubmitting(false);
+            }
+            return;
+        }
+
+        // Fluxo Scalapay — cria encomenda WooCommerce e redireciona para o portal de pagamento Scalapay
+        if (data.paymentMethod === 'scalapay') {
+            setIsSubmitting(true);
+            try {
+                const orderData: any = {
+                    payment_method: 'scalapay',
+                    payment_method_title: 'Scalapay',
+                    set_paid: false,
+                    billing: {
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        address_1: data.address,
+                        city: data.city,
+                        postcode: data.postalCode,
+                        country: 'PT',
+                        email: data.email,
+                        phone: data.phone,
+                    },
+                    shipping: {
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        address_1: data.address,
+                        city: data.city,
+                        postcode: data.postalCode,
+                        country: 'PT',
+                    },
+                    line_items: items.map(item => {
+                        const line: any = {
+                            product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
+                            quantity: item.quantity,
+                        };
+                        if (item.variationId) line.variation_id = item.variationId;
+                        if (item.customOptions && item.customOptions.length > 0) {
+                            line.meta_data = item.customOptions.map(opt => ({
+                                key: opt.name,
+                                value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value,
+                            }));
+                        }
+                        return line;
+                    }),
+                    shipping_lines: [{
+                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                        total: (dynamicShippingCost || 0).toFixed(2),
+                    }],
+                    meta_data: [
+                        { key: '_nif', value: data.nif || '' },
+                        { key: '_scalapay_flow', value: 'redirect' },
+                    ]
+                };
+
+                const response = await createWooCommerceOrder(orderData);
+
+                try {
+                    localStorage.setItem(
+                        'scalapay_pending_order',
+                        JSON.stringify({ orderId: String(response.id), total: parseFloat(response.total) })
+                    );
+                } catch {
+                    // ignore storage errors
+                }
+
+                const checkoutUrl = await getScalapayCheckoutUrl(response.id);
+                window.location.href = checkoutUrl;
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Scalapay.';
+                toast.error(msg);
+                console.error('❌ Scalapay onSubmit:', err);
             } finally {
                 setIsSubmitting(false);
             }
@@ -945,6 +1028,34 @@ export default function CheckoutPage() {
                                                         <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
                                                     </svg>
                                                     Pagar com Klarna
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </div>
+                                ) : selectedPaymentMethod === 'scalapay' ? (
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-xs text-gray-500 text-center">
+                                            Será redirecionado para a página segura da Scalapay após confirmar a encomenda.
+                                        </p>
+                                        <Button
+                                            type="submit"
+                                            form="checkout-form"
+                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
+                                            className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            style={{ backgroundColor: '#00C480', color: '#ffffff' }}
+                                        >
+                                            {isSubmitting ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    A processar com Scalapay…
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-2 font-semibold">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 40 40" fill="none">
+                                                        <rect width="40" height="40" rx="8" fill="white" fillOpacity="0.25"/>
+                                                        <text x="20" y="27" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="22" fill="white">S</text>
+                                                    </svg>
+                                                    Pagar com Scalapay
                                                 </span>
                                             )}
                                         </Button>

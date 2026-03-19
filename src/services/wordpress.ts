@@ -557,6 +557,32 @@ export async function getKlarnaHppUrl(orderId: number): Promise<string> {
 }
 
 /**
+ * Cria sessão de checkout Scalapay para uma encomenda WooCommerce.
+ * Chama o gateway Scalapay no WordPress via process_payment() e devolve o URL do portal.
+ *
+ * Requer endpoint WordPress: POST /wp-json/ptmoveis/v1/scalapay-checkout-url
+ * Body:    { order_id: number }
+ * Returns: { checkout_url: string }
+ */
+export async function getScalapayCheckoutUrl(orderId: number): Promise<string> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/scalapay-checkout-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId }),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Scalapay error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.checkout_url) throw new Error('URL de pagamento Scalapay não retornado pelo servidor.');
+    return data.checkout_url;
+}
+
+/**
  * Processa o pagamento de uma encomenda APM (Multibanco, MBWay, etc.)
  * e devolve o URL de redirect real (PayPal / PPRO) para onde o utilizador deve ser enviado.
  *
