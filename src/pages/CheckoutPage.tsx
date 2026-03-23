@@ -201,8 +201,11 @@ export default function CheckoutPage() {
 
     // Calculate dynamic shipping based on postal code
     const matchedShippingMethod = matchShippingZoneWithMethod(currentPostalCode, shippingZones);
-    const dynamicShippingCost = matchedShippingMethod && matchedShippingMethod.settings.cost ? parseFloat(matchedShippingMethod.settings.cost.value) : null;
-    const isShippingCalculated = dynamicShippingCost !== null;
+    // Cost may be absent on free-shipping or simple flat-rate methods — treat missing as 0
+    const dynamicShippingCost = matchedShippingMethod !== null
+        ? (parseFloat(matchedShippingMethod.settings?.cost?.value || '0') || 0)
+        : null;
+    const isShippingCalculated = matchedShippingMethod !== null;
 
     const finalTotal = totalPrice + (dynamicShippingCost || 0);
 
@@ -245,57 +248,100 @@ export default function CheckoutPage() {
             return;
         }
 
+        // Check localStorage cache first to avoid hitting rate-limited APIs repeatedly
+        const CACHE_KEY = `cep_cache_${cep}`;
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { street, city } = JSON.parse(cached) as { street: string; city: string };
+                if (street) setValue('address', street, { shouldValidate: true, shouldDirty: true });
+                if (city) setValue('city', city, { shouldValidate: true, shouldDirty: true });
+                toast.success('Morada preenchida com sucesso!');
+                return;
+            }
+        } catch {
+            // ignore cache errors
+        }
+
         setIsLoadingCep(true);
+
+        let resolvedStreet = '';
+        let resolvedCity = '';
+
+        // --- API 1: GeoAPI (primary) ---
         try {
             const response = await fetch(`https://json.geoapi.pt/cp/${cep}`);
-            if (!response.ok) {
-                throw new Error('Erro ao buscar o código postal.');
+            if (response.ok) {
+                const data = await response.json();
+                const hasError = data.msg?.includes('limit') || data.Erro || data.Error
+                    || (typeof data === 'string' && data.includes('Error'))
+                    || (Array.isArray(data) && data.length === 0);
+                if (!hasError) {
+                    resolvedStreet = data.arteria || (data.ruas && data.ruas.length > 0 ? data.ruas[0] : '') || data['Designação Postal'] || '';
+                    resolvedCity = data.Localidade || data.municipio || data.Concelho || '';
+                }
             }
-            const data = await response.json();
+        } catch {
+            // fall through to next API
+        }
 
-            // Check for rate limit message or errors
-            if (data.msg?.includes('limit') || data.Erro || data.Error || (typeof data === 'string' && data.includes('Error')) || (Array.isArray(data) && data.length === 0)) {
-                throw new Error('Limite de uso da API atingido ou CEP não encontrado.');
-            }
-
-            const street = data.arteria || (data.ruas && data.ruas.length > 0 ? data.ruas[0] : '') || data['Designação Postal'] || '';
-            const city = data.Localidade || data.municipio || data.Concelho || '';
-
-            if (!street && !city) {
-                throw new Error('Detalhes do código postal não encontrados na base principal.');
-            }
-
-            if (street) {
-                setValue('address', street, { shouldValidate: true, shouldDirty: true });
-            }
-            if (city) {
-                setValue('city', city, { shouldValidate: true, shouldDirty: true });
-            }
-
-            toast.success('Morada preenchida com sucesso!');
-        } catch (error) {
-            console.warn('GeoAPI falhou. Tentando fallback para Zippopotam.us...', error);
-
-            // Fallback to Zippopotam.us
+        // --- API 2: Nominatim / OpenStreetMap (first fallback, no rate limits for light use) ---
+        if (!resolvedCity) {
             try {
-                const fallbackResponse = await fetch(`https://api.zippopotam.us/PT/${cep}`);
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    if (fallbackData.places && fallbackData.places.length > 0) {
-                        const city = fallbackData.places[0]['place name'];
-                        setValue('city', city, { shouldValidate: true, shouldDirty: true });
-                        // We only have city, not street
-                        toast.success('Localidade preenchida. Por favor, digite o restante da morada manualmente.', { duration: 5000 });
-                        return; // Exit successfully from fallback
+                const nominatimUrl = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cep)}&countrycodes=pt&format=json&limit=1&addressdetails=1`;
+                const nomRes = await fetch(nominatimUrl, {
+                    headers: { 'Accept-Language': 'pt', 'User-Agent': 'ptmoveis-checkout/1.0' }
+                });
+                if (nomRes.ok) {
+                    const nomData = await nomRes.json();
+                    if (Array.isArray(nomData) && nomData.length > 0) {
+                        const addr = nomData[0].address || {};
+                        resolvedCity = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+                        if (!resolvedStreet) {
+                            resolvedStreet = addr.road || addr.pedestrian || '';
+                        }
                     }
                 }
-            } catch (fallbackError) {
-                console.error('Fallback Zippopotamus falhou:', fallbackError);
+            } catch {
+                // fall through to next API
             }
+        }
 
-            toast.error('Não foi possível encontrar a morada automaticamente. Por favor, preencha manualmente os campos.');
-        } finally {
-            setIsLoadingCep(false);
+        // --- API 3: Zippopotam.us (second fallback) ---
+        // Expects code without dash: 4000001
+        if (!resolvedCity) {
+            try {
+                const cepNoHyphen = cep.replace('-', '');
+                const zipRes = await fetch(`https://api.zippopotam.us/PT/${cepNoHyphen}`);
+                if (zipRes.ok) {
+                    const zipData = await zipRes.json();
+                    if (zipData.places && zipData.places.length > 0) {
+                        resolvedCity = zipData.places[0]['place name'] || '';
+                    }
+                }
+            } catch {
+                // all APIs exhausted
+            }
+        }
+
+        setIsLoadingCep(false);
+
+        if (resolvedStreet || resolvedCity) {
+            if (resolvedStreet) setValue('address', resolvedStreet, { shouldValidate: true, shouldDirty: true });
+            if (resolvedCity) setValue('city', resolvedCity, { shouldValidate: true, shouldDirty: true });
+
+            // Cache for future lookups
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ street: resolvedStreet, city: resolvedCity }));
+            } catch { /* ignore */ }
+
+            if (resolvedStreet) {
+                toast.success('Morada preenchida com sucesso!');
+            } else {
+                toast.success('Localidade preenchida. Por favor, complete a morada manualmente.', { duration: 5000 });
+            }
+        } else {
+            toast.error('Não foi possível encontrar a morada. Por favor, preencha manualmente os campos.');
         }
     };
 
