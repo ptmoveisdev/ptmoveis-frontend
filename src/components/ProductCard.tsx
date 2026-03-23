@@ -12,7 +12,7 @@ interface ProductCardProps {
     onViewDetails?: (product: Product) => void;
 }
 
-export function ProductCard({ product, index = 0, onViewDetails }: ProductCardProps) {
+export function ProductCard({ product, index = 0 }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const { isFavorite, toggleFavorite } = useFavorites();
     const navigate = useNavigate();
@@ -22,12 +22,6 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
         e?.stopPropagation();
         navigate(`/produto/${product.slug}`);
         window.scrollTo(0, 0);
-    };
-
-    const handleViewDetails = () => {
-        if (onViewDetails) {
-            onViewDetails(product);
-        }
     };
 
     return (

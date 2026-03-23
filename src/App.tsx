@@ -9,10 +9,8 @@ import {
   Menu, X, Search, Heart, ShoppingCart, User,
   Shield, Truck, CreditCard, Headphones, Star,
   Instagram, MapPin,
-  ChevronRight,
   Facebook
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { CartSidebar } from '@/components/CartSidebar';
