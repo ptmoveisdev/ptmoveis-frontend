@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Heart, ShoppingCart, Eye, Star } from 'lucide-react';
+import { Heart, Eye, Star, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import type { Product } from '@/data/products';
 
@@ -14,27 +14,14 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0, onViewDetails }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
-    const { addToCart } = useCart();
     const { isFavorite, toggleFavorite } = useFavorites();
+    const navigate = useNavigate();
     const isLiked = isFavorite(product.id);
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            oldPrice: product.oldPrice,
-            image: product.image,
-            badge: product.badge,
-            badgeColor: product.badgeColor,
-            productId: product.id,
-        });
-
-        // Visual feedback
-        const button = e.currentTarget as HTMLButtonElement;
-        button.classList.add('animate-price-pop');
-        setTimeout(() => button.classList.remove('animate-price-pop'), 400);
+    const handleViewProduct = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        navigate(`/produto/${product.slug}`);
+        window.scrollTo(0, 0);
     };
 
     const handleViewDetails = () => {
@@ -50,7 +37,7 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                 animationDelay: `${index * 60}ms`,
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
             }}
-            onClick={handleViewDetails}
+            onClick={() => handleViewProduct()}
             onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
             }}
@@ -107,12 +94,9 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                         />
                     </button>
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetails();
-                        }}
+                        onClick={(e) => handleViewProduct(e)}
                         className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
-                        aria-label="Quick view"
+                        aria-label="Ver produto"
                     >
                         <Eye className="w-4 h-4 text-gray-600" />
                     </button>
@@ -162,13 +146,13 @@ export function ProductCard({ product, index = 0, onViewDetails }: ProductCardPr
                     )}
                 </div>
 
-                {/* Add to Cart Button */}
+                {/* View Product Button */}
                 <Button
-                    onClick={handleAddToCart}
+                    onClick={(e) => handleViewProduct(e)}
                     className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white text-xs sm:text-sm font-bold py-2 sm:py-2.5 rounded-lg transition-all group-hover:shadow-md h-8 sm:h-auto"
                 >
-                    <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                    ADICIONAR
+                    VER PRODUTO
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
                 </Button>
 
                 {/* Stock Status */}
