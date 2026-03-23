@@ -222,6 +222,7 @@ export interface WCCOOptionField {
     type: 'select' | 'radio' | 'image_swatch';
     required: boolean;
     options: WCCOOptionChoice[];
+    mutex_group?: string;
 }
 
 export interface WooCommerceProduct {

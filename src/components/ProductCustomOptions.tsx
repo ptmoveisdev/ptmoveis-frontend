@@ -71,9 +71,33 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
             }
         });
 
-        const isValid = fields.every((field, index) => !field.required || selections[index] !== undefined);
+        const isValid = fields.every((field, index) => {
+            if (!field.required) return true;
+            if (selections[index] !== undefined) return true;
+            if (field.mutex_group) {
+                const groupHasSelection = fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined);
+                if (groupHasSelection) return true;
+            }
+            return false;
+        });
         onSelectionChange(currentSelections, { effectiveBaseOverride, totalExtras }, isValid);
     }, [selections, fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    function applyMutexGroup(prev: Record<number, number>, fieldIndex: number, newVal: number | undefined): Record<number, number> {
+        const updated = { ...prev };
+        if (newVal !== undefined) updated[fieldIndex] = newVal;
+        else delete updated[fieldIndex];
+
+        const mutexGroup = fields[fieldIndex]?.mutex_group;
+        if (mutexGroup && newVal !== undefined) {
+            fields.forEach((f, i) => {
+                if (i !== fieldIndex && f.mutex_group === mutexGroup) {
+                    delete updated[i];
+                }
+            });
+        }
+        return updated;
+    }
 
     if (loading) {
         return (
@@ -102,13 +126,17 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 }
                 
                 const selectedValue = selections[fieldIndex];
-                
-                const hasError = attemptedSubmit && field.required && selectedValue === undefined;
+
+                const mutexSatisfied = field.mutex_group
+                    ? fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined)
+                    : false;
+
+                const hasError = attemptedSubmit && field.required && selectedValue === undefined && !mutexSatisfied;
 
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
                         <label className="text-sm font-semibold text-gray-900 mb-3 block">
-                            {field.title} {field.required && <span className="text-red-500">*</span>}
+                            {field.title}{field.required && !mutexSatisfied && (!field.mutex_group || fields.findIndex((f) => f.mutex_group === field.mutex_group) === fieldIndex) && <span className="text-red-500"> *</span>}
                         </label>
                         {hasError && (
                             <p className="text-red-500 text-xs mb-2">Este campo é obrigatório.</p>
@@ -119,15 +147,8 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                 value={selectedValue !== undefined ? String(selectedValue) : undefined}
 
                                 onValueChange={(val) => {
-                                    if (val === '__none__') {
-                                        setSelections((prev) => {
-                                            const updated = { ...prev };
-                                            delete updated[fieldIndex];
-                                            return updated;
-                                        });
-                                        return;
-                                    }
-                                    setSelections({ ...selections, [fieldIndex]: parseInt(val, 10) });
+                                    const newVal = val === '__none__' ? undefined : parseInt(val, 10);
+                                    setSelections((prev) => applyMutexGroup(prev, fieldIndex, newVal));
                                 }}
                             >
                                 <SelectTrigger className={`w-full rounded-xl border bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all ${hasError ? 'border-red-500' : 'border-gray-200'}`}>
@@ -161,14 +182,8 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 checked={isSelected}
                                                 onChange={() => {
                                                     setSelections((prev) => {
-                                                        const current = prev[fieldIndex];
-                                                        const updated = { ...prev };
-                                                        if (current === optIndex) {
-                                                            delete updated[fieldIndex];
-                                                        } else {
-                                                            updated[fieldIndex] = optIndex;
-                                                        }
-                                                        return updated;
+                                                        const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
+                                                        return applyMutexGroup(prev, fieldIndex, newVal);
                                                     });
                                                 }}
                                                 className="text-[#D4AF37] focus:ring-[#D4AF37]"
@@ -195,14 +210,8 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 checked={isSelected}
                                                 onChange={() => {
                                                     setSelections((prev) => {
-                                                        const current = prev[fieldIndex];
-                                                        const updated = { ...prev };
-                                                        if (current === optIndex) {
-                                                            delete updated[fieldIndex];
-                                                        } else {
-                                                            updated[fieldIndex] = optIndex;
-                                                        }
-                                                        return updated;
+                                                        const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
+                                                        return applyMutexGroup(prev, fieldIndex, newVal);
                                                     });
                                                 }}
                                                 className="sr-only"
