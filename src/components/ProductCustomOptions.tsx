@@ -144,7 +144,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
 
                         {field.type === 'select' && (
                             <Select
-                                value={selectedValue !== undefined ? String(selectedValue) : undefined}
+                                value={selectedValue !== undefined ? String(selectedValue) : '__none__'}
 
                                 onValueChange={(val) => {
                                     const newVal = val === '__none__' ? undefined : parseInt(val, 10);
