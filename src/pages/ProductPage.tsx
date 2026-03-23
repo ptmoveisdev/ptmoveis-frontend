@@ -95,11 +95,11 @@ export default function ProductPage() {
         ? selectedVariation.stock_status === 'instock'
         : product.inStock;
 
-    const handleAddToCart = () => {
-        if (product.hasVariations && !selectedVariation) return;
+    const handleAddToCart = (): boolean => {
+        if (product.hasVariations && !selectedVariation) return false;
         if (!customOptionsValid) {
             setAttemptedSubmit(true);
-            return;
+            return false;
         }
 
         let selectedAttributesString = '';
@@ -141,10 +141,12 @@ export default function ProductPage() {
                 description: `${quantity}x ${product.name}`,
             });
         }
+        return true;
     };
 
     const handleBuyNow = () => {
-        handleAddToCart();
+        const added = handleAddToCart();
+        if (!added) return;
         navigate('/checkout');
     };
 
