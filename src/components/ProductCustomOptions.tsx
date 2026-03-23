@@ -7,11 +7,13 @@ interface ProductCustomOptionsProps {
     productId: number;
     onSelectionChange: (
         selections: { name: string; value: string; price: number; mode?: 'add' | 'replace' }[],
-        pricing: { effectiveBaseOverride?: number; totalExtras: number }
+        pricing: { effectiveBaseOverride?: number; totalExtras: number },
+        isValid: boolean
     ) => void;
+    attemptedSubmit?: boolean;
 }
 
-export function ProductCustomOptions({ productId, onSelectionChange }: ProductCustomOptionsProps) {
+export function ProductCustomOptions({ productId, onSelectionChange, attemptedSubmit = false }: ProductCustomOptionsProps) {
     const [fields, setFields] = useState<WCCOOptionField[]>([]);
     const [loading, setLoading] = useState(true);
     // Armazena as seleções { fieldIndex: opcaoIndex }
@@ -35,7 +37,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
 
     useEffect(() => {
         if (!fields.length) {
-            onSelectionChange([], { totalExtras: 0 });
+            onSelectionChange([], { totalExtras: 0 }, true);
             return;
         }
 
@@ -69,7 +71,8 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
             }
         });
 
-        onSelectionChange(currentSelections, { effectiveBaseOverride, totalExtras });
+        const isValid = fields.every((field, index) => !field.required || selections[index] !== undefined);
+        onSelectionChange(currentSelections, { effectiveBaseOverride, totalExtras }, isValid);
     }, [selections, fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (loading) {
@@ -100,15 +103,21 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                 
                 const selectedValue = selections[fieldIndex];
                 
+                const hasError = attemptedSubmit && field.required && selectedValue === undefined;
+
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
                         <label className="text-sm font-semibold text-gray-900 mb-3 block">
                             {field.title} {field.required && <span className="text-red-500">*</span>}
                         </label>
+                        {hasError && (
+                            <p className="text-red-500 text-xs mb-2">Este campo é obrigatório.</p>
+                        )}
 
                         {field.type === 'select' && (
                             <Select
                                 value={selectedValue !== undefined ? String(selectedValue) : undefined}
+
                                 onValueChange={(val) => {
                                     if (val === '__none__') {
                                         setSelections((prev) => {
@@ -121,7 +130,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                                     setSelections({ ...selections, [fieldIndex]: parseInt(val, 10) });
                                 }}
                             >
-                                <SelectTrigger className="w-full rounded-xl border border-gray-200 bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all">
+                                <SelectTrigger className={`w-full rounded-xl border bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all ${hasError ? 'border-red-500' : 'border-gray-200'}`}>
                                     <SelectValue placeholder="Escolha uma opção" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
@@ -139,7 +148,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                         )}
 
                         {field.type === 'radio' && (
-                            <div className="grid gap-2">
+                            <div className={`grid gap-2 ${hasError ? 'rounded-xl border border-red-500 p-2' : ''}`}>
                                 {field.options.map((opt, optIndex) => {
                                     const p = parsePrice(opt.price);
                                     const isSelected = selections[fieldIndex] === optIndex;
@@ -150,7 +159,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onClick={() => {
+                                                onChange={() => {
                                                     setSelections((prev) => {
                                                         const current = prev[fieldIndex];
                                                         const updated = { ...prev };
@@ -184,7 +193,7 @@ export function ProductCustomOptions({ productId, onSelectionChange }: ProductCu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onClick={() => {
+                                                onChange={() => {
                                                     setSelections((prev) => {
                                                         const current = prev[fieldIndex];
                                                         const updated = { ...prev };

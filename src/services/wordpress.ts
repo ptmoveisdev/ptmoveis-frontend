@@ -668,6 +668,43 @@ export async function getShippingZoneMethods(zoneId: number): Promise<WooCommerc
 }
 
 // ============================================
+// SLIDES DO PLUGIN PT MOVEIS SLIDER
+// ============================================
+
+export interface PTMoveiSlide {
+    id: number;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    image_full?: { url: string; width: number; height: number; alt: string };
+    image_mobile?: { url: string; width: number; height: number; alt: string };
+    video_url?: string;
+    video_embed?: string;
+    link_text?: string;
+    link_url?: string;
+    sort_order?: number;
+}
+
+/**
+ * Busca slides do plugin PT Moveis Slider
+ */
+export async function getSlides(): Promise<PTMoveiSlide[]> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/slides`, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erro ao buscar slides: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+}
+
+// ============================================
 // UTILITÁRIOS
 // ============================================
 

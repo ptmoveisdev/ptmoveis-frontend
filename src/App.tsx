@@ -32,7 +32,8 @@ import { AllProductsPage } from '@/components/AllProductsPage';
 import { useProductCategories } from '@/hooks/useWordPress';
 import type { WooCommerceCategory } from '@/types/wordpress';
 import { MegaMenu } from '@/components/MegaMenu';
-import { Toaster } from '@/components/ui/sonner';// Navigation Header Component
+import { Toaster } from '@/components/ui/sonner';
+import { HeroSlider } from '@/components/HeroSlider';// Navigation Header Component
 function NavigationHeader({
   onCartClick,
   onFavoritesClick,
@@ -219,65 +220,6 @@ function NavigationHeader({
         </div>
       )}
     </header>
-  );
-}
-
-// Hero Section Component
-function HeroSection({ onViewCollection }: { onViewCollection: () => void }) {
-  return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden bg-gradient-to-br from-white via-gray-50 to-white">
-      {/* Decorative gold line */}
-      <div className="hidden lg:block absolute left-[8%] top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#D4AF37] to-transparent opacity-60" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Content */}
-          <div className="relative z-10 py-12 lg:py-0">
-            <span className="inline-block text-xs font-semibold tracking-[0.2em] text-[#D4AF37] mb-4 animate-fade-in-up">
-              QUALIDADE QUE TRANSFORMA
-            </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1E3A5F] mb-4 leading-tight" style={{ fontFamily: 'Montserrat' }}>
-              <span className="block animate-fade-in-up delay-100">Tudo para</span>
-              <span className="block animate-fade-in-up delay-200">sua <span className="text-[#D4AF37]">Casa</span></span>
-            </h1>
-            <p className="text-lg text-gray-600 mb-8 animate-fade-in-up delay-300">
-              Com elegância e conforto. Descubra a nossa coleção de móveis premium.
-            </p>
-            <Button
-              onClick={onViewCollection}
-              className="bg-[#D4AF37] hover:bg-[#B8960C] text-white px-8 py-6 text-base font-semibold rounded-lg transition-all hover:scale-105 animate-pulse-glow animate-fade-in-up delay-400"
-            >
-              Ver Coleção
-              <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
-          </div>
-
-          {/* Image */}
-          <div className="relative animate-fade-in delay-200">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img
-                src="/hero-bedroom.jpg"
-                alt="Quarto moderno PT Móveis"
-                className="w-full h-[400px] lg:h-[500px] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-white/30" />
-            </div>
-            {/* Floating badge */}
-            <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-xl p-4 animate-float">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#D4AF37] rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#1E3A5F]">Qualidade Premium</p>
-                  <p className="text-xs text-gray-500">Garantia de 2 anos</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -706,7 +648,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             <>
-              <HeroSection onViewCollection={() => handleNavigate('/produtos')} />
+              <HeroSlider onViewCollection={() => handleNavigate('/produtos')} />
               <TrustBar />
               <FeaturedProducts onProductClick={handleProductClick} />
               <AboutSection />

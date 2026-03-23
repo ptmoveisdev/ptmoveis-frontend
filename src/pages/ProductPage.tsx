@@ -29,6 +29,8 @@ export default function ProductPage() {
     const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number; mode?: 'add' | 'replace' }[]>([]);
     const [customOptionsExtras, setCustomOptionsExtras] = useState(0);
     const [customOptionsBaseOverride, setCustomOptionsBaseOverride] = useState<number | null>(null);
+    const [customOptionsValid, setCustomOptionsValid] = useState(true);
+    const [attemptedSubmit, setAttemptedSubmit] = useState(false);
     const { addToCart } = useCart();
 
     // Fetch from WordPress
@@ -95,6 +97,10 @@ export default function ProductPage() {
 
     const handleAddToCart = () => {
         if (product.hasVariations && !selectedVariation) return;
+        if (!customOptionsValid) {
+            setAttemptedSubmit(true);
+            return;
+        }
 
         let selectedAttributesString = '';
         if (selectedVariation) {
@@ -323,10 +329,13 @@ export default function ProductPage() {
                             {wpProduct && (
                                 <ProductCustomOptions
                                     productId={wpProduct.id}
-                                    onSelectionChange={(selections, pricing) => {
+                                    attemptedSubmit={attemptedSubmit}
+                                    onSelectionChange={(selections, pricing, isValid) => {
                                         setCustomOptionsSelection(selections);
                                         setCustomOptionsExtras(pricing.totalExtras);
                                         setCustomOptionsBaseOverride(pricing.effectiveBaseOverride ?? null);
+                                        setCustomOptionsValid(isValid);
+                                        if (isValid) setAttemptedSubmit(false);
                                     }}
                                 />
                             )}
