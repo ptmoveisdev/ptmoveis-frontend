@@ -180,7 +180,9 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onChange={() => {
+                                                onChange={() => {}}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
                                                     setSelections((prev) => {
                                                         const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
                                                         return applyMutexGroup(prev, fieldIndex, newVal);
@@ -208,7 +210,9 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onChange={() => {
+                                                onChange={() => {}}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
                                                     setSelections((prev) => {
                                                         const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
                                                         return applyMutexGroup(prev, fieldIndex, newVal);

@@ -37,7 +37,7 @@ export function ProductVariations({
     className = ''
 }: ProductVariationsProps) {
     const { variations, loading, error } = useProductVariations(productId);
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+    const [selectedOptions, setSelectedOptions] = useState<Record<string, string | undefined>>({});
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
 
     // Filtrar apenas atributos que são usados para variações
@@ -73,7 +73,7 @@ export function ProductVariations({
     const handleOptionSelect = (attributeSlug: string, option: string) => {
         setSelectedOptions(prev => ({
             ...prev,
-            [attributeSlug]: option
+            [attributeSlug]: prev[attributeSlug] === option ? undefined : option
         }));
     };
 
