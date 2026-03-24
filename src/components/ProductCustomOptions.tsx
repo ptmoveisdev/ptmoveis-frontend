@@ -180,13 +180,13 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onChange={() => {}}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setSelections((prev) => {
-                                                        const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
-                                                        return applyMutexGroup(prev, fieldIndex, newVal);
-                                                    });
+                                                onChange={() => {
+                                                    setSelections((prev) => applyMutexGroup(prev, fieldIndex, optIndex));
+                                                }}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelections((prev) => applyMutexGroup(prev, fieldIndex, undefined));
+                                                    }
                                                 }}
                                                 className="text-[#D4AF37] focus:ring-[#D4AF37]"
                                             />
@@ -210,13 +210,13 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
-                                                onChange={() => {}}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setSelections((prev) => {
-                                                        const newVal = prev[fieldIndex] === optIndex ? undefined : optIndex;
-                                                        return applyMutexGroup(prev, fieldIndex, newVal);
-                                                    });
+                                                onChange={() => {
+                                                    setSelections((prev) => applyMutexGroup(prev, fieldIndex, optIndex));
+                                                }}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelections((prev) => applyMutexGroup(prev, fieldIndex, undefined));
+                                                    }
                                                 }}
                                                 className="sr-only"
                                             />
