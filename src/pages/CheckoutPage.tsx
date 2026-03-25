@@ -497,8 +497,6 @@ export default function CheckoutPage() {
                         const line: any = {
                             product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                             quantity: item.quantity,
-                            subtotal: (item.price * item.quantity).toFixed(2),
-                            total: (item.price * item.quantity).toFixed(2),
                         };
                         if (item.variationId) line.variation_id = item.variationId;
                         if (item.customOptions && item.customOptions.length > 0) {
@@ -577,8 +575,6 @@ export default function CheckoutPage() {
                         const line: any = {
                             product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                             quantity: item.quantity,
-                            subtotal: (item.price * item.quantity).toFixed(2),
-                            total: (item.price * item.quantity).toFixed(2),
                         };
                         if (item.variationId) line.variation_id = item.variationId;
                         if (item.customOptions && item.customOptions.length > 0) {
