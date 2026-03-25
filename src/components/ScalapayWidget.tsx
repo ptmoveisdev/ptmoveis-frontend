@@ -30,7 +30,8 @@ interface ScalapayWidgetProps {
 }
 
 export function ScalapayWidget({ amountSelector, type, visible = true }: ScalapayWidgetProps) {
-    if (!visible) return null;
+    // INFO: Temporarily disabled globally as requested by merchant until API approval is confirmed.
+    return null;
 
     // TODO: Num ambiente de produção, substituir "integration" pelo token de live e remover o "environment"
     const merchantToken = import.meta.env.VITE_SCALAPAY_TOKEN || '8KDS3SPEL';
