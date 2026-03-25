@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { ScalapayWidget } from './ScalapayWidget';
 
 interface CartSidebarProps {
     isOpen: boolean;
@@ -161,14 +162,15 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             </div>
 
                             {/* Total */}
-                            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Montserrat' }}>
-                                    Total
+                            <div className="flex justify-between items-end mb-6">
+                                <span className="text-gray-600 font-medium" style={{ fontFamily: 'Montserrat' }}>
+                                    Total a pagar
                                 </span>
-                                <span className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                                <span id="scalapay-cart-price" className="text-2xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                     {!isNaN(totalPrice) ? `${totalPrice.toFixed(2)} €` : ''}
                                 </span>
                             </div>
+                            <ScalapayWidget amountSelector="#scalapay-cart-price" type="cart" visible={totalPrice > 0} />
 
                             {/* Online Checkout Button */}
                             <Button

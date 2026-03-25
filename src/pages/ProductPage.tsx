@@ -16,6 +16,7 @@ import { convertWPProductToLocal } from '@/utils/productUtils';
 import type { WooCommerceVariation } from '@/types/wordpress';
 import { toast } from 'sonner';
 import { ProductShippingCalculator } from '@/components/ProductShippingCalculator';
+import { ScalapayWidget } from '../components/ScalapayWidget';
 
 export default function ProductPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -280,9 +281,10 @@ export default function ProductPage() {
                                             {displayOldPrice.toFixed(2)} €
                                         </span>
                                     )}
-                                    <span className="text-4xl lg:text-5xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                                    <span id="scalapay-product-price" className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                         {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
                                     </span>
+                                    <ScalapayWidget amountSelector="#scalapay-product-price" type="product" />
                                 </div>
 
                                 {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
