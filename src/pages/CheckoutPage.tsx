@@ -10,6 +10,7 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { ScalapayWidget } from '../components/ScalapayWidget';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
@@ -1029,10 +1030,11 @@ export default function CheckoutPage() {
 
                                 <div className="flex justify-between items-end">
                                     <span className="text-gray-900 font-bold text-lg">Total</span>
-                                    <span className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
+                                    <span id="scalapay-checkout-price" className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                         {finalTotal.toFixed(2)} €
                                     </span>
                                 </div>
+                                <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} />
 
                                 {selectedPaymentMethod === 'whatsapp' ? (
                                     <Button

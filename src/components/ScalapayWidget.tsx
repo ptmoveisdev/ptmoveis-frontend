@@ -4,7 +4,13 @@
  * Este componente exige que o script do Scalapay esteja carregado no index.html.
  */
 
-import React from 'react';
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'scalapay-widget': any;
+        }
+    }
+}
 
 interface ScalapayWidgetProps {
     /** 
@@ -45,6 +51,7 @@ export function ScalapayWidget({ amountSelector, type, visible = true }: Scalapa
 
     return (
         <div className="mt-3 scalapay-widget-container">
+            {/* @ts-ignore: Web component ignorado pelo TS */}
             <scalapay-widget {...widgetProps}></scalapay-widget>
         </div>
     );
