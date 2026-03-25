@@ -29,7 +29,7 @@ interface ScalapayWidgetProps {
     visible?: boolean;
 }
 
-export function ScalapayWidget({ amountSelector, type, visible = true }: ScalapayWidgetProps) {
+export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
     // INFO: Temporarily disabled globally as requested by merchant until API approval is confirmed.
     return null;
 
