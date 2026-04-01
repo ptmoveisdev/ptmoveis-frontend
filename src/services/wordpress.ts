@@ -556,30 +556,66 @@ export async function getKlarnaHppUrl(orderId: number): Promise<string> {
     return data.hpp_url;
 }
 
+export interface ScalapayOrderData {
+    totalAmount: { amount: string; currency: string };
+    consumer: { phoneNumber: string; givenNames: string; surname: string; email: string };
+    billing: { name: string; line1: string; suburb: string; postcode: string; countryCode: string; phoneNumber: string };
+    shipping: { name: string; line1: string; suburb: string; postcode: string; countryCode: string; phoneNumber: string };
+    items: Array<{ name: string; sku: string; quantity: number; price: { amount: string; currency: string } }>;
+    merchant: { redirectConfirmUrl: string; redirectCancelUrl: string };
+    merchantReference?: string;
+    taxAmount?: { amount: string; currency: string };
+    shippingAmount?: { amount: string; currency: string };
+    discounts?: Array<{ displayName: string; amount: { amount: string; currency: string } }>;
+    type?: string;
+    product?: string;
+    frequency?: { frequencyType: string; number: number };
+}
+
 /**
  * Cria sessão de checkout Scalapay para uma encomenda WooCommerce.
  * Chama o gateway Scalapay no WordPress via process_payment() e devolve o URL do portal.
  *
  * Requer endpoint WordPress: POST /wp-json/ptmoveis/v1/scalapay-checkout-url
- * Body:    { order_id: number }
+ * Body:    { order_id: number, scalapay_order_data?: ScalapayOrderData }
  * Returns: { checkout_url: string }
  */
-export async function getScalapayCheckoutUrl(orderId: number): Promise<string> {
+export async function getScalapayCheckoutUrl(orderId: number, scalapayOrderData?: ScalapayOrderData): Promise<string> {
     const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
     const response = await fetch(`${base}/wp-json/ptmoveis/v1/scalapay-checkout-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId }),
+        body: JSON.stringify({ order_id: orderId, ...(scalapayOrderData && { scalapay_order_data: scalapayOrderData }) }),
     });
 
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || `Scalapay error: ${response.status}`);
+        const detail = err.data?.scalapay_error ? ` (${JSON.stringify(err.data.scalapay_error)})` : '';
+        throw new Error((err.message || `Scalapay error: ${response.status}`) + detail);
     }
 
     const data = await response.json();
     if (!data.checkout_url) throw new Error('URL de pagamento Scalapay não retornado pelo servidor.');
     return data.checkout_url;
+}
+
+/**
+ * Confirma o pagamento Scalapay após redirect do portal (POST /v2/payments/capture).
+ * Requer endpoint WordPress: POST /wp-json/ptmoveis/v1/scalapay-capture
+ * Body:    { order_id: number, order_token: string }
+ * Returns: { success: true }
+ */
+export async function captureScalapayPayment(orderId: number, orderToken: string): Promise<void> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/scalapay-capture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, order_token: orderToken }),
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Scalapay capture error: ${response.status}`);
+    }
 }
 
 /**

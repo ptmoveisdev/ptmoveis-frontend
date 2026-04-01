@@ -30,9 +30,6 @@ interface ScalapayWidgetProps {
 }
 
 export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
-    // INFO: Temporarily disabled globally as requested by merchant until API approval is confirmed.
-    return null;
-
     // TODO: Num ambiente de produção, substituir "integration" pelo token de live e remover o "environment"
     const merchantToken = import.meta.env.VITE_SCALAPAY_TOKEN || '8KDS3SPEL';
     const isIntegration = import.meta.env.VITE_SCALAPAY_ENV === 'integration' || !import.meta.env.VITE_SCALAPAY_TOKEN;
@@ -40,6 +37,7 @@ export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
     const widgetProps: any = {
         'amount-selectors': `["${amountSelector}"]`,
         'merchant-token': merchantToken,
+        'locale': 'pt',
     };
 
     if (isIntegration) {

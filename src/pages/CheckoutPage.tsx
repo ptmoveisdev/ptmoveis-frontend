@@ -11,7 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ScalapayWidget } from '../components/ScalapayWidget';
-import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl } from '@/services/wordpress';
+import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
 
@@ -69,6 +69,7 @@ const checkoutSchema = z.object({
         message: 'NIF inválido (9 dígitos)'
     }),
     address: z.string().min(5, 'Endereço inválido'),
+    doorNumber: z.string().optional(),
     city: z.string().min(2, 'Cidade inválida'),
     postalCode: z.string().regex(/^[0-9]{4}-[0-9]{3}$/, 'Formato inválido (XXXX-XXX)'),
     paymentMethod: z.string().min(1, 'Selecione um método de pagamento')
@@ -98,11 +99,12 @@ export default function CheckoutPage() {
             try {
                 let gw = await getPaymentGateways();
                 // Remove gateways do plugin Klarna (substituídos pelo nosso fluxo HPP)
+                // Remove duplicates e gateways não usados; scalapay é adicionado manualmente abaixo
                 gw = gw.filter((g: any) => !['ppcp-card-button-gateway', 'klarna_payments', 'klarna-payments', 'kco', 'scalapay'].includes(g.id));
                 gw = [
                     ...gw,
                     // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
-                    // { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' },
+                    { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' },
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
@@ -552,6 +554,17 @@ export default function CheckoutPage() {
         if (data.paymentMethod === 'scalapay') {
             setIsSubmitting(true);
             try {
+                // Normaliza o número de telefone: remove espaços e garante indicativo +351
+                const rawPhone = (data.phone || '').replace(/\s+/g, '');
+                const formattedPhone = rawPhone.startsWith('+')
+                    ? rawPhone
+                    : `+351${rawPhone.replace(/^00351/, '').replace(/^351/, '')}`;
+
+                const fullName = `${data.firstName} ${data.lastName}`;
+                const fullAddress = data.doorNumber
+                    ? `${data.address}, ${data.doorNumber}`
+                    : data.address;
+
                 const orderData: any = {
                     payment_method: 'scalapay',
                     payment_method_title: 'Scalapay',
@@ -559,20 +572,21 @@ export default function CheckoutPage() {
                     billing: {
                         first_name: data.firstName,
                         last_name: data.lastName,
-                        address_1: data.address,
+                        address_1: fullAddress,
                         city: data.city,
                         postcode: data.postalCode,
                         country: 'PT',
                         email: data.email,
-                        phone: data.phone,
+                        phone: formattedPhone,
                     },
                     shipping: {
                         first_name: data.firstName,
                         last_name: data.lastName,
-                        address_1: data.address,
+                        address_1: fullAddress,
                         city: data.city,
                         postcode: data.postalCode,
                         country: 'PT',
+                        phone: formattedPhone,
                     },
                     line_items: items.map(item => {
                         const line: any = {
@@ -612,7 +626,50 @@ export default function CheckoutPage() {
                     // ignore storage errors
                 }
 
-                const checkoutUrl = await getScalapayCheckoutUrl(response.id);
+                // Payload pré-formatado para o Scalapay CREATE ORDER (POST /v2/orders)
+                const origin = window.location.origin;
+                const scalapayOrderData: ScalapayOrderData = {
+                    totalAmount: { amount: finalTotal.toFixed(2), currency: 'EUR' },
+                    consumer: {
+                        phoneNumber: formattedPhone,
+                        givenNames: data.firstName,
+                        surname: data.lastName,
+                        email: data.email,
+                    },
+                    billing: {
+                        name: fullName,
+                        line1: fullAddress,
+                        suburb: data.city,
+                        postcode: data.postalCode,
+                        countryCode: 'PT',
+                        phoneNumber: formattedPhone,
+                    },
+                    shipping: {
+                        name: fullName,
+                        line1: fullAddress,
+                        suburb: data.city,
+                        postcode: data.postalCode,
+                        countryCode: 'PT',
+                        phoneNumber: formattedPhone,
+                    },
+                    items: items.map(item => ({
+                        name: item.name,
+                        sku: item.name,
+                        quantity: item.quantity,
+                        price: { amount: item.price.toFixed(2), currency: 'EUR' },
+                    })),
+                    merchant: {
+                        redirectConfirmUrl: `${origin}/encomenda-concluida`,
+                        redirectCancelUrl: `${origin}/checkout`,
+                    },
+                    merchantReference: String(response.id),
+                    taxAmount: { amount: '0.00', currency: 'EUR' },
+                    shippingAmount: { amount: (dynamicShippingCost || 0).toFixed(2), currency: 'EUR' },
+                    type: 'online',
+                    product: 'pay-in-3',
+                };
+
+                const checkoutUrl = await getScalapayCheckoutUrl(response.id, scalapayOrderData);
                 window.location.href = checkoutUrl;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Scalapay.';
@@ -918,13 +975,22 @@ export default function CheckoutPage() {
                                         </div>
 
                                         <div className="space-y-2 sm:col-span-2">
-                                            <label className="text-sm font-medium text-gray-700">Endereço Completo *</label>
+                                            <label className="text-sm font-medium text-gray-700">Rua / Avenida *</label>
                                             <input
                                                 {...register('address')}
                                                 className={`w-full p-3 rounded-xl border ${errors.address ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
-                                                placeholder="Rua da Alegria, nº 123, 4º Esq"
+                                                placeholder="Rua da Alegria"
                                             />
                                             {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Nº de Porta</label>
+                                            <input
+                                                {...register('doorNumber')}
+                                                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all"
+                                                placeholder="123, 4º Esq"
+                                            />
                                         </div>
 
                                         <div className="space-y-2 sm:col-span-2">

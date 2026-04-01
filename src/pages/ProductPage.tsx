@@ -121,6 +121,7 @@ export default function ProductPage() {
             id: cartItemId,
             productId: product.id,
             name: product.name,
+            slug: product.slug,
             price: displayPrice,
             oldPrice: displayOldPrice,
             image: displayImage,

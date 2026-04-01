@@ -69,6 +69,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
             id: cartItemId,
             productId: product.id,
             name: product.name,
+            slug: product.slug,
             price: displayPrice,
             oldPrice: displayOldPrice,
             image: displayImage, // Usar a imagem exibida atualmente (que pode ser a da variação)

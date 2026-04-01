@@ -5,6 +5,7 @@ export interface CartItem {
     id: string; // Pode ser "ID_PRODUTO" ou "ID_PRODUTO-ID_VARIACAO"
     productId: string; // ID original do produto
     name: string;
+    slug?: string; // WooCommerce product slug (used as SKU in Scalapay)
     price: number;
     oldPrice?: number;
     image: string;

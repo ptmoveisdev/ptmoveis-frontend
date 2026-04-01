@@ -6,7 +6,7 @@ import {
     Truck, Clock, MapPin, Mail, Search, RotateCcw, CreditCard, Banknote, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getOrderById } from '@/services/wordpress';
+import { getOrderById, captureScalapayPayment } from '@/services/wordpress';
 import { useCart } from '@/contexts/CartContext';
 
 interface OrderState {
@@ -78,6 +78,23 @@ export default function OrderSuccessPage() {
     useEffect(() => {
         if (routerState?.orderId) {
             setResolvedState(routerState);
+            return;
+        }
+
+        // Scalapay redirect: ?orderToken=XXX&status=APPROVED
+        const scalapayToken = searchParams.get('orderToken');
+        const scalapayStatus = searchParams.get('status');
+        if (scalapayToken) {
+            const stored = localStorage.getItem('scalapay_pending_order');
+            const parsed: OrderState & { orderId: string } = stored ? JSON.parse(stored) : {};
+            if (parsed.orderId && scalapayStatus === 'APPROVED') {
+                captureScalapayPayment(Number(parsed.orderId), scalapayToken).catch(err =>
+                    console.error('❌ Scalapay capture:', err)
+                );
+            }
+            setResolvedState({ orderId: parsed.orderId, total: parsed.total });
+            localStorage.removeItem('scalapay_pending_order');
+            clearCart();
             return;
         }
 
