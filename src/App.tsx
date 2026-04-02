@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FloatingWhatsApp, WhatsAppIcon } from '@/components/FloatingWhatsApp';
 import { CookieConsent } from '@/components/CookieConsent';
 import {
@@ -321,6 +321,28 @@ function CategoryGrid({
 
 // About Section Component
 function AboutSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [videoSrc, setVideoSrc] = useState(
+    'https://www.youtube.com/embed/Ba4Bku3WBjM?controls=0&rel=0&modestbranding=1&playsinline=1'
+  );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVideoSrc(
+            'https://www.youtube.com/embed/Ba4Bku3WBjM?controls=0&rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=1'
+          );
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="py-0">
       <div className="grid lg:grid-cols-2">
@@ -351,12 +373,21 @@ function AboutSection() {
           </div>
         </div>
 
-        {/* Image */}
-        <div className="relative h-[400px] lg:h-auto animate-fade-in delay-200">
-          <img
-            src="/about-workshop.jpg"
-            alt="Oficina PT Móveis"
-            className="w-full h-full object-cover"
+        {/* Video */}
+        <div ref={containerRef} className="relative h-[400px] lg:h-auto animate-fade-in delay-200 overflow-hidden">
+          <iframe
+            src={videoSrc}
+            title="PT Móveis"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{
+              border: 'none',
+              position: 'absolute',
+              top: '-60px',
+              left: 0,
+              width: '100%',
+              height: 'calc(100% + 120px)',
+            }}
           />
         </div>
       </div>
