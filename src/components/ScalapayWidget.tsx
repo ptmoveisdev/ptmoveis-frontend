@@ -29,7 +29,11 @@ interface ScalapayWidgetProps {
     visible?: boolean;
 }
 
+// TEMPORÁRIO: ocultar todos os widgets Scalapay
+const SCALAPAY_ENABLED = false;
+
 export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
+    if (!SCALAPAY_ENABLED) return null;
     // TODO: Num ambiente de produção, substituir "integration" pelo token de live e remover o "environment"
     const merchantToken = import.meta.env.VITE_SCALAPAY_TOKEN || '8KDS3SPEL';
     const isIntegration = import.meta.env.VITE_SCALAPAY_ENV === 'integration' || !import.meta.env.VITE_SCALAPAY_TOKEN;

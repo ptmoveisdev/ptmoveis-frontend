@@ -104,7 +104,7 @@ export default function CheckoutPage() {
                 gw = [
                     ...gw,
                     // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
-                    { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' },
+                    // { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' }, // TEMPORÁRIO: oculto
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
