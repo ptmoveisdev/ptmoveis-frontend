@@ -225,6 +225,10 @@ export interface WCCOOptionField {
     required: boolean;
     options: WCCOOptionChoice[];
     mutex_group?: string;
+    /** Segundo grupo de exclusão mútua entre campos */
+    cross_mutex_group?: string;
+    /** Exclusão mútua entre grupos inteiros (injetado pelo backend via _group_mutex) */
+    _group_mutex?: string;
 }
 
 export interface WooCommerceProduct {

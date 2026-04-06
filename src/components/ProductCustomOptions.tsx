@@ -83,6 +83,14 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 const groupHasSelection = fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined);
                 if (groupHasSelection) return true;
             }
+            if (field.cross_mutex_group) {
+                const groupHasSelection = fields.some((f, i) => f.cross_mutex_group === field.cross_mutex_group && selections[i] !== undefined);
+                if (groupHasSelection) return true;
+            }
+            if (field._group_mutex) {
+                const groupHasSelection = fields.some((f, i) => f._group_mutex === field._group_mutex && selections[i] !== undefined);
+                if (groupHasSelection) return true;
+            }
             return false;
         });
         onSelectionChange(currentSelections, { effectiveBaseOverride, extraPerUnit, extraFlat }, isValid);
@@ -93,14 +101,37 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
         if (newVal !== undefined) updated[fieldIndex] = newVal;
         else delete updated[fieldIndex];
 
-        const mutexGroup = fields[fieldIndex]?.mutex_group;
-        if (mutexGroup && newVal !== undefined) {
+        if (newVal === undefined) return updated;
+
+        const changedField = fields[fieldIndex];
+
+        // mutex_group — exclusão entre campos com mesmo nome
+        if (changedField?.mutex_group) {
             fields.forEach((f, i) => {
-                if (i !== fieldIndex && f.mutex_group === mutexGroup) {
+                if (i !== fieldIndex && f.mutex_group === changedField.mutex_group) {
                     delete updated[i];
                 }
             });
         }
+
+        // cross_mutex_group — segundo grupo de exclusão entre campos
+        if (changedField?.cross_mutex_group) {
+            fields.forEach((f, i) => {
+                if (i !== fieldIndex && f.cross_mutex_group === changedField.cross_mutex_group) {
+                    delete updated[i];
+                }
+            });
+        }
+
+        // _group_mutex — exclusão entre grupos inteiros
+        if (changedField?._group_mutex) {
+            fields.forEach((f, i) => {
+                if (i !== fieldIndex && f._group_mutex === changedField._group_mutex) {
+                    delete updated[i];
+                }
+            });
+        }
+
         return updated;
     }
 
@@ -132,9 +163,11 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 
                 const selectedValue = selections[fieldIndex];
 
-                const mutexSatisfied = field.mutex_group
-                    ? fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined)
-                    : false;
+                const mutexSatisfied = (
+                    (field.mutex_group ? fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined) : false) ||
+                    (field.cross_mutex_group ? fields.some((f, i) => f.cross_mutex_group === field.cross_mutex_group && selections[i] !== undefined) : false) ||
+                    (field._group_mutex ? fields.some((f, i) => f._group_mutex === field._group_mutex && selections[i] !== undefined) : false)
+                );
 
                 const hasError = attemptedSubmit && field.required && selectedValue === undefined && !mutexSatisfied;
 
