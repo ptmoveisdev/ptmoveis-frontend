@@ -27,8 +27,9 @@ export default function ProductPage() {
     const [isLiked, setIsLiked] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
-    const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number; mode?: 'add' | 'replace' }[]>([]);
-    const [customOptionsExtras, setCustomOptionsExtras] = useState(0);
+    const [customOptionsSelection, setCustomOptionsSelection] = useState<{ name: string; value: string; price: number; mode?: 'add' | 'replace'; multiply_qty?: boolean }[]>([]);
+    const [customOptionsExtraPerUnit, setCustomOptionsExtraPerUnit] = useState(0);
+    const [customOptionsExtraFlat, setCustomOptionsExtraFlat] = useState(0);
     const [customOptionsBaseOverride, setCustomOptionsBaseOverride] = useState<number | null>(null);
     const [customOptionsValid, setCustomOptionsValid] = useState(true);
     const [attemptedSubmit, setAttemptedSubmit] = useState(false);
@@ -41,7 +42,8 @@ export default function ProductPage() {
     useEffect(() => {
         setSelectedVariation(null);
         setCustomOptionsSelection([]);
-        setCustomOptionsExtras(0);
+        setCustomOptionsExtraPerUnit(0);
+        setCustomOptionsExtraFlat(0);
         setCustomOptionsBaseOverride(null);
         setSelectedImage(0);
         setQuantity(1);
@@ -83,12 +85,14 @@ export default function ProductPage() {
     // Price resolving logic
     const basePrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
     const effectiveBase = customOptionsBaseOverride && customOptionsBaseOverride > 0 ? customOptionsBaseOverride : basePrice;
-    const displayPrice = effectiveBase + customOptionsExtras;
+    // Preço unitário = base + extras por unidade; preço total = unitário × qtd + taxa fixa
+    const unitPrice = effectiveBase + customOptionsExtraPerUnit;
+    const displayPrice = unitPrice * quantity + customOptionsExtraFlat;
     const baseOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
     // Se houve "replace", o preço antigo pode não fazer sentido; mantemos apenas quando não há override.
     const displayOldPrice =
         baseOldPrice && !(customOptionsBaseOverride && customOptionsBaseOverride > 0)
-            ? baseOldPrice + customOptionsExtras
+            ? baseOldPrice * quantity
             : undefined;
 
     // Stock availability
@@ -122,7 +126,8 @@ export default function ProductPage() {
             productId: product.id,
             name: product.name,
             slug: product.slug,
-            price: displayPrice,
+            price: unitPrice,
+            flatExtras: customOptionsExtraFlat,
             oldPrice: displayOldPrice,
             image: displayImage,
             badge: product.badge,
@@ -130,7 +135,7 @@ export default function ProductPage() {
             selectedAttributes: selectedAttributesString,
             variationId: selectedVariation?.id,
             quantity: quantity,
-            customOptions: customOptionsSelection,
+            customOptions: customOptionsSelection.length > 0 ? customOptionsSelection : undefined,
         });
 
         // Feedback in UI
@@ -337,7 +342,8 @@ export default function ProductPage() {
                                     attemptedSubmit={attemptedSubmit}
                                     onSelectionChange={(selections, pricing, isValid) => {
                                         setCustomOptionsSelection(selections);
-                                        setCustomOptionsExtras(pricing.totalExtras);
+                                        setCustomOptionsExtraPerUnit(pricing.extraPerUnit);
+                                        setCustomOptionsExtraFlat(pricing.extraFlat);
                                         setCustomOptionsBaseOverride(pricing.effectiveBaseOverride ?? null);
                                         setCustomOptionsValid(isValid);
                                         if (isValid) setAttemptedSubmit(false);

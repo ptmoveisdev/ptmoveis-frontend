@@ -6,6 +6,7 @@ import InnerImageZoom from 'react-inner-image-zoom';
 import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
 import { ProductVariations } from '@/components/ProductVariations';
+import { ProductCustomOptions } from '@/components/ProductCustomOptions';
 import { useProductBySlug } from '@/hooks/useWordPress';
 import type { Product } from '@/data/products';
 import type { WooCommerceVariation } from '@/types/wordpress';
@@ -21,6 +22,10 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     const [quantity, setQuantity] = useState(1);
     const [isLiked, setIsLiked] = useState(false);
     const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
+    const [customOptions, setCustomOptions] = useState<{ name: string; value: string; price: number; multiply_qty?: boolean }[]>([]);
+    const [customPricing, setCustomPricing] = useState<{ effectiveBaseOverride?: number; extraPerUnit: number; extraFlat: number }>({ extraPerUnit: 0, extraFlat: 0 });
+    const [customOptionsValid, setCustomOptionsValid] = useState(true);
+    const [attemptedSubmit, setAttemptedSubmit] = useState(false);
     const { addToCart } = useCart();
 
     // Buscar dados completos do produto WooCommerce se for produto variável
@@ -30,6 +35,10 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     useEffect(() => {
         setSelectedVariation(null);
         setSelectedImage(0);
+        setCustomOptions([]);
+        setCustomPricing({ extraPerUnit: 0, extraFlat: 0 });
+        setCustomOptionsValid(true);
+        setAttemptedSubmit(false);
     }, [product?.id]);
 
     if (!product) return null;
@@ -40,9 +49,17 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
     const images = variationImage ? [variationImage, ...productImages] : productImages;
     const displayImage = images[0];
 
-    // Usar preço da variação se selecionada
-    const displayPrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
+    // Preço base (variação ou produto)
+    const basePrice = selectedVariation ? parseFloat(selectedVariation.price) : product.price;
     const displayOldPrice = selectedVariation?.on_sale ? parseFloat(selectedVariation.regular_price) : product.oldPrice;
+
+    // Preço unitário = base substituído (replace) ou base + extras por unidade
+    const unitPrice = customPricing.effectiveBaseOverride !== undefined
+        ? customPricing.effectiveBaseOverride + customPricing.extraPerUnit
+        : basePrice + customPricing.extraPerUnit;
+
+    // Preço total exibido = unitário × qtd + taxa fixa
+    const displayPrice = unitPrice * quantity + customPricing.extraFlat;
 
     // Verificar disponibilidade
     const isInStock = selectedVariation
@@ -51,6 +68,10 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
 
     const handleAddToCart = () => {
         if (product.hasVariations && !selectedVariation) return;
+        if (!customOptionsValid) {
+            setAttemptedSubmit(true);
+            return;
+        }
 
         // Formatar atributos selecionados para exibição
         let selectedAttributesString = '';
@@ -60,9 +81,6 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                 .join(', ');
         }
 
-        // Determinar ID único para o item do carrinho
-        // Se for produto simples: ID do produto
-        // Se for variação: ID da variação (se disponível) ou combinação
         const cartItemId = selectedVariation ? `${product.id}-${selectedVariation.id}` : product.id;
 
         addToCart({
@@ -70,13 +88,17 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
             productId: product.id,
             name: product.name,
             slug: product.slug,
-            price: displayPrice,
+            // price armazena o preço unitário (base + extras por unidade)
+            price: unitPrice,
+            flatExtras: customPricing.extraFlat,
             oldPrice: displayOldPrice,
-            image: displayImage, // Usar a imagem exibida atualmente (que pode ser a da variação)
+            image: displayImage,
+            quantity,
             badge: product.badge,
             badgeColor: product.badgeColor,
             selectedAttributes: selectedAttributesString,
-            variationId: selectedVariation?.id
+            variationId: selectedVariation?.id,
+            customOptions: customOptions.length > 0 ? customOptions : undefined,
         });
 
         onClose();
@@ -218,6 +240,13 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                         <span className="text-4xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                             {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
                                         </span>
+                                        {/* Detalhamento quando há extras e quantidade > 1 */}
+                                        {quantity > 1 && (customPricing.extraPerUnit > 0 || customPricing.effectiveBaseOverride !== undefined) && (
+                                            <span className="text-sm text-gray-500">
+                                                {unitPrice.toFixed(2)} € × {quantity}
+                                                {customPricing.extraFlat > 0 ? ` + ${customPricing.extraFlat.toFixed(2)} €` : ''}
+                                            </span>
+                                        )}
                                     </div>
 
                                     {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
@@ -269,6 +298,17 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                                         onVariationChange={setSelectedVariation}
                                     />
                                 )}
+
+                                {/* Custom Options (montagem, etc.) */}
+                                <ProductCustomOptions
+                                    productId={parseInt(product.id)}
+                                    onSelectionChange={(selections, pricing, isValid) => {
+                                        setCustomOptions(selections);
+                                        setCustomPricing(pricing);
+                                        setCustomOptionsValid(isValid);
+                                    }}
+                                    attemptedSubmit={attemptedSubmit}
+                                />
 
                                 {/* Quantity Selector */}
                                 <div>

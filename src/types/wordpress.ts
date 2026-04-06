@@ -215,6 +215,8 @@ export interface WCCOOptionChoice {
     mode?: 'add' | 'replace' | string;
     price_mode?: 'add' | 'replace' | string;
     image?: string;
+    /** Se true, o preço desta opção é multiplicado pela quantidade de itens */
+    multiply_qty?: boolean;
 }
 
 export interface WCCOOptionField {

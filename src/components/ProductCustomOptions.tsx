@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface ProductCustomOptionsProps {
     productId: number;
     onSelectionChange: (
-        selections: { name: string; value: string; price: number; mode?: 'add' | 'replace' }[],
-        pricing: { effectiveBaseOverride?: number; totalExtras: number },
+        selections: { name: string; value: string; price: number; mode?: 'add' | 'replace'; multiply_qty?: boolean }[],
+        pricing: { effectiveBaseOverride?: number; extraPerUnit: number; extraFlat: number },
         isValid: boolean
     ) => void;
     attemptedSubmit?: boolean;
@@ -37,12 +37,13 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
 
     useEffect(() => {
         if (!fields.length) {
-            onSelectionChange([], { totalExtras: 0 }, true);
+            onSelectionChange([], { extraPerUnit: 0, extraFlat: 0 }, true);
             return;
         }
 
-        const currentSelections: { name: string; value: string; price: number; mode?: 'add' | 'replace' }[] = [];
-        let totalExtras = 0;
+        const currentSelections: { name: string; value: string; price: number; mode?: 'add' | 'replace'; multiply_qty?: boolean }[] = [];
+        let extraPerUnit = 0; // cobrado por cada item (×qtd)
+        let extraFlat    = 0; // taxa fixa, cobrada uma vez
         let effectiveBaseOverride: number | undefined = undefined;
 
         fields.forEach((field, index) => {
@@ -53,20 +54,24 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 const modeRaw = (opt.price_mode ?? opt.mode ?? 'add').toString().toLowerCase();
                 const mode: 'add' | 'replace' = modeRaw === 'replace' ? 'replace' : 'add';
                 const normalizedPrice = isNaN(price) ? 0 : price;
+                const multiplyQty = !!opt.multiply_qty;
 
                 currentSelections.push({
                     name: field.title,
                     value: opt.label,
                     price: normalizedPrice,
-                    mode
+                    mode,
+                    multiply_qty: multiplyQty,
                 });
 
                 if (mode === 'replace') {
                     if (normalizedPrice > 0) {
                         effectiveBaseOverride = Math.max(effectiveBaseOverride ?? 0, normalizedPrice);
                     }
+                } else if (multiplyQty) {
+                    extraPerUnit += normalizedPrice;
                 } else {
-                    totalExtras += normalizedPrice;
+                    extraFlat += normalizedPrice;
                 }
             }
         });
@@ -80,7 +85,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
             }
             return false;
         });
-        onSelectionChange(currentSelections, { effectiveBaseOverride, totalExtras }, isValid);
+        onSelectionChange(currentSelections, { effectiveBaseOverride, extraPerUnit, extraFlat }, isValid);
     }, [selections, fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function applyMutexGroup(prev: Record<number, number>, fieldIndex: number, newVal: number | undefined): Record<number, number> {

@@ -6,7 +6,7 @@ export interface CartItem {
     productId: string; // ID original do produto
     name: string;
     slug?: string; // WooCommerce product slug (used as SKU in Scalapay)
-    price: number;
+    price: number; // preço unitário (base + extras por unidade)
     oldPrice?: number;
     image: string;
     quantity: number;
@@ -14,7 +14,9 @@ export interface CartItem {
     badgeColor?: string;
     selectedAttributes?: string; // Ex: "Cor: Azul, Tecido: T1"
     variationId?: number;
-    customOptions?: { name: string; value: string; price: number }[];
+    customOptions?: { name: string; value: string; price: number; multiply_qty?: boolean }[];
+    /** Extras de preço fixo (não multiplicados pela quantidade) */
+    flatExtras?: number;
 }
 
 interface CartContextType {
@@ -86,7 +88,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // price já inclui os extras por unidade; flatExtras é cobrado uma vez por item de carrinho
+    const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity + (item.flatExtras ?? 0), 0);
 
     return (
         <CartContext.Provider
