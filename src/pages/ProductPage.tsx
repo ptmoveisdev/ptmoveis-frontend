@@ -303,14 +303,6 @@ export default function ProductPage() {
                             {/* Plugin WCCO - preço dinâmico baseado em data-* */}
                             <WccoDynamicPrice className="mt-4" />
 
-                            {/* Description */}
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-                                <p className="text-gray-600 leading-relaxed text-base">
-                                    {product.description}
-                                </p>
-                            </div>
-
                             {/* Features */}
                             {product.features && product.features.length > 0 && (
                                 <div>
@@ -351,6 +343,14 @@ export default function ProductPage() {
                                 />
                             )}
 
+                            {/* Description */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
+                                <p className="text-gray-600 leading-relaxed text-base">
+                                    {product.description}
+                                </p>
+                            </div>
+
                             {/* Quantity Selector */}
                             <div>
                                 <label className="text-sm font-semibold text-gray-900 mb-3 block">
@@ -374,6 +374,9 @@ export default function ProductPage() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Shipping Calculator */}
+                            <ProductShippingCalculator />
 
                             <div className="flex flex-col sm:flex-row gap-4">
                                 {/* Add to Cart Button */}
@@ -400,9 +403,6 @@ export default function ProductPage() {
                                     }
                                 </Button>
                             </div>
-
-                            {/* Shipping Calculator */}
-                            <ProductShippingCalculator />
 
                             {/* Trust Badges */}
                             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
