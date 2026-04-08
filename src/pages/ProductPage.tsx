@@ -16,7 +16,6 @@ import { convertWPProductToLocal } from '@/utils/productUtils';
 import type { WooCommerceVariation } from '@/types/wordpress';
 import { toast } from 'sonner';
 import { ProductShippingCalculator } from '@/components/ProductShippingCalculator';
-import { ScalapayWidget } from '../components/ScalapayWidget';
 
 export default function ProductPage() {
     const { slug } = useParams<{ slug: string }>();

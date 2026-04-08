@@ -10,7 +10,6 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ScalapayWidget } from '../components/ScalapayWidget';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 
