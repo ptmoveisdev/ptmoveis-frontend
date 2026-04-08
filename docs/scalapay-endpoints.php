@@ -10,6 +10,26 @@
  * Instalar: adicionar ao functions.php ou como plugin snippet (Code Snippets, etc.)
  */
 
+// ---------------------------------------------------------------------------
+// Regista status personalizado "charged" no WooCommerce
+// ---------------------------------------------------------------------------
+
+add_action( 'init', function () {
+    register_post_status( 'wc-charged', [
+        'label'                     => 'Charged',
+        'public'                    => true,
+        'exclude_from_search'       => false,
+        'show_in_admin_all_list'    => true,
+        'show_in_admin_status_list' => true,
+        'label_count'               => _n_noop( 'Charged <span class="count">(%s)</span>', 'Charged <span class="count">(%s)</span>' ),
+    ] );
+} );
+
+add_filter( 'wc_order_statuses', function ( $statuses ) {
+    $statuses['wc-charged'] = 'Charged';
+    return $statuses;
+} );
+
 add_action( 'rest_api_init', function () {
 
     register_rest_route( 'ptmoveis/v1', '/scalapay-checkout-url', [
@@ -153,6 +173,7 @@ function ptmoveis_scalapay_via_gateway( WC_Order $order, int $order_id ) {
 function ptmoveis_scalapay_capture( WP_REST_Request $request ) {
     $order_id    = intval( $request->get_param( 'order_id' ) );
     $order_token = sanitize_text_field( $request->get_param( 'order_token' ) );
+    $order_data  = $request->get_param( 'order_data' ); // ScalapayOrderData do frontend (opcional)
 
     if ( ! $order_id || ! $order_token ) {
         return new WP_Error( 'missing_params', 'order_id e order_token são obrigatórios.', [ 'status' => 400 ] );
@@ -164,7 +185,7 @@ function ptmoveis_scalapay_capture( WP_REST_Request $request ) {
     }
 
     // Evita capture duplo
-    if ( $order->get_status() === 'processing' || $order->get_status() === 'completed' ) {
+    if ( in_array( $order->get_status(), [ 'processing', 'completed', 'charged' ], true ) ) {
         return rest_ensure_response( [ 'success' => true, 'already_captured' => true ] );
     }
 
@@ -176,6 +197,37 @@ function ptmoveis_scalapay_capture( WP_REST_Request $request ) {
         return rest_ensure_response( [ 'success' => true ] );
     }
 
+    $total_amount = number_format( (float) $order->get_total(), 2, '.', '' );
+    $currency     = $order->get_currency();
+
+    // Monta o payload de capture conforme especificação Scalapay POST /v2/payments/capture
+    $capture_payload = [
+        'token'  => $order_token,
+        'status' => 'APPROVED',
+        'totalAmount' => [
+            'amount'   => $total_amount,
+            'currency' => $currency,
+        ],
+    ];
+
+    // Adiciona orderDetails se o frontend enviou os dados da ordem
+    if ( ! empty( $order_data ) && is_array( $order_data ) ) {
+        $capture_payload['orderDetails'] = array_merge(
+            // Garante que totalAmount também está dentro de orderDetails
+            [ 'totalAmount' => [ 'amount' => $total_amount, 'currency' => $currency ] ],
+            array_filter( [
+                'items'             => $order_data['items']          ?? null,
+                'billing'           => $order_data['billing']        ?? null,
+                'consumer'          => $order_data['consumer']       ?? null,
+                'merchant'          => $order_data['merchant']       ?? null,
+                'shipping'          => $order_data['shipping']       ?? null,
+                'taxAmount'         => $order_data['taxAmount']      ?? null,
+                'shippingAmount'    => $order_data['shippingAmount'] ?? null,
+                'merchantReference' => $order_data['merchantReference'] ?? null,
+            ] )
+        );
+    }
+
     $response = wp_remote_post(
         $config['base_url'] . '/v2/payments/capture',
         [
@@ -183,7 +235,7 @@ function ptmoveis_scalapay_capture( WP_REST_Request $request ) {
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $config['api_key'],
             ],
-            'body'    => wp_json_encode( [ 'token' => $order_token ] ),
+            'body'    => wp_json_encode( $capture_payload ),
             'timeout' => 20,
         ]
     );
@@ -207,9 +259,22 @@ function ptmoveis_scalapay_capture( WP_REST_Request $request ) {
         );
     }
 
-    // Marca a encomenda como paga/em processamento
-    $order->payment_complete( $order_token );
-    $order->add_order_note( 'Scalapay: pagamento capturado. Token: ' . $order_token );
+    // Verifica que o Scalapay confirmou o estado CHARGED
+    $scalapay_status = $body['status'] ?? '';
+    if ( $scalapay_status !== 'APPROVED' && $scalapay_status !== 'CHARGED' ) {
+        return new WP_Error(
+            'capture_not_charged',
+            'Scalapay não confirmou o estado CHARGED. Estado recebido: ' . $scalapay_status,
+            [ 'status' => 502, 'scalapay_response' => $body ]
+        );
+    }
+
+    // Marca a encomenda como "charged" e guarda o token
+    $order->set_transaction_id( $order_token );
+    $order->update_status( 'charged', 'Scalapay: pagamento capturado com sucesso (CHARGED). Token: ' . $order_token );
+    $order->update_meta_data( '_scalapay_token', sanitize_text_field( $order_token ) );
+    $order->update_meta_data( '_scalapay_status', 'CHARGED' );
+    $order->save();
 
     return rest_ensure_response( [ 'success' => true ] );
 }

@@ -86,9 +86,9 @@ export default function OrderSuccessPage() {
         const scalapayStatus = searchParams.get('status');
         if (scalapayToken) {
             const stored = localStorage.getItem('scalapay_pending_order');
-            const parsed: OrderState & { orderId: string } = stored ? JSON.parse(stored) : {};
+            const parsed: OrderState & { orderId: string; orderData?: any } = stored ? JSON.parse(stored) : {};
             if (parsed.orderId && scalapayStatus === 'APPROVED') {
-                captureScalapayPayment(Number(parsed.orderId), scalapayToken).catch(err =>
+                captureScalapayPayment(Number(parsed.orderId), scalapayToken, parsed.orderData).catch(err =>
                     console.error('❌ Scalapay capture:', err)
                 );
             }

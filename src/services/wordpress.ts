@@ -605,12 +605,12 @@ export async function getScalapayCheckoutUrl(orderId: number, scalapayOrderData?
  * Body:    { order_id: number, order_token: string }
  * Returns: { success: true }
  */
-export async function captureScalapayPayment(orderId: number, orderToken: string): Promise<void> {
+export async function captureScalapayPayment(orderId: number, orderToken: string, orderData?: any): Promise<void> {
     const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
     const response = await fetch(`${base}/wp-json/ptmoveis/v1/scalapay-capture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId, order_token: orderToken }),
+        body: JSON.stringify({ order_id: orderId, order_token: orderToken, order_data: orderData }),
     });
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));

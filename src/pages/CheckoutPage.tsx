@@ -24,12 +24,7 @@ const GatewayIcon = ({ id }: { id: string }) => {
         );
     }
     if (id.includes('scalapay')) {
-        return (
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 40 40" fill="none">
-                <rect width="40" height="40" rx="8" fill="#00C480"/>
-                <text x="20" y="27" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="22" fill="white">S</text>
-            </svg>
-        );
+        return <img src="/scalapay-logo-black.svg" alt="Scalapay" style={{ height: 28, width: 'auto' }} />;
     }
     if (id.includes('card') || id.includes('stripe')) return <CreditCard size={32} />;
     if (id.includes('mbway')) return <Smartphone size={32} />;
@@ -104,12 +99,11 @@ export default function CheckoutPage() {
                 gw = [
                     ...gw,
                     // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
-                    // { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 prestações sem juros' }, // TEMPORÁRIO: oculto
+                    // { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 ou 4 prestações sem juros' }, // OCULTO temporariamente
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
             } catch (error) {
-                console.error("Error fetching gateways:", error);
                 toast.error("Erro ao carregar os métodos de pagamento.");
             } finally {
                 setIsLoadingGateways(false);
@@ -453,7 +447,6 @@ export default function CheckoutPage() {
             navigate('/encomenda-concluida', { state: { orderId: String(wooOrder.id), total: finalTotal } });
 
         } catch (error) {
-            console.error('Erro ao processar pedido', error);
             toast.error('Ocorreu um erro ao processar seu pedido. Por favor, contacte o suporte.', {
                 description: error instanceof Error ? error.message : 'Erro desconhecido'
             });
@@ -543,7 +536,6 @@ export default function CheckoutPage() {
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Klarna.';
                 toast.error(msg);
-                console.error('❌ Klarna onSubmit:', err);
             } finally {
                 setIsSubmitting(false);
             }
@@ -552,6 +544,7 @@ export default function CheckoutPage() {
 
         // Fluxo Scalapay — cria encomenda WooCommerce e redireciona para o portal de pagamento Scalapay
         if (data.paymentMethod === 'scalapay') {
+            const scalapayProduct = 'pay-in-3';
             setIsSubmitting(true);
             try {
                 // Normaliza o número de telefone: remove espaços e garante indicativo +351
@@ -617,15 +610,6 @@ export default function CheckoutPage() {
 
                 const response = await createWooCommerceOrder(orderData);
 
-                try {
-                    localStorage.setItem(
-                        'scalapay_pending_order',
-                        JSON.stringify({ orderId: String(response.id), total: parseFloat(response.total) })
-                    );
-                } catch {
-                    // ignore storage errors
-                }
-
                 // Payload pré-formatado para o Scalapay CREATE ORDER (POST /v2/orders)
                 const origin = window.location.origin;
                 const scalapayOrderData: ScalapayOrderData = {
@@ -666,15 +650,23 @@ export default function CheckoutPage() {
                     taxAmount: { amount: '0.00', currency: 'EUR' },
                     shippingAmount: { amount: (dynamicShippingCost || 0).toFixed(2), currency: 'EUR' },
                     type: 'online',
-                    product: 'pay-in-3',
+                    product: scalapayProduct,
                 };
+
+                try {
+                    localStorage.setItem(
+                        'scalapay_pending_order',
+                        JSON.stringify({ orderId: String(response.id), total: parseFloat(response.total), orderData: scalapayOrderData })
+                    );
+                } catch {
+                    // ignore storage errors
+                }
 
                 const checkoutUrl = await getScalapayCheckoutUrl(response.id, scalapayOrderData);
                 window.location.href = checkoutUrl;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erro ao processar pagamento Scalapay.';
                 toast.error(msg);
-                console.error('❌ Scalapay onSubmit:', err);
             } finally {
                 setIsSubmitting(false);
             }
@@ -719,7 +711,6 @@ export default function CheckoutPage() {
                 return;
 
             } catch (error) {
-                console.error('Erro ao processar pedido via WhatsApp', error);
                 toast.error('Ocorreu um erro ao processar seu pedido.');
             } finally {
                 setIsSubmitting(false);
@@ -800,7 +791,6 @@ export default function CheckoutPage() {
             navigate('/encomenda-concluida', { state: { orderId: String(response.id), total: parseFloat(response.total) } });
 
         } catch (error) {
-            console.error('Erro ao processar pedido', error);
             toast.error('Ocorreu um erro ao criar a encomenda.', {
                 description: error instanceof Error ? error.message : 'Erro desconhecido'
             });
@@ -1100,7 +1090,7 @@ export default function CheckoutPage() {
                                         {finalTotal.toFixed(2)} €
                                     </span>
                                 </div>
-                                <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} />
+                                {/* <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} /> */}{/* OCULTO temporariamente */}
 
                                 {selectedPaymentMethod === 'whatsapp' ? (
                                     <Button
@@ -1151,29 +1141,22 @@ export default function CheckoutPage() {
                                         </Button>
                                     </div>
                                 ) : selectedPaymentMethod === 'scalapay' ? (
-                                    <div className="mt-4 space-y-2">
-                                        <p className="text-xs text-gray-500 text-center">
-                                            Será redirecionado para a página segura da Scalapay após confirmar a encomenda.
-                                        </p>
+                                    <div className="mt-4 space-y-3">
                                         <Button
                                             type="submit"
                                             form="checkout-form"
                                             disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
-                                            className="w-full mt-2 font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                            style={{ backgroundColor: '#00C480', color: '#ffffff' }}
+                                            className="w-full font-bold py-6 rounded-xl text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            style={{ backgroundColor: '#ffffff', color: '#1a1a1a', border: '1px solid #e5e7eb' }}
                                         >
                                             {isSubmitting ? (
                                                 <span className="flex items-center justify-center gap-2">
-                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <span className="w-5 h-5 border-2 border-gray-400/30 border-t-gray-700 rounded-full animate-spin" />
                                                     A processar com Scalapay…
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center justify-center gap-2 font-semibold">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 40 40" fill="none">
-                                                        <rect width="40" height="40" rx="8" fill="white" fillOpacity="0.25"/>
-                                                        <text x="20" y="27" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="22" fill="white">S</text>
-                                                    </svg>
-                                                    Pagar com Scalapay
+                                                    <img src="/scalapay-logo-black.svg" alt="Scalapay" style={{ height: 36, width: 'auto' }} />
                                                 </span>
                                             )}
                                         </Button>

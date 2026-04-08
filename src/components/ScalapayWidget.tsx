@@ -29,8 +29,7 @@ interface ScalapayWidgetProps {
     visible?: boolean;
 }
 
-// TEMPORÁRIO: ocultar todos os widgets Scalapay
-const SCALAPAY_ENABLED = false;
+const SCALAPAY_ENABLED = true;
 
 export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
     if (!SCALAPAY_ENABLED) return null;

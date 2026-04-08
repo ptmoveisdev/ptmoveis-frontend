@@ -290,7 +290,7 @@ export default function ProductPage() {
                                     <span id="scalapay-product-price" className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                         {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
                                     </span>
-                                    <ScalapayWidget amountSelector="#scalapay-product-price" type="product" />
+                                    {/* <ScalapayWidget amountSelector="#scalapay-product-price" type="product" /> */}{/* OCULTO temporariamente */}
                                 </div>
 
                                 {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
