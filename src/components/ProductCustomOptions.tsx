@@ -21,6 +21,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
 
     useEffect(() => {
         let isMounted = true;
+        setSelections({});
         async function fetchOptions() {
             setLoading(true);
             const data = await getProductCategoryOptions(productId);
