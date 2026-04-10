@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
+import { ScalapayWidget } from '@/components/ScalapayWidget';
 
 
 const GatewayIcon = ({ id }: { id: string }) => {
@@ -98,7 +99,7 @@ export default function CheckoutPage() {
                 gw = [
                     ...gw,
                     // { id: 'klarna-payments', title: 'Klarna', method_title: 'Pague depois ou em prestações' }, // OCULTO — aguarda decisão do cliente
-                    // { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 ou 4 prestações sem juros' }, // OCULTO temporariamente
+                    { id: 'scalapay', title: 'Scalapay', method_title: 'Pague em 3 ou 4 prestações sem juros' },
                     { id: 'whatsapp', title: 'WhatsApp', method_title: 'Pagamento manual via WhatsApp' }
                 ];
                 setGateways(gw);
@@ -1089,7 +1090,7 @@ export default function CheckoutPage() {
                                         {finalTotal.toFixed(2)} €
                                     </span>
                                 </div>
-                                {/* <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} /> */}{/* OCULTO temporariamente */}
+                                <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} />
 
                                 {selectedPaymentMethod === 'whatsapp' ? (
                                     <Button
