@@ -816,7 +816,7 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 lg:pt-24 pb-16">
+        <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gray-50 pt-24 lg:pt-32 pb-20">
             <Helmet>
                 <title>Checkout | PT Móveis</title>
                 <meta name="robots" content="noindex, nofollow" />
@@ -839,11 +839,11 @@ export default function CheckoutPage() {
 
                     <h1 className="text-2xl sm:text-3xl font-bold text-[#1E3A5F] mb-6 lg:mb-8" style={{ fontFamily: 'Montserrat' }}>Finalizar Compra</h1>
 
-                    <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full max-w-full">
 
                         {/* Formulário Principal */}
-                        <div className="lg:col-span-7 xl:col-span-8 bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100">
-                            <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                        <div className="lg:col-span-7 xl:col-span-8 bg-white p-5 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 order-2 lg:order-1">
+                            <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
 
                                 {/* Informações Pessoais */}
                                 <section>
@@ -947,7 +947,7 @@ export default function CheckoutPage() {
                                                             {...field}
                                                             onChange={(e) => field.onChange(formatPostalCode(e.target.value))}
                                                             maxLength={8}
-                                                            className={`w-full p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
+                                                            className={`w-full min-w-0 p-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all`}
                                                             placeholder="4000-123"
                                                         />
                                                         <Button
@@ -1010,7 +1010,7 @@ export default function CheckoutPage() {
                                         Método de Pagamento
                                     </h2>
 
-                                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         {isLoadingGateways ? (
                                             <div className="col-span-full py-8 flex justify-center text-gray-400">
                                                 <span className="w-8 h-8 border-4 border-gray-200 border-t-[#D4AF37] rounded-full animate-spin" />
@@ -1040,15 +1040,153 @@ export default function CheckoutPage() {
                                         )}
                                     </div>
                                 </section>
+
+                                <hr className="border-gray-100" />
+
+                                <div className="pt-4">
+                                    {selectedPaymentMethod === 'whatsapp' ? (
+                                        <Button
+                                            type="submit"
+                                            form="checkout-form"
+                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
+                                            className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg relative disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        >
+                                            {isSubmitting ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    A processar...
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
+                                                    </svg>
+                                                    Finalizar no WhatsApp
+                                                </span>
+                                            )}
+                                        </Button>
+                                    ) : selectedPaymentMethod === 'klarna-payments' ? (
+                                        <div className="space-y-2">
+                                            <p className="text-xs text-gray-500 text-center">
+                                                Será redirecionado para a página segura da Klarna após confirmar a encomenda.
+                                            </p>
+                                            <Button
+                                                type="submit"
+                                                form="checkout-form"
+                                                disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
+                                                className="w-full font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                                style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
+                                            >
+                                                {isSubmitting ? (
+                                                    <span className="flex items-center justify-center gap-2">
+                                                        <span className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                                                        A processar com Klarna…
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center justify-center gap-2 font-semibold">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a">
+                                                            <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
+                                                        </svg>
+                                                        Pagar com Klarna
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    ) : selectedPaymentMethod === 'scalapay' ? (
+                                        <div className="space-y-3">
+                                            <Button
+                                                type="submit"
+                                                form="checkout-form"
+                                                disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
+                                                className="w-full font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed border hover:bg-gray-50"
+                                                style={{ backgroundColor: '#ffffff', color: '#1a1a1a', borderColor: '#e5e7eb' }}
+                                            >
+                                                {isSubmitting ? (
+                                                    <span className="flex items-center justify-center gap-2">
+                                                        <span className="w-5 h-5 border-2 border-gray-400/30 border-t-gray-700 rounded-full animate-spin" />
+                                                        A processar com Scalapay…
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center justify-center gap-2 font-semibold">
+                                                        <img src="/scalapay-logo-black.svg" alt="Scalapay" style={{ height: 36, width: 'auto' }} />
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    ) : currentFundingSource ? (
+                                        <div className="space-y-3">
+                                            {!isValid ? (
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => handleSubmit(onSubmit)()}
+                                                    className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg relative"
+                                                >
+                                                    <span className="flex items-center justify-center gap-2">
+                                                        Preencha os dados para pagar com {currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
+                                                    </span>
+                                                </Button>
+                                            ) : currentFundingSource === 'card' && !showCardFields ? (
+                                                <Button
+                                                    type="button"
+                                                    disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
+                                                    onClick={() => setShowCardFields(true)}
+                                                    className="w-full bg-[#1C1E21] hover:bg-[#3a3d42] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                                >
+                                                    <CreditCard className="w-5 h-5" />
+                                                    Pagar com Cartão
+                                                </Button>
+                                            ) : (
+                                                <div className="w-full max-w-full overflow-hidden">
+                                                    <PayPalButtons
+                                                        key={currentFundingSource}
+                                                        fundingSource={currentFundingSource as any}
+                                                        style={{ layout: "vertical", shape: "rect", label: "pay" }}
+                                                        createOrder={createOrder}
+                                                        onApprove={onApprove}
+                                                        disabled={isSubmitting || isLoadingShipping || !isValid || !isShippingCalculated}
+                                                        forceReRender={[currentFundingSource, finalTotal, isValid, dynamicShippingCost]}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            type="submit"
+                                            form="checkout-form"
+                                            disabled={isSubmitting || isLoadingShipping || !selectedPaymentMethod || !isShippingCalculated}
+                                            className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg relative transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        >
+                                            {isSubmitting ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    A processar...
+                                                </span>
+                                            ) : isLoadingShipping ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    A calcular envio...
+                                                </span>
+                                            ) : !isShippingCalculated ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    Calcule a taxa de envio
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    Finalizar Encomenda
+                                                </span>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
                             </form>
                         </div>
 
                         {/* Resumo do Pedido */}
-                        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
+                        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 order-1 lg:order-2 mb-6 lg:mb-0">
                             <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 lg:gap-6">
                                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 font-montserrat">Resumo do Pedido</h2>
 
-                                <div className="space-y-3 max-h-[28vh] lg:max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-4 max-h-[40vh] lg:max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                                     {items.map((item) => (
                                         <div key={item.id} className="flex gap-4 items-center">
                                             <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
@@ -1097,139 +1235,9 @@ export default function CheckoutPage() {
                                         {finalTotal.toFixed(2)} €
                                     </span>
                                 </div>
-                                <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} />
-
-                                {selectedPaymentMethod === 'whatsapp' ? (
-                                    <Button
-                                        type="submit"
-                                        form="checkout-form"
-                                        disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
-                                        className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg mt-2 relative disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        {isSubmitting ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                A processar...
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 0A12 12 0 0 0 4.5 20.66l-1.22 4.46a.5.5 0 0 0 .61.61l4.46-1.22A12 12 0 1 0 11.944 0zm0 21.9a9.92 9.92 0 0 1-5.07-1.39l-.36-.21-3.23.88.88-3.23-.21-.36a9.94 9.94 0 1 1 8-15.63 9.87 9.87 0 0 1 5.6 15.11 9.92 9.92 0 0 1-5.61 4.83zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.23-.65.08a8.21 8.21 0 0 1-2.42-1.5 8.98 8.98 0 0 1-1.68-2.09c-.18-.3.02-.46.16-.61.13-.13.3-.35.45-.52.15-.18.2-.29.3-.49.1-.2.05-.38-.03-.53-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.08-.79.35-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.48 1.69.62.71.22 1.36.19 1.87.11.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.08-.12-.27-.2-.57-.35z" />
-                                                </svg>
-                                                Finalizar no WhatsApp
-                                            </span>
-                                        )}
-                                    </Button>
-                                ) : selectedPaymentMethod === 'klarna-payments' ? (
-                                    <div className="mt-4 space-y-2">
-                                        <p className="text-xs text-gray-500 text-center">
-                                            Será redirecionado para a página segura da Klarna após confirmar a encomenda.
-                                        </p>
-                                        <Button
-                                            type="submit"
-                                            form="checkout-form"
-                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
-                                            className="w-full mt-2 font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                            style={{ backgroundColor: '#FFB3C7', color: '#1a1a1a' }}
-                                        >
-                                            {isSubmitting ? (
-                                                <span className="flex items-center justify-center gap-2">
-                                                    <span className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
-                                                    A processar com Klarna…
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center justify-center gap-2 font-semibold">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a">
-                                                        <path d="M20 0H4C1.8 0 0 1.8 0 4v16c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V4c0-2.2-1.8-4-4-4zm-8.4 17.5h-2.1V6.5h2.1v11zm4.3 0h-2V15c0-1.4-.6-2.7-1.7-3.6l1.4-1.5c1.5 1.2 2.3 3 2.3 4.9v2.7zm1.6-8.6c-.8-.9-1.7-1.6-2.8-2.1l1-1.8c1.4.7 2.6 1.7 3.5 2.9l-1.7 1z" />
-                                                    </svg>
-                                                    Pagar com Klarna
-                                                </span>
-                                            )}
-                                        </Button>
-                                    </div>
-                                ) : selectedPaymentMethod === 'scalapay' ? (
-                                    <div className="mt-4 space-y-3">
-                                        <Button
-                                            type="submit"
-                                            form="checkout-form"
-                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
-                                            className="w-full font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                            style={{ backgroundColor: '#ffffff', color: '#1a1a1a', border: '1px solid #e5e7eb' }}
-                                        >
-                                            {isSubmitting ? (
-                                                <span className="flex items-center justify-center gap-2">
-                                                    <span className="w-5 h-5 border-2 border-gray-400/30 border-t-gray-700 rounded-full animate-spin" />
-                                                    A processar com Scalapay…
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center justify-center gap-2 font-semibold">
-                                                    <img src="/scalapay-logo-black.svg" alt="Scalapay" style={{ height: 36, width: 'auto' }} />
-                                                </span>
-                                            )}
-                                        </Button>
-                                    </div>
-                                ) : currentFundingSource ? (
-                                    <div className="mt-4">
-                                        {!isValid ? (
-                                            <Button
-                                                type="button"
-                                                onClick={() => handleSubmit(onSubmit)()}
-                                                className="w-full bg-[#00457C] hover:bg-[#00335c] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg mt-2 relative"
-                                            >
-                                                <span className="flex items-center justify-center gap-2">
-                                                    Preencha os dados para pagar com {currentFundingSource === 'card' ? 'Cartão' : 'PayPal'}
-                                                </span>
-                                            </Button>
-                                        ) : currentFundingSource === 'card' && !showCardFields ? (
-                                            <Button
-                                                type="button"
-                                                disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
-                                                onClick={() => setShowCardFields(true)}
-                                                className="w-full bg-[#1C1E21] hover:bg-[#3a3d42] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg mt-2 flex items-center justify-center gap-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                            >
-                                                <CreditCard className="w-5 h-5" />
-                                                Pagar com Cartão
-                                            </Button>
-                                        ) : (
-                                            <PayPalButtons
-                                                key={currentFundingSource}
-                                                fundingSource={currentFundingSource as any}
-                                                style={{ layout: "vertical", shape: "rect", label: "pay" }}
-                                                createOrder={createOrder}
-                                                onApprove={onApprove}
-                                                disabled={isSubmitting || isLoadingShipping || !isValid || !isShippingCalculated}
-                                                forceReRender={[currentFundingSource, finalTotal, isValid, dynamicShippingCost]}
-                                            />
-                                        )}
-                                    </div>
-                                ) : (
-                                    <Button
-                                        type="submit"
-                                        form="checkout-form"
-                                        disabled={isSubmitting || isLoadingShipping || !selectedPaymentMethod || !isShippingCalculated}
-                                        className="w-full bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg mt-2 relative transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        {isSubmitting ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                A processar...
-                                            </span>
-                                        ) : isLoadingShipping ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                A calcular envio...
-                                            </span>
-                                        ) : !isShippingCalculated ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                Calcule a taxa de envio
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center justify-center gap-2">
-                                                Finalizar Encomenda
-                                            </span>
-                                        )}
-                                    </Button>
-                                )}
+                                <div className="w-full max-w-full overflow-hidden">
+                                    <ScalapayWidget amountSelector="#scalapay-checkout-price" type="checkout" visible={finalTotal > 0} />
+                                </div>
 
                                 {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
                                 <Truck className="w-4 h-4" />
