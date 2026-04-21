@@ -6,7 +6,7 @@ import {
   ContactFAQ, ComplaintsBook, Payments
 } from '@/components/StaticPages';
 import {
-  Menu, X, Search, Heart, ShoppingCart, User,
+  Menu, X, Search, Heart, ShoppingCart, User, PackageSearch,
   Shield, Truck, CreditCard, Headphones, Star,
   Instagram, MapPin,
   Facebook
@@ -123,20 +123,20 @@ function NavigationHeader({
             >
               <Search className="w-5 h-5 text-gray-700" />
             </button>
-            <a
-              href="https://wa.me/351939076117"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 hover:bg-green-50 rounded-full transition-colors hidden sm:block text-[#25D366]"
-              aria-label="WhatsApp"
+
+            <button
+              onClick={() => navigate('/acompanhar-pedido')}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block text-gray-700"
+              title="Acompanhar Encomenda"
             >
-              <WhatsAppIcon className="w-5 h-5" />
-            </a>
+              <PackageSearch className="w-5 h-5" />
+            </button>
             <button
               onClick={onFavoritesClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block relative"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block relative text-gray-700"
+              title="Favoritos"
             >
-              <Heart className="w-5 h-5 text-gray-700" />
+              <Heart className="w-5 h-5" />
               {totalFavorites > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium animate-pulse-glow">
                   {totalFavorites}
@@ -145,9 +145,10 @@ function NavigationHeader({
             </button>
             <button
               onClick={onCartClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative text-gray-700"
+              title="Carrinho"
             >
-              <ShoppingCart className="w-5 h-5 text-gray-700" />
+              <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D4AF37] text-white text-xs rounded-full flex items-center justify-center font-medium animate-price-pop">
                   {totalItems}
@@ -155,20 +156,20 @@ function NavigationHeader({
               )}
             </button>
             {isAuthenticated ? (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1">
                 <button
                   onClick={() => navigate('/minha-conta')}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-700"
+                  title="Minha Conta"
                 >
-                  <User className="w-4 h-4" />
-                  <span>Minha Conta</span>
+                  <User className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => {
                     logout();
                     navigate('/');
                   }}
-                  className="text-xs text-gray-500 hover:text-red-500"
+                  className="text-xs text-gray-500 hover:text-red-500 font-medium px-2"
                 >
                   Sair
                 </button>
@@ -176,10 +177,10 @@ function NavigationHeader({
             ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5A8F] transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block text-gray-700"
+                title="Entrar"
               >
-                <User className="w-4 h-4" />
-                <span>ENTRAR</span>
+                <User className="w-5 h-5" />
               </button>
             )}
             <button
