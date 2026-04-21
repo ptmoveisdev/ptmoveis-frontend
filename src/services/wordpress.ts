@@ -663,6 +663,17 @@ export async function getOrderById(orderId: number) {
     return data;
 }
 
+/**
+ * Busca encomendas pelo email do cliente
+ */
+export async function getOrdersByEmail(email: string): Promise<any[]> {
+    const { data } = await fetchWooCommerce<any[]>('/orders', { search: email });
+    // Filtrar localmente para garantir correspondência exata de email e não vazar de outros campos do search
+    return (data || []).filter((order: any) => 
+        order.billing?.email?.toLowerCase() === email.toLowerCase()
+    );
+}
+
 // ============================================
 // PAYMENT GATEWAYS DO WOOCOMMERCE
 // ============================================
