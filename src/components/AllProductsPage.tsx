@@ -206,8 +206,8 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
                                     <div className="flex justify-center items-center mt-12 gap-4">
                                         <button
                                             onClick={() => {
+                                                window.scrollTo(0, 0);
                                                 prevPage();
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                             disabled={currentPage === 1}
                                             className="p-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -220,8 +220,8 @@ export function AllProductsPage({ onBack, onProductClick, initialCategoryId, ini
                                         </span>
                                         <button
                                             onClick={() => {
+                                                window.scrollTo(0, 0);
                                                 nextPage();
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                             disabled={currentPage === totalPages}
                                             className="p-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
