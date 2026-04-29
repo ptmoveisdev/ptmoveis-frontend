@@ -28,7 +28,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <div
             className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-[#D4AF37]/30 transition-all duration-300 cursor-pointer animate-fade-in-up"
             style={{
-                animationDelay: `${index * 60}ms`,
+                animationDelay: `${Math.min(index, 8) * 40}ms`,
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
             }}
             onClick={() => handleViewProduct()}
@@ -47,7 +47,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                     className={`w-full h-full object-contain p-2 transition-all duration-500 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                         } group-hover:scale-105`}
                     onLoad={() => setImageLoaded(true)}
-                    loading="lazy"
+                    onError={(e) => {
+                        const img = e.currentTarget;
+                        if (!img.dataset.errored) {
+                            img.dataset.errored = '1';
+                            img.src = '/placeholder-product.jpg';
+                        }
+                        setImageLoaded(true);
+                    }}
+                    loading={index < 8 ? 'eager' : 'lazy'}
+                    decoding="async"
                 />
 
                 {/* Gradient Overlay on Hover */}
