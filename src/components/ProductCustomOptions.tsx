@@ -105,33 +105,26 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
         if (newVal === undefined) return updated;
 
         const changedField = fields[fieldIndex];
-        const selectedOpt = changedField?.options?.[newVal];
-        const selectedMode = (selectedOpt?.price_mode ?? selectedOpt?.mode ?? 'add').toString().toLowerCase();
-        // Opções "add" são aditivas — não limpam outros campos no mesmo grupo mutex.
-        // Só opções "replace" são mutuamente exclusivas entre si.
-        const isReplace = selectedMode === 'replace';
 
-        if (isReplace) {
-            // mutex_group — exclusão entre campos com mesmo nome
-            if (changedField?.mutex_group) {
-                fields.forEach((f, i) => {
-                    if (i !== fieldIndex && f.mutex_group === changedField.mutex_group) {
-                        delete updated[i];
-                    }
-                });
-            }
-
-            // cross_mutex_group — segundo grupo de exclusão entre campos
-            if (changedField?.cross_mutex_group) {
-                fields.forEach((f, i) => {
-                    if (i !== fieldIndex && f.cross_mutex_group === changedField.cross_mutex_group) {
-                        delete updated[i];
-                    }
-                });
-            }
+        // mutex_group — exclusão entre campos com mesmo nome
+        if (changedField?.mutex_group) {
+            fields.forEach((f, i) => {
+                if (i !== fieldIndex && f.mutex_group === changedField.mutex_group) {
+                    delete updated[i];
+                }
+            });
         }
 
-        // _group_mutex — exclusão entre grupos inteiros (aplica-se sempre)
+        // cross_mutex_group — segundo grupo de exclusão entre campos
+        if (changedField?.cross_mutex_group) {
+            fields.forEach((f, i) => {
+                if (i !== fieldIndex && f.cross_mutex_group === changedField.cross_mutex_group) {
+                    delete updated[i];
+                }
+            });
+        }
+
+        // _group_mutex — exclusão entre grupos inteiros
         if (changedField?._group_mutex) {
             fields.forEach((f, i) => {
                 if (i !== fieldIndex && f._group_mutex === changedField._group_mutex) {
