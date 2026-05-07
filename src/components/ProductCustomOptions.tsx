@@ -80,22 +80,28 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
         const isValid = fields.every((field, index) => {
             if (!field.required) return true;
             if (selections[index] !== undefined) return true;
-            if (field.mutex_group) {
-                const groupHasSelection = fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined);
-                if (groupHasSelection) return true;
-            }
-            if (field.cross_mutex_group) {
-                const groupHasSelection = fields.some((f, i) => f.cross_mutex_group === field.cross_mutex_group && selections[i] !== undefined);
-                if (groupHasSelection) return true;
-            }
-            if (field._group_mutex) {
-                const groupHasSelection = fields.some((f, i) => f._group_mutex === field._group_mutex && selections[i] !== undefined);
+            // Check across all three key types — direct product fields use mutex_group/
+            // cross_mutex_group while group fields get _group_mutex; same key name in
+            // any property means they belong to the same exclusion set.
+            const keys = getMutexKeys(field);
+            if (keys.size > 0) {
+                const groupHasSelection = fields.some((f, i) =>
+                    i !== index && selections[i] !== undefined && getMutexKeys(f).size > 0 &&
+                    [...getMutexKeys(f)].some(k => keys.has(k))
+                );
                 if (groupHasSelection) return true;
             }
             return false;
         });
         onSelectionChange(currentSelections, { effectiveBaseOverride, extraPerUnit, extraFlat }, isValid);
     }, [selections, fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    function getMutexKeys(field: WCCOOptionField): Set<string> {
+        return new Set(
+            [field.mutex_group, field.cross_mutex_group, field._group_mutex]
+                .filter((k): k is string => !!k)
+        );
+    }
 
     function applyMutexGroup(prev: Record<number, number>, fieldIndex: number, newVal: number | undefined): Record<number, number> {
         const updated = { ...prev };
@@ -104,34 +110,18 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
 
         if (newVal === undefined) return updated;
 
-        const changedField = fields[fieldIndex];
+        const changedKeys = getMutexKeys(fields[fieldIndex]);
+        if (changedKeys.size === 0) return updated;
 
-        // mutex_group — exclusão entre campos com mesmo nome
-        if (changedField?.mutex_group) {
-            fields.forEach((f, i) => {
-                if (i !== fieldIndex && f.mutex_group === changedField.mutex_group) {
-                    delete updated[i];
-                }
-            });
-        }
-
-        // cross_mutex_group — segundo grupo de exclusão entre campos
-        if (changedField?.cross_mutex_group) {
-            fields.forEach((f, i) => {
-                if (i !== fieldIndex && f.cross_mutex_group === changedField.cross_mutex_group) {
-                    delete updated[i];
-                }
-            });
-        }
-
-        // _group_mutex — exclusão entre grupos inteiros
-        if (changedField?._group_mutex) {
-            fields.forEach((f, i) => {
-                if (i !== fieldIndex && f._group_mutex === changedField._group_mutex) {
-                    delete updated[i];
-                }
-            });
-        }
+        // Clear any field that shares at least one exclusion key with the changed field,
+        // regardless of whether the match is via mutex_group, cross_mutex_group, or
+        // _group_mutex. This allows direct-product fields and category-group fields to
+        // exclude each other when the admin assigns the same group name.
+        fields.forEach((f, i) => {
+            if (i !== fieldIndex && [...getMutexKeys(f)].some(k => changedKeys.has(k))) {
+                delete updated[i];
+            }
+        });
 
         return updated;
     }
@@ -164,10 +154,10 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 
                 const selectedValue = selections[fieldIndex];
 
-                const mutexSatisfied = (
-                    (field.mutex_group ? fields.some((f, i) => f.mutex_group === field.mutex_group && selections[i] !== undefined) : false) ||
-                    (field.cross_mutex_group ? fields.some((f, i) => f.cross_mutex_group === field.cross_mutex_group && selections[i] !== undefined) : false) ||
-                    (field._group_mutex ? fields.some((f, i) => f._group_mutex === field._group_mutex && selections[i] !== undefined) : false)
+                const fieldKeys = getMutexKeys(field);
+                const mutexSatisfied = fieldKeys.size > 0 && fields.some((f, i) =>
+                    i !== fieldIndex && selections[i] !== undefined &&
+                    [...getMutexKeys(f)].some(k => fieldKeys.has(k))
                 );
 
                 const hasError = attemptedSubmit && field.required && selectedValue === undefined && !mutexSatisfied;
@@ -175,7 +165,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
                         <label className="text-sm font-semibold text-gray-900 mb-3 block">
-                            {field.title}{field.required && !mutexSatisfied && (!field.mutex_group || fields.findIndex((f) => f.mutex_group === field.mutex_group) === fieldIndex) && <span className="text-red-500"> *</span>}
+                            {field.title}{field.required && !mutexSatisfied && (fieldKeys.size === 0 || fields.findIndex((f) => [...getMutexKeys(f)].some(k => fieldKeys.has(k))) === fieldIndex) && <span className="text-red-500"> *</span>}
                         </label>
                         {hasError && (
                             <p className="text-red-500 text-xs mb-2">Este campo é obrigatório.</p>
