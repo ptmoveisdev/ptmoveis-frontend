@@ -52,7 +52,7 @@ export function ScalapayWidget({ amountSelector, type }: ScalapayWidgetProps) {
     }
 
     return (
-        <div className="mt-3 scalapay-widget-container">
+        <div className="mt-3 scalapay-widget-container overflow-x-hidden max-w-full">
             {/* @ts-ignore: Web component ignorado pelo TS */}
             <scalapay-widget {...widgetProps}></scalapay-widget>
         </div>

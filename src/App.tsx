@@ -645,6 +645,10 @@ function App() {
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleCategoryClick = (categoryId: number) => {
     navigate(`/produtos?category=${categoryId}`);
     window.scrollTo(0, 0);

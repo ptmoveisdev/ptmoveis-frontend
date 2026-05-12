@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Heart, ShoppingCart, Star, Check, Truck, Shield, CreditCard, ChevronLeft, Maximize, ZoomIn } from 'lucide-react';
+import { Heart, ShoppingCart, Check, Truck, Shield, CreditCard, ChevronLeft, Maximize, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -158,7 +158,7 @@ export default function ProductPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-16">
+        <div className="min-h-screen bg-gray-50 pt-20 pb-16 overflow-x-hidden">
             <Helmet>
                 <title>{`${product.name} | PT Móveis`}</title>
                 <meta name="description" content={product.description.substring(0, 160)} />
@@ -178,7 +178,7 @@ export default function ProductPage() {
                     Voltar
                 </button>
 
-                <div className="bg-white rounded-2xl shadow-sm p-6 md:p-12">
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 md:p-12 overflow-hidden">
                     <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
                         {/* Left Column - Images */}
                         <div className="space-y-4 md:sticky md:top-28 self-start">
@@ -252,36 +252,19 @@ export default function ProductPage() {
                         </div>
 
                         {/* Right Column - Details */}
-                        <div className="space-y-8">
+                        <div className="space-y-8 min-w-0 overflow-hidden">
                             <div>
                                 <p className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider mb-2">
                                     {product.category}
                                 </p>
-                                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Montserrat' }}>
+                                <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Montserrat' }}>
                                     {product.name}
                                 </h1>
-                                {/* Rating */}
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star
-                                                key={i}
-                                                className={`w-5 h-5 ${i < Math.floor(product.rating)
-                                                    ? 'fill-[#D4AF37] text-[#D4AF37]'
-                                                    : 'text-gray-300'
-                                                    }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="text-sm text-gray-600">
-                                        {product.rating} ({product.reviewCount} avaliações)
-                                    </span>
-                                </div>
                             </div>
 
                             {/* Price */}
-                            <div className="flex items-end gap-4 py-6 border-y border-gray-100">
-                                <div className="flex flex-col gap-1">
+                            <div className="py-6 border-y border-gray-100">
+                                <div className="flex flex-wrap items-center gap-3 mb-1">
                                     {displayOldPrice && !isNaN(displayOldPrice) && (
                                         <span className="text-lg text-gray-400 line-through font-medium">
                                             {displayOldPrice.toFixed(2)} €
@@ -290,14 +273,15 @@ export default function ProductPage() {
                                     <span id="scalapay-product-price" className="text-3xl font-bold text-[#1E3A5F]" style={{ fontFamily: 'Montserrat' }}>
                                         {!isNaN(displayPrice) ? `${displayPrice.toFixed(2)} €` : ''}
                                     </span>
+                                    {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
+                                        <div className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg whitespace-nowrap">
+                                            POUPE {(displayOldPrice - displayPrice).toFixed(2)} €
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="overflow-x-hidden max-w-full">
                                     <ScalapayWidget amountSelector="#scalapay-product-price" type="product" />
                                 </div>
-
-                                {displayOldPrice && !isNaN(displayOldPrice) && !isNaN(displayPrice) && (
-                                    <div className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg mb-2">
-                                        POUPE {(displayOldPrice - displayPrice).toFixed(2)} €
-                                    </div>
-                                )}
                             </div>
 
                             {/* Plugin WCCO - preço dinâmico baseado em data-* */}
@@ -344,9 +328,9 @@ export default function ProductPage() {
                             )}
 
                             {/* Description */}
-                            <div>
+                            <div className="overflow-hidden">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-                                <p className="text-gray-600 leading-relaxed text-base">
+                                <p className="text-gray-600 leading-relaxed text-base break-words overflow-wrap-anywhere">
                                     {product.description}
                                 </p>
                             </div>

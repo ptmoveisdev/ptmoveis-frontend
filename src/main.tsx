@@ -8,6 +8,10 @@ import { CartProvider } from './contexts/CartContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { AuthProvider } from './contexts/AuthContext';
 
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>

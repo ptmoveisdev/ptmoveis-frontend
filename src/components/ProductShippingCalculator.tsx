@@ -50,27 +50,27 @@ export function ProductShippingCalculator() {
     };
 
     return (
-        <div className="mt-8 border border-gray-200 rounded-xl p-5 bg-gray-50/50">
-            <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3 block">
+        <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+            <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
                 <Truck className="w-5 h-5 text-[#1E3A5F]" />
                 Simular Frete
             </h4>
-            
-            <div className="flex gap-2 mb-3">
+
+            <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <input
                     type="text"
                     value={postalCode}
                     onChange={(e) => setPostalCode(formatPostalCode(e.target.value))}
                     maxLength={8}
                     placeholder="4000-123"
-                    className="flex-1 p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all placeholder:text-gray-400"
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all placeholder:text-gray-400"
                 />
-                <Button 
+                <Button
                     onClick={handleCalculate}
                     disabled={isLoading || shippingZones.length === 0}
-                    className="bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white px-6 rounded-xl shrink-0 h-[50px] transition-colors"
+                    className="w-full sm:w-auto bg-[#1E3A5F] hover:bg-[#2E5A8F] text-white px-6 rounded-xl h-[50px] transition-colors"
                 >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Search className="w-5 h-5 mr-2" />Calcular</>}
                 </Button>
             </div>
             
