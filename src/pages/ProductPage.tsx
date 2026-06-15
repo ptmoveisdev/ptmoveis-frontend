@@ -412,14 +412,14 @@ export default function ProductPage() {
                                 <TabsList className="flex border-b border-gray-200 bg-transparent rounded-none p-0 h-auto gap-8 mb-8">
                                     <TabsTrigger
                                         value="description"
-                                        className="pb-4 pt-2 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-[#D4AF37] data-[state=active]:bg-transparent text-lg font-bold text-gray-500 data-[state=active]:text-[#1E3A5F] transition-all"
+                                        className="pb-4 pt-2 px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-lg font-bold text-gray-500 transition-all cursor-pointer"
                                         style={{ fontFamily: 'Montserrat' }}
                                     >
                                         Descrição
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="specifications"
-                                        className="pb-4 pt-2 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-[#D4AF37] data-[state=active]:bg-transparent text-lg font-bold text-gray-500 data-[state=active]:text-[#1E3A5F] transition-all"
+                                        className="pb-4 pt-2 px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-lg font-bold text-gray-500 transition-all cursor-pointer"
                                         style={{ fontFamily: 'Montserrat' }}
                                     >
                                         Especificações Técnicas
