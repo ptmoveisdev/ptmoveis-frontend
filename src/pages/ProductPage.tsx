@@ -5,6 +5,7 @@ import { Heart, ShoppingCart, Check, Truck, Shield, CreditCard, ChevronLeft, Max
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import InnerImageZoom from 'react-inner-image-zoom';
 import 'react-inner-image-zoom/lib/styles.min.css';
 import { useCart } from '@/contexts/CartContext';
@@ -327,14 +328,6 @@ export default function ProductPage() {
                                 />
                             )}
 
-                            {/* Description */}
-                            <div className="overflow-hidden">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-                                <p className="text-gray-600 leading-relaxed text-base break-words overflow-wrap-anywhere">
-                                    {product.description}
-                                </p>
-                            </div>
-
                             {/* Quantity Selector */}
                             <div>
                                 <label className="text-sm font-semibold text-gray-900 mb-3 block">
@@ -412,22 +405,71 @@ export default function ProductPage() {
                         </div>
                     </div>
 
-                    {/* Specifications Section */}
-                    {product.specifications && product.specifications.length > 0 && (
-                        <div className="mt-16 pt-16 border-t border-gray-100">
-                            <h3 className="text-2xl font-bold text-[#1E3A5F] mb-8" style={{ fontFamily: 'Montserrat' }}>
-                                Especificações Técnicas
-                            </h3>
-                            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {product.specifications.map((spec, index) => (
-                                    <div key={index} className="bg-gray-50 rounded-xl p-5 border border-gray-100 hover:border-[#D4AF37]/30 transition-colors">
-                                        <p className="text-sm text-gray-500 mb-2 uppercase tracking-wide font-medium">{spec.label}</p>
-                                        <p className="text-base font-bold text-gray-900">{spec.value}</p>
+                    {/* Detailed Info Section */}
+                    <div className="mt-16 pt-16 border-t border-gray-100">
+                        {product.specifications && product.specifications.length > 0 ? (
+                            <Tabs defaultValue="description" className="w-full">
+                                <TabsList className="flex border-b border-gray-200 bg-transparent rounded-none p-0 h-auto gap-8 mb-8">
+                                    <TabsTrigger
+                                        value="description"
+                                        className="pb-4 pt-2 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-[#D4AF37] data-[state=active]:bg-transparent text-lg font-bold text-gray-500 data-[state=active]:text-[#1E3A5F] transition-all"
+                                        style={{ fontFamily: 'Montserrat' }}
+                                    >
+                                        Descrição
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="specifications"
+                                        className="pb-4 pt-2 px-0 rounded-none border-b-2 border-transparent data-[state=active]:border-[#D4AF37] data-[state=active]:bg-transparent text-lg font-bold text-gray-500 data-[state=active]:text-[#1E3A5F] transition-all"
+                                        style={{ fontFamily: 'Montserrat' }}
+                                    >
+                                        Especificações Técnicas
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="description" className="focus-visible:outline-none">
+                                    <div className="max-w-4xl wp-description-content text-gray-600 leading-relaxed text-base">
+                                        {product.descriptionHtml ? (
+                                            <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {product.description.split('\n').filter(p => p.trim() !== '').map((para, i) => (
+                                                    <p key={i}>{para}</p>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
+                                </TabsContent>
+
+                                <TabsContent value="specifications" className="focus-visible:outline-none">
+                                    <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fadeIn">
+                                        {product.specifications.map((spec, index) => (
+                                            <div key={index} className="bg-gray-50 rounded-xl p-5 border border-gray-100 hover:border-[#D4AF37]/30 transition-colors">
+                                                <p className="text-sm text-gray-500 mb-2 uppercase tracking-wide font-medium">{spec.label}</p>
+                                                <p className="text-base font-bold text-gray-900">{spec.value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
+                        ) : (
+                            <div className="max-w-4xl">
+                                <h3 className="text-2xl font-bold text-[#1E3A5F] mb-6" style={{ fontFamily: 'Montserrat' }}>
+                                    Descrição do Produto
+                                </h3>
+                                <div className="wp-description-content text-gray-600 leading-relaxed text-base">
+                                    {product.descriptionHtml ? (
+                                        <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {product.description.split('\n').filter(p => p.trim() !== '').map((para, i) => (
+                                                <p key={i}>{para}</p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 

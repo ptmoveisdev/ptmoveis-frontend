@@ -10,6 +10,7 @@ export interface Product {
     badgeColor?: string;
     category: string;
     description: string;
+    descriptionHtml?: string;
     features: string[];
     specifications: {
         label: string;

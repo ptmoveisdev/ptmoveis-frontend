@@ -37,6 +37,7 @@ function convertWPProductToLocal(wpProduct: WooCommerceProduct): Product {
         badgeColor: wpProduct.on_sale ? 'bg-red-500' : (wpProduct.featured ? 'bg-[#D4AF37]' : undefined),
         category: wpProduct.categories[0]?.name || 'Sem categoria',
         description: stripHtml(wpProduct.description),
+        descriptionHtml: wpProduct.description,
         features: wpProduct.attributes.map(attr => `${attr.name}: ${attr.options.join(', ')}`),
         specifications: [
             { label: 'SKU', value: wpProduct.sku || 'N/A' },
