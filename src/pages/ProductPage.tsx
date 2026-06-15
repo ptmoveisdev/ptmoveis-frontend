@@ -159,7 +159,7 @@ export default function ProductPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-16 overflow-x-hidden">
+        <div className="min-h-screen bg-gray-50 pt-20 pb-16 overflow-x-clip">
             <Helmet>
                 <title>{`${product.name} | PT Móveis`}</title>
                 <meta name="description" content={product.description.substring(0, 160)} />
@@ -179,7 +179,7 @@ export default function ProductPage() {
                     Voltar
                 </button>
 
-                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 md:p-12 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 md:p-12 overflow-visible">
                     <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
                         {/* Left Column - Images */}
                         <div className="space-y-4 md:sticky md:top-28 self-start">
