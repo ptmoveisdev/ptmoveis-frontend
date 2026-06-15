@@ -159,7 +159,7 @@ export default function ProductPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-16 overflow-x-clip">
+        <div className="min-h-screen bg-gray-50 pt-10 pb-16 overflow-x-clip">
             <Helmet>
                 <title>{`${product.name} | PT Móveis`}</title>
                 <meta name="description" content={product.description.substring(0, 160)} />
@@ -409,17 +409,17 @@ export default function ProductPage() {
                     <div className="mt-16 pt-16 border-t border-gray-100">
                         {product.specifications && product.specifications.length > 0 ? (
                             <Tabs defaultValue="description" className="w-full">
-                                <TabsList className="flex border-b border-gray-200 bg-transparent rounded-none p-0 h-auto gap-8 mb-8">
+                                <TabsList className="flex border-b border-gray-200 bg-transparent rounded-none p-0 h-auto gap-4 sm:gap-8 mb-8 overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap w-full">
                                     <TabsTrigger
                                         value="description"
-                                        className="pb-4 pt-2 px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-lg font-bold text-gray-500 transition-all cursor-pointer"
+                                        className="pb-4 pt-2 px-2 sm:px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-sm sm:text-lg font-bold text-gray-500 transition-all cursor-pointer whitespace-nowrap"
                                         style={{ fontFamily: 'Montserrat' }}
                                     >
                                         Descrição
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="specifications"
-                                        className="pb-4 pt-2 px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-lg font-bold text-gray-500 transition-all cursor-pointer"
+                                        className="pb-4 pt-2 px-2 sm:px-6 rounded-none border-b-2 border-transparent bg-transparent shadow-none hover:text-[#1E3A5F] hover:bg-transparent data-[state=active]:border-b-[#D4AF37] data-[state=active]:bg-transparent data-[state=active]:text-[#1E3A5F] data-[state=active]:shadow-none text-sm sm:text-lg font-bold text-gray-500 transition-all cursor-pointer whitespace-nowrap"
                                         style={{ fontFamily: 'Montserrat' }}
                                     >
                                         Especificações Técnicas
