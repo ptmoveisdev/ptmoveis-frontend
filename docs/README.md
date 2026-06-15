@@ -93,7 +93,7 @@ docs/
 
 ### Estou com erro 401
 1. Leia: [PASSO_A_PASSO_ERRO_401.md](./PASSO_A_PASSO_ERRO_401.md)
-2. Execute: `bash test-woocommerce.sh`
+2. Execute: `bash scripts/test-woocommerce.sh`
 
 ### Quero usar HTTPS
 1. Leia: [HTTPS_LOCALHOST.md](./HTTPS_LOCALHOST.md)

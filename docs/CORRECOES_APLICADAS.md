@@ -6,8 +6,8 @@ As opções de categoria do plugin WooCommerce Category Options (WCCO) apareciam
 ## Diagnóstico Realizado ✅
 
 ### Testes Executados:
-1. ✅ Script de teste de endpoints (`test-wcco-endpoint.js`)
-2. ✅ Verificação de rotas disponíveis (`test-available-routes.js`)
+1. ✅ Script de teste de endpoints (`tests/test-wcco-endpoint.js`)
+2. ✅ Verificação de rotas disponíveis (`tests/test-available-routes.js`)
 3. ✅ Análise de produtos e meta_data
 
 ### Resultado do Diagnóstico:
@@ -80,20 +80,20 @@ if (!field || !field.title || !Array.isArray(field.options)) {
 
 ## Scripts de Diagnóstico Criados
 
-### 1. `test-wcco-endpoint.js`
+### 1. `tests/test-wcco-endpoint.js`
 Testa o endpoint WCCO e lista produtos disponíveis.
 
 **Como usar:**
 ```bash
-node test-wcco-endpoint.js
+node tests/test-wcco-endpoint.js
 ```
 
-### 2. `test-available-routes.js`
+### 2. `tests/test-available-routes.js`
 Lista todas as rotas REST API disponíveis no WordPress.
 
 **Como usar:**
 ```bash
-node test-available-routes.js
+node tests/test-available-routes.js
 ```
 
 ## Documentação Criada
@@ -145,7 +145,7 @@ node test-available-routes.js
    - Acessar https://api.ptmoveis.pt/wp-admin/
    - Instalar e ativar o plugin
    - Configurar opções para os produtos
-   - Testar com `node test-wcco-endpoint.js`
+   - Testar com `node tests/test-wcco-endpoint.js`
 
 3. **Se usar variações:**
    - Configurar produtos como "Produto Variável" no WordPress
@@ -158,10 +158,10 @@ Após implementar a solução escolhida:
 
 ```bash
 # 1. Testar endpoints
-node test-wcco-endpoint.js
+node tests/test-wcco-endpoint.js
 
 # 2. Verificar rotas
-node test-available-routes.js
+node tests/test-available-routes.js
 
 # 3. Testar no navegador
 # Abrir console (F12) e verificar logs

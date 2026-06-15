@@ -2,7 +2,7 @@
  * Script para testar o endpoint do plugin WooCommerce Category Options
  * 
  * Como usar:
- * 1. node test-wcco-endpoint.js
+ * 1. node tests/test-wcco-endpoint.js
  * 2. Verifique os resultados no console
  */
 

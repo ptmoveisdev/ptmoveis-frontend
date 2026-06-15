@@ -66,8 +66,8 @@ curl https://loja.local/wp-json/wcco/v1/health
 curl https://loja.local/wp-json/wcco/v1/options/14
 
 # Ou use o script
-chmod +x test-wcco-localhost.sh
-./test-wcco-localhost.sh
+chmod +x scripts/test-wcco-localhost.sh
+./scripts/test-wcco-localhost.sh
 ```
 
 ## Estrutura de Resposta Esperada

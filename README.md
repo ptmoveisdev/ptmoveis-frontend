@@ -123,7 +123,7 @@ Siga o guia completo: **[docs/WORDPRESS_GUIA_VISUAL.md](./docs/WORDPRESS_GUIA_VI
 
 ```bash
 # Testar credenciais WooCommerce
-bash test-woocommerce.sh
+bash scripts/test-woocommerce.sh
 ```
 
 ---
@@ -158,7 +158,7 @@ yarn preview                # Preview do build
 yarn lint                   # Executa ESLint
 
 # Testes
-bash test-woocommerce.sh    # Testa credenciais WooCommerce
+bash scripts/test-woocommerce.sh    # Testa credenciais WooCommerce
 ```
 
 ---
@@ -173,7 +173,7 @@ Veja: **[docs/PASSO_A_PASSO_ERRO_401.md](./docs/PASSO_A_PASSO_ERRO_401.md)**
 
 1. Verifique se WordPress está rodando
 2. Verifique credenciais no `.env`
-3. Execute `bash test-woocommerce.sh`
+3. Execute `bash scripts/test-woocommerce.sh`
 4. Veja logs no console do navegador (F12)
 
 ### Erro de CORS

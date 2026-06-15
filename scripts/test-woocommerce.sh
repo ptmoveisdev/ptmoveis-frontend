@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de teste rápido para verificar credenciais WooCommerce
-# Execute: bash test-woocommerce.sh
+# Execute: bash scripts/test-woocommerce.sh
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -11,11 +11,22 @@ echo "║                                                              ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Ler credenciais do .env
+# Ler credenciais do .env ou .env.local (no diretório atual ou pai)
+ENV_FILE=""
 if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+    ENV_FILE=".env"
+elif [ -f .env.local ]; then
+    ENV_FILE=".env.local"
+elif [ -f ../.env ]; then
+    ENV_FILE="../.env"
+elif [ -f ../.env.local ]; then
+    ENV_FILE="../.env.local"
+fi
+
+if [ ! -z "$ENV_FILE" ]; then
+    export $(cat "$ENV_FILE" | grep -v '^#' | xargs)
 else
-    echo "❌ Arquivo .env não encontrado!"
+    echo "❌ Arquivo .env ou .env.local não encontrado!"
     exit 1
 fi
 

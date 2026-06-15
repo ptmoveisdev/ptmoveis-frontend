@@ -35,7 +35,7 @@ Verifique se o plugin "WooCommerce Category Options" está:
 
 Execute o script de teste:
 ```bash
-node test-wcco-endpoint.js
+node tests/test-wcco-endpoint.js
 ```
 
 Ou teste manualmente com curl:
@@ -112,7 +112,7 @@ Procure no campo `meta_data` por chaves relacionadas a opções de categoria.
 
 ## Próximos Passos
 
-1. ✅ Execute o script de teste: `node test-wcco-endpoint.js`
+1. ✅ Execute o script de teste: `node tests/test-wcco-endpoint.js`
 2. ✅ Verifique os logs do console do navegador
 3. ✅ Confirme que o plugin está instalado em produção
 4. ✅ Verifique se há diferenças de configuração entre ambientes

@@ -109,7 +109,7 @@ cs_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 No terminal, execute:
 
 ```bash
-bash test-woocommerce.sh
+bash scripts/test-woocommerce.sh
 ```
 
 Você verá:
@@ -171,7 +171,7 @@ Marque cada item conforme completa:
 - [ ] Copiei Consumer Secret
 - [ ] Atualizei arquivo .env
 - [ ] Salvei o arquivo .env
-- [ ] Testei com test-woocommerce.sh (opcional)
+- [ ] Testei com scripts/test-woocommerce.sh (opcional)
 - [ ] Reiniciei o servidor (Ctrl+C + yarn dev)
 - [ ] Recarreguei a página (F5)
 - [ ] Verifiquei o console (F12)

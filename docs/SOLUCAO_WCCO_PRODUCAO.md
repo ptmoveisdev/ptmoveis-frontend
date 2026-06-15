@@ -28,7 +28,7 @@ O teste confirmou que o plugin **WooCommerce Category Options (WCCO) não está 
 
 6. Teste novamente com:
    ```bash
-   node test-wcco-endpoint.js
+   node tests/test-wcco-endpoint.js
    ```
 
 ### Solução 2: Usar Variações do WooCommerce (Alternativa)
@@ -123,10 +123,10 @@ Após instalar o plugin em produção, execute:
 
 ```bash
 # 1. Verificar rotas disponíveis
-node test-available-routes.js
+node tests/test-available-routes.js
 
 # 2. Testar endpoint WCCO
-node test-wcco-endpoint.js
+node tests/test-wcco-endpoint.js
 
 # 3. Testar no navegador
 # Abra o site e verifique se as opções aparecem
