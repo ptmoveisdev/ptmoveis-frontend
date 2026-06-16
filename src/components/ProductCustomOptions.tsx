@@ -3,6 +3,15 @@ import { getProductCategoryOptions } from '@/services/wordpress';
 import type { WCCOOptionField } from '@/types/wordpress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+function normalizeTitle(title: string): string {
+    return title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+        .replace(/\s+/g, '') // remove spaces
+        .replace(/[^a-z0-9+()]/g, ''); // keep alphanumeric, +, and parenthesis
+}
+
 interface ProductCustomOptionsProps {
     productId: number;
     onSelectionChange: (
@@ -18,6 +27,33 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
     const [loading, setLoading] = useState(true);
     // Armazena as seleções { fieldIndex: opcaoIndex }
     const [selections, setSelections] = useState<Record<number, number>>({});
+
+    useEffect(() => {
+        if (!fields.length) return;
+
+        const bedIndex = fields.findIndex(f => {
+            const norm = normalizeTitle(f.title);
+            return norm.includes('cama+estrado+colchao') || 
+                   (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
+        });
+        const recIndex = fields.findIndex(f => {
+            const norm = normalizeTitle(f.title);
+            return norm.includes('recomendacaoparacolchao');
+        });
+
+        if (bedIndex !== -1 && recIndex !== -1) {
+            const hasBedSelection = selections[bedIndex] !== undefined;
+            const hasRecSelection = selections[recIndex] !== undefined;
+
+            if (!hasBedSelection && hasRecSelection) {
+                setSelections(prev => {
+                    const updated = { ...prev };
+                    delete updated[recIndex];
+                    return updated;
+                });
+            }
+        }
+    }, [selections, fields]);
 
     useEffect(() => {
         let isMounted = true;
@@ -78,6 +114,20 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
         });
 
         const isValid = fields.every((field, index) => {
+            // Se o campo for a recomendação e a cama não estiver selecionada, ele fica desabilitado
+            // e, portanto, é considerado válido (não deve bloquear a submissão).
+            const normTitle = normalizeTitle(field.title);
+            const isRecommendationField = normTitle.includes('recomendacaoparacolchao');
+            const bedIndex = fields.findIndex(f => {
+                const norm = normalizeTitle(f.title);
+                return norm.includes('cama+estrado+colchao') || 
+                       (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
+            });
+            const isBedSelected = bedIndex !== -1 && selections[bedIndex] !== undefined;
+            const isDisabledByRule = isRecommendationField && bedIndex !== -1 && !isBedSelected;
+
+            if (isDisabledByRule) return true;
+
             if (!field.required) return true;
             if (selections[index] !== undefined) return true;
             // Check across all three key types — direct product fields use mutex_group/
@@ -162,11 +212,27 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
 
                 const hasError = attemptedSubmit && field.required && selectedValue === undefined && !mutexSatisfied;
 
+                // Verificação de dependência de cama para recomendação de colchão
+                const normTitle = normalizeTitle(field.title);
+                const isRecommendationField = normTitle.includes('recomendacaoparacolchao');
+                const bedIndex = fields.findIndex(f => {
+                    const norm = normalizeTitle(f.title);
+                    return norm.includes('cama+estrado+colchao') || 
+                           (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
+                });
+                const isBedSelected = bedIndex !== -1 && selections[bedIndex] !== undefined;
+                const isDisabledByRule = isRecommendationField && bedIndex !== -1 && !isBedSelected;
+
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
-                        <label className="text-sm font-semibold text-gray-900 mb-3 block">
+                        <label className={`text-sm font-semibold text-gray-900 mb-3 block ${isDisabledByRule ? 'opacity-50' : ''}`}>
                             {field.title}{field.required && !mutexSatisfied && (fieldKeys.size === 0 || fields.findIndex((f) => [...getMutexKeys(f)].some(k => fieldKeys.has(k))) === fieldIndex) && <span className="text-red-500"> *</span>}
                         </label>
+                        {isDisabledByRule && (
+                            <p className="text-amber-600 text-xs mb-2 font-medium">
+                                Disponível apenas após selecionar uma opção de CAMA+ESTRADO+COLCHÃO.
+                            </p>
+                        )}
                         {hasError && (
                             <p className="text-red-500 text-xs mb-2">Este campo é obrigatório.</p>
                         )}
@@ -174,14 +240,14 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                         {field.type === 'select' && (
                             <Select
                                 value={selectedValue !== undefined ? String(selectedValue) : '__none__'}
-
+                                disabled={isDisabledByRule}
                                 onValueChange={(val) => {
                                     const newVal = val === '__none__' ? undefined : parseInt(val, 10);
                                     setSelections((prev) => applyMutexGroup(prev, fieldIndex, newVal));
                                 }}
                             >
-                                <SelectTrigger className={`w-full rounded-xl border bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all ${hasError ? 'border-red-500' : 'border-gray-200'}`}>
-                                    <SelectValue placeholder="Escolha uma opção" />
+                                <SelectTrigger className={`w-full rounded-xl border bg-white hover:bg-white/95 focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all ${hasError ? 'border-red-500' : 'border-gray-200'} ${isDisabledByRule ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    <SelectValue placeholder={isDisabledByRule ? "Selecione cama + estrado + colchão primeiro" : "Escolha uma opção"} />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
                                     <SelectItem value="__none__">Nenhuma</SelectItem>
@@ -198,7 +264,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                         )}
 
                         {field.type === 'radio' && (
-                            <div className={`grid gap-2 ${hasError ? 'rounded-xl border border-red-500 p-2' : ''}`}>
+                            <div className={`grid gap-2 ${hasError ? 'rounded-xl border border-red-500 p-2' : ''} ${isDisabledByRule ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {field.options.map((opt, optIndex) => {
                                     const p = parsePrice(opt.price);
                                     const isSelected = selections[fieldIndex] === optIndex;
@@ -209,6 +275,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
+                                                disabled={isDisabledByRule}
                                                 onChange={() => {
                                                     setSelections((prev) => applyMutexGroup(prev, fieldIndex, optIndex));
                                                 }}
@@ -228,7 +295,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                         )}
 
                         {field.type === 'image_swatch' && (
-                            <div className="flex flex-wrap gap-3">
+                            <div className={`flex flex-wrap gap-3 ${isDisabledByRule ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {field.options.map((opt, optIndex) => {
                                     const p = parsePrice(opt.price);
                                     const isSelected = selections[fieldIndex] === optIndex;
@@ -239,6 +306,7 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                                                 name={`wcco_field_${fieldIndex}`}
                                                 value={optIndex}
                                                 checked={isSelected}
+                                                disabled={isDisabledByRule}
                                                 onChange={() => {
                                                     setSelections((prev) => applyMutexGroup(prev, fieldIndex, optIndex));
                                                 }}
