@@ -420,8 +420,8 @@ export default function CheckoutPage() {
                     const line: any = {
                         product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                         quantity: item.quantity,
-                        subtotal: (item.price * item.quantity).toFixed(2),
-                        total: (item.price * item.quantity).toFixed(2),
+                        subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
+                        total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
                     };
                     if (item.variationId) line.variation_id = item.variationId;
                     if (item.customOptions && item.customOptions.length > 0) {
@@ -495,8 +495,8 @@ export default function CheckoutPage() {
                         const line: any = {
                             product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                             quantity: item.quantity,
-                            subtotal: (item.price * item.quantity).toFixed(2),
-                            total: (item.price * item.quantity).toFixed(2),
+                            subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
+                            total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
                         };
                         if (item.variationId) line.variation_id = item.variationId;
                         if (item.customOptions && item.customOptions.length > 0) {
@@ -587,8 +587,8 @@ export default function CheckoutPage() {
                         const line: any = {
                             product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                             quantity: item.quantity,
-                            subtotal: (item.price * item.quantity).toFixed(2),
-                            total: (item.price * item.quantity).toFixed(2),
+                            subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
+                            total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
                         };
                         if (item.variationId) line.variation_id = item.variationId;
                         if (item.customOptions && item.customOptions.length > 0) {
@@ -638,12 +638,16 @@ export default function CheckoutPage() {
                         countryCode: 'PT',
                         phoneNumber: formattedPhone,
                     },
-                    items: items.map(item => ({
-                        name: item.name,
-                        sku: item.name,
-                        quantity: item.quantity,
-                        price: { amount: item.price.toFixed(2), currency: 'EUR' },
-                    })),
+                    items: items.map(item => {
+                        const itemTotal = item.price * item.quantity + (item.flatExtras ?? 0);
+                        const unitPrice = itemTotal / item.quantity;
+                        return {
+                            name: item.name,
+                            sku: item.name,
+                            quantity: item.quantity,
+                            price: { amount: unitPrice.toFixed(2), currency: 'EUR' },
+                        };
+                    }),
                     merchant: {
                         redirectConfirmUrl: `${origin}/encomenda-concluida`,
                         redirectCancelUrl: `${origin}/checkout`,
@@ -697,6 +701,14 @@ export default function CheckoutPage() {
                     message += `- ${item.quantity}x ${item.name}`;
                     if (item.selectedAttributes) message += ` (${item.selectedAttributes})`;
                     message += ` - ${item.price.toFixed(2)} €\n`;
+                    if (item.customOptions && item.customOptions.length > 0) {
+                        item.customOptions.forEach((opt: any) => {
+                            message += `  * ${opt.name}: ${opt.value}${opt.price > 0 ? ` (+${opt.price.toFixed(2)} €)` : ''}\n`;
+                        });
+                    }
+                    if (item.flatExtras && item.flatExtras > 0) {
+                        message += `  * Opções Fixas: +${item.flatExtras.toFixed(2)} €\n`;
+                    }
                 });
 
                 message += `\n*RESUMO*\n`;
@@ -750,8 +762,8 @@ export default function CheckoutPage() {
                     const line: any = {
                         product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
                         quantity: item.quantity,
-                        subtotal: (item.price * item.quantity).toFixed(2),
-                        total: (item.price * item.quantity).toFixed(2),
+                        subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
+                        total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
                     };
                     if (item.variationId) {
                         line.variation_id = item.variationId;
@@ -1201,6 +1213,20 @@ export default function CheckoutPage() {
                                                 {item.selectedAttributes && (
                                                     <p className="text-xs text-gray-500 truncate">{item.selectedAttributes}</p>
                                                 )}
+                                                {item.customOptions && item.customOptions.length > 0 && (
+                                                    <div className="mt-0.5 flex flex-col gap-0.5">
+                                                        {item.customOptions.map((opt: any, idx: number) => (
+                                                            <p key={idx} className="text-xs text-gray-500 truncate">
+                                                                {opt.name}: {opt.value} {opt.price > 0 && `(+${opt.price.toFixed(2)} €)`}
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {item.flatExtras && item.flatExtras > 0 ? (
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        Opções fixas: +{item.flatExtras.toFixed(2)} €
+                                                    </p>
+                                                ) : null}
                                                 <p className="text-sm text-gray-600 mt-0.5">{item.quantity} × {item.price.toFixed(2)} €</p>
                                             </div>
                                         </div>
