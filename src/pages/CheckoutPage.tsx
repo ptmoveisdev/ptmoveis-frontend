@@ -433,7 +433,8 @@ export default function CheckoutPage() {
                     return line;
                 }),
                 shipping_lines: [{
-                    method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                    method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
+                    instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
                     method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
                     total: (dynamicShippingCost || 0).toFixed(2),
                 }],
@@ -508,7 +509,8 @@ export default function CheckoutPage() {
                         return line;
                     }),
                     shipping_lines: [{
-                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
+                        instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
                         method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
                         total: (dynamicShippingCost || 0).toFixed(2),
                     }],
@@ -600,7 +602,8 @@ export default function CheckoutPage() {
                         return line;
                     }),
                     shipping_lines: [{
-                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
+                        instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
                         method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
                         total: (dynamicShippingCost || 0).toFixed(2),
                     }],
@@ -778,7 +781,8 @@ export default function CheckoutPage() {
                 }),
                 shipping_lines: [
                     {
-                        method_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : 'flat_rate',
+                        method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
+                        instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
                         method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
                         total: (dynamicShippingCost || 0).toFixed(2),
                     }

@@ -63,6 +63,8 @@ export async function fetchAllShippingZones(): Promise<EnrichedShippingZone[]> {
     }
 }
 
+const normalizePostcode = (pc: string) => pc.replace(/[\s-]/g, '').toUpperCase();
+
 /**
  * Matches a pre-fetched list of shipping zones against a given Portuguese postal code.
  * @param postalCode Portuguese postal code (e.g., "4000-123")
@@ -72,19 +74,22 @@ export async function fetchAllShippingZones(): Promise<EnrichedShippingZone[]> {
 export function matchShippingZoneWithMethod(postalCode: string, zones: EnrichedShippingZone[]): WooCommerceShippingMethod | null {
     if (!postalCode) return null;
 
-    // WooCommerce stores wildcards like "40*"
-    // And exact matches like "4000-123"
-    // Just grab the first part for wildcard checks if it's formatted
-    const cleanPostalCode = postalCode.trim();
-    const postalCodeParts = cleanPostalCode.split('-');
-    const zipCodeFirstPart = postalCodeParts[0] || '';
+    const cleanPostalCode = normalizePostcode(postalCode);
+    const zipCodeFirstPart = cleanPostalCode.slice(0, 4);
 
-    // Sort zones by order (WooCommerce matches top to bottom); zone 0 (Rest of World) sorts last
-    const sortedZones = [...zones].sort((a, b) => {
-        if (a.id === 0) return 1;
-        if (b.id === 0) return -1;
-        return a.order - b.order;
-    });
+    // Sort active zones by order (lower order first), keeping original order for ties, and place Zone 0 at the end
+    const activeZones = zones
+        .filter(z => z.id !== 0)
+        .map((zone, index) => ({ zone, index }))
+        .sort((a, b) => {
+            if (a.zone.order !== b.zone.order) {
+                return a.zone.order - b.zone.order;
+            }
+            return a.index - b.index;
+        })
+        .map(item => item.zone);
+    const zone0 = zones.find(z => z.id === 0);
+    const sortedZones = zone0 ? [...activeZones, zone0] : activeZones;
 
     let restOfWorldMethod: WooCommerceShippingMethod | null = null;
 
@@ -101,22 +106,25 @@ export function matchShippingZoneWithMethod(postalCode: string, zones: EnrichedS
                 const rules = loc.code.split('\n').map(r => r.trim()).filter(Boolean);
 
                 for (const rule of rules) {
+                    const cleanRule = normalizePostcode(rule);
                     if (rule.endsWith('*')) {
                         // Wildcard match (e.g. 40*)
-                        const prefix = rule.replace('*', '');
+                        const prefix = normalizePostcode(rule.replace('*', ''));
                         if (cleanPostalCode.startsWith(prefix) || zipCodeFirstPart.startsWith(prefix)) {
                             return zone.methods[0] || null;
                         }
                     } else if (rule.includes('...')) {
                         // Range match (e.g. 4000...4999)
                         const [start, end] = rule.split('...');
+                        const startNum = parseInt(normalizePostcode(start), 10);
+                        const endNum = parseInt(normalizePostcode(end), 10);
                         const zipNum = parseInt(zipCodeFirstPart, 10);
-                        if (!isNaN(zipNum) && zipNum >= parseInt(start, 10) && zipNum <= parseInt(end, 10)) {
+                        if (!isNaN(zipNum) && !isNaN(startNum) && !isNaN(endNum) && zipNum >= startNum && zipNum <= endNum) {
                             return zone.methods[0] || null;
                         }
                     } else {
                         // Exact match
-                        if (cleanPostalCode === rule || zipCodeFirstPart === rule) {
+                        if (cleanPostalCode === cleanRule || zipCodeFirstPart === cleanRule) {
                             return zone.methods[0] || null;
                         }
                     }

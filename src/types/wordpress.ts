@@ -334,6 +334,7 @@ export interface WooCommerceOrderPayload {
     }>;
     shipping_lines: Array<{
         method_id: string;
+        instance_id?: string;
         method_title: string;
         total: string;
     }>;
@@ -376,6 +377,7 @@ export interface WooCommerceShippingLocation {
 
 export interface WooCommerceShippingMethod {
     id: number;
+    method_id: string;
     title: string;
     enabled: boolean;
     settings: {
