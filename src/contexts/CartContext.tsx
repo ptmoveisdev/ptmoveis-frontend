@@ -14,7 +14,7 @@ export interface CartItem {
     badgeColor?: string;
     selectedAttributes?: string; // Ex: "Cor: Azul, Tecido: T1"
     variationId?: number;
-    customOptions?: { name: string; value: string; price: number; multiply_qty?: boolean }[];
+    customOptions?: { name: string; value: string; price: number; multiply_qty?: boolean; mode?: 'add' | 'replace' }[];
     /** Extras de preço fixo (não multiplicados pela quantidade) */
     flatExtras?: number;
 }

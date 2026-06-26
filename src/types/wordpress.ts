@@ -331,12 +331,24 @@ export interface WooCommerceOrderPayload {
         product_id: number;
         variation_id?: number;
         quantity: number;
+        subtotal?: string;
+        total?: string;
+        meta_data?: Array<{
+            key: string;
+            value: any;
+        }>;
     }>;
     shipping_lines: Array<{
         method_id: string;
         instance_id?: string;
         method_title: string;
         total: string;
+    }>;
+    fee_lines?: Array<{
+        name: string;
+        total: string;
+        tax_status?: string;
+        tax_class?: string;
     }>;
     meta_data?: Array<{
         key: string;

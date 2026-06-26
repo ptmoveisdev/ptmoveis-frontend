@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { ChevronLeft, ShoppingBag, CreditCard, Smartphone, Banknote, Search, Loader2 } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { useCart } from '@/contexts/CartContext';
+import { useCart, type CartItem } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
@@ -53,6 +53,77 @@ const saveCheckoutData = (data: Partial<CheckoutFormData>) => {
         localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(rest));
     } catch {}
 };
+
+interface LineItemPayload {
+    product_id: number;
+    variation_id?: number;
+    quantity: number;
+    subtotal: string;
+    total: string;
+    meta_data?: Array<{ key: string; value: any }>;
+}
+
+interface FeeLinePayload {
+    name: string;
+    total: string;
+    tax_status: string;
+}
+
+export function prepareWooCommerceCart(items: CartItem[]): { line_items: LineItemPayload[], fee_lines: FeeLinePayload[] } {
+    const line_items: LineItemPayload[] = [];
+    const feeMap = new Map<string, number>();
+
+    items.forEach(item => {
+        const perUnitExtras = item.customOptions?.reduce((sum, opt) => {
+            if (opt.price > 0 && opt.mode !== 'replace' && opt.multiply_qty) {
+                return sum + opt.price;
+            }
+            return sum;
+        }, 0) ?? 0;
+
+        const baseUnitPrice = Math.max(0, item.price - perUnitExtras);
+        const quantity = item.quantity;
+        const lineItemTotal = baseUnitPrice * quantity;
+
+        const lineItem: LineItemPayload = {
+            product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
+            quantity,
+            subtotal: lineItemTotal.toFixed(2),
+            total: lineItemTotal.toFixed(2),
+        };
+
+        if (item.variationId) {
+            lineItem.variation_id = item.variationId;
+        }
+
+        if (item.customOptions && item.customOptions.length > 0) {
+            lineItem.meta_data = item.customOptions.map(opt => ({
+                key: opt.name,
+                value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value,
+            }));
+        }
+
+        line_items.push(lineItem);
+
+        if (item.customOptions) {
+            item.customOptions.forEach(opt => {
+                if (opt.price > 0 && opt.mode !== 'replace') {
+                    const feeTotal = opt.multiply_qty ? (opt.price * quantity) : opt.price;
+                    const currentVal = feeMap.get(opt.name) ?? 0;
+                    feeMap.set(opt.name, currentVal + feeTotal);
+                }
+            });
+        }
+    });
+
+    const fee_lines = Array.from(feeMap.entries()).map(([name, total]) => ({
+        name,
+        total: total.toFixed(2),
+        tax_status: 'none',
+    }));
+
+    return { line_items, fee_lines };
+}
 
 // Schema de validação
 const checkoutSchema = z.object({
@@ -392,6 +463,7 @@ export default function CheckoutPage() {
             const captureId = isApm ? _data.orderID : (await actions.order.capture()).id;
 
             const formData = watch();
+            const { line_items, fee_lines } = prepareWooCommerceCart(items);
             const wooOrder = await createWooCommerceOrder({
                 payment_method: selectedPaymentMethod,
                 payment_method_title:
@@ -416,22 +488,8 @@ export default function CheckoutPage() {
                     postcode: formData.postalCode,
                     country: 'PT',
                 },
-                line_items: items.map(item => {
-                    const line: any = {
-                        product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                        quantity: item.quantity,
-                        subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                        total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                    };
-                    if (item.variationId) line.variation_id = item.variationId;
-                    if (item.customOptions && item.customOptions.length > 0) {
-                        line.meta_data = item.customOptions.map((opt: any) => ({
-                            key: opt.name,
-                            value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value
-                        }));
-                    }
-                    return line;
-                }),
+                line_items,
+                fee_lines,
                 shipping_lines: [{
                     method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
                     instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
@@ -470,6 +528,7 @@ export default function CheckoutPage() {
         if (data.paymentMethod === 'klarna-payments') {
             setIsSubmitting(true);
             try {
+                const { line_items, fee_lines } = prepareWooCommerceCart(items);
                 const orderData: any = {
                     payment_method: 'klarna_payments',
                     payment_method_title: 'Klarna',
@@ -492,22 +551,8 @@ export default function CheckoutPage() {
                         postcode: data.postalCode,
                         country: 'PT',
                     },
-                    line_items: items.map(item => {
-                        const line: any = {
-                            product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                            quantity: item.quantity,
-                            subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                            total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                        };
-                        if (item.variationId) line.variation_id = item.variationId;
-                        if (item.customOptions && item.customOptions.length > 0) {
-                            line.meta_data = item.customOptions.map(opt => ({
-                                key: opt.name,
-                                value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value,
-                            }));
-                        }
-                        return line;
-                    }),
+                    line_items,
+                    fee_lines,
                     shipping_lines: [{
                         method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
                         instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
@@ -562,6 +607,7 @@ export default function CheckoutPage() {
                     ? `${data.address}, ${data.doorNumber}`
                     : data.address;
 
+                const { line_items, fee_lines } = prepareWooCommerceCart(items);
                 const orderData: any = {
                     payment_method: 'scalapay',
                     payment_method_title: 'Scalapay',
@@ -585,22 +631,8 @@ export default function CheckoutPage() {
                         country: 'PT',
                         phone: formattedPhone,
                     },
-                    line_items: items.map(item => {
-                        const line: any = {
-                            product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                            quantity: item.quantity,
-                            subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                            total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                        };
-                        if (item.variationId) line.variation_id = item.variationId;
-                        if (item.customOptions && item.customOptions.length > 0) {
-                            line.meta_data = item.customOptions.map(opt => ({
-                                key: opt.name,
-                                value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value,
-                            }));
-                        }
-                        return line;
-                    }),
+                    line_items,
+                    fee_lines,
                     shipping_lines: [{
                         method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
                         instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
@@ -738,6 +770,7 @@ export default function CheckoutPage() {
         setIsSubmitting(true);
         try {
             const selectedGateway = gateways.find(g => g.id === selectedPaymentMethod);
+            const { line_items, fee_lines } = prepareWooCommerceCart(items);
 
             const orderData = {
                 payment_method: selectedGateway?.id || selectedPaymentMethod,
@@ -761,24 +794,8 @@ export default function CheckoutPage() {
                     postcode: data.postalCode,
                     country: 'PT',
                 },
-                line_items: items.map(item => {
-                    const line: any = {
-                        product_id: typeof item.id === 'string' ? parseInt(item.id.split('-')[0], 10) : Number(item.id),
-                        quantity: item.quantity,
-                        subtotal: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                        total: (item.price * item.quantity + (item.flatExtras ?? 0)).toFixed(2),
-                    };
-                    if (item.variationId) {
-                        line.variation_id = item.variationId;
-                    }
-                    if (item.customOptions && item.customOptions.length > 0) {
-                        line.meta_data = item.customOptions.map(opt => ({
-                            key: opt.name,
-                            value: opt.price > 0 ? `${opt.value} (+${opt.price} €)` : opt.value
-                        }));
-                    }
-                    return line;
-                }),
+                line_items,
+                fee_lines,
                 shipping_lines: [
                     {
                         method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
