@@ -12,6 +12,17 @@ function normalizeTitle(title: string): string {
         .replace(/[^a-z0-9+()]/g, ''); // keep alphanumeric, +, and parenthesis
 }
 
+function isBedComboField(title: string): boolean {
+    const norm = normalizeTitle(title);
+    return norm.includes('colchao') && !norm.includes('recomendacao');
+}
+
+function isRecommendationField(title: string): boolean {
+    const norm = normalizeTitle(title);
+    return norm.includes('recomendacao');
+}
+
+
 interface ProductCustomOptionsProps {
     productId: number;
     onSelectionChange: (
@@ -31,18 +42,14 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
     useEffect(() => {
         if (!fields.length) return;
 
-        const bedIndex = fields.findIndex(f => {
-            const norm = normalizeTitle(f.title);
-            return norm.includes('cama+estrado+colchao') || 
-                   (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
-        });
-        const recIndex = fields.findIndex(f => {
-            const norm = normalizeTitle(f.title);
-            return norm.includes('recomendacaoparacolchao');
-        });
+        const bedIndexes = fields
+            .map((f, idx) => ({ f, idx }))
+            .filter(({ f }) => isBedComboField(f.title))
+            .map(({ idx }) => idx);
+        const recIndex = fields.findIndex(f => isRecommendationField(f.title));
 
-        if (bedIndex !== -1 && recIndex !== -1) {
-            const hasBedSelection = selections[bedIndex] !== undefined;
+        if (bedIndexes.length > 0 && recIndex !== -1) {
+            const hasBedSelection = bedIndexes.some(idx => selections[idx] !== undefined);
             const hasRecSelection = selections[recIndex] !== undefined;
 
             if (!hasBedSelection && hasRecSelection) {
@@ -116,15 +123,13 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
         const isValid = fields.every((field, index) => {
             // Se o campo for a recomendação e a cama não estiver selecionada, ele fica desabilitado
             // e, portanto, é considerado válido (não deve bloquear a submissão).
-            const normTitle = normalizeTitle(field.title);
-            const isRecommendationField = normTitle.includes('recomendacaoparacolchao');
-            const bedIndex = fields.findIndex(f => {
-                const norm = normalizeTitle(f.title);
-                return norm.includes('cama+estrado+colchao') || 
-                       (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
-            });
-            const isBedSelected = bedIndex !== -1 && selections[bedIndex] !== undefined;
-            const isDisabledByRule = isRecommendationField && bedIndex !== -1 && !isBedSelected;
+            const isRec = isRecommendationField(field.title);
+            const bedIndexes = fields
+                .map((f, idx) => ({ f, idx }))
+                .filter(({ f }) => isBedComboField(f.title))
+                .map(({ idx }) => idx);
+            const isBedSelected = bedIndexes.some(idx => selections[idx] !== undefined);
+            const isDisabledByRule = isRec && bedIndexes.length > 0 && !isBedSelected;
 
             if (isDisabledByRule) return true;
 
@@ -213,15 +218,13 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
                 const hasError = attemptedSubmit && field.required && selectedValue === undefined && !mutexSatisfied;
 
                 // Verificação de dependência de cama para recomendação de colchão
-                const normTitle = normalizeTitle(field.title);
-                const isRecommendationField = normTitle.includes('recomendacaoparacolchao');
-                const bedIndex = fields.findIndex(f => {
-                    const norm = normalizeTitle(f.title);
-                    return norm.includes('cama+estrado+colchao') || 
-                           (norm.includes('cama') && norm.includes('estrado') && norm.includes('colchao'));
-                });
-                const isBedSelected = bedIndex !== -1 && selections[bedIndex] !== undefined;
-                const isDisabledByRule = isRecommendationField && bedIndex !== -1 && !isBedSelected;
+                const isRec = isRecommendationField(field.title);
+                const bedIndexes = fields
+                    .map((f, idx) => ({ f, idx }))
+                    .filter(({ f }) => isBedComboField(f.title))
+                    .map(({ idx }) => idx);
+                const isBedSelected = bedIndexes.some(idx => selections[idx] !== undefined);
+                const isDisabledByRule = isRec && bedIndexes.length > 0 && !isBedSelected;
 
                 return (
                     <div key={fieldIndex} className="wcco-field-group">
