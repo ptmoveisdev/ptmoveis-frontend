@@ -619,6 +619,7 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
 }
 
 import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import { MaintenancePage } from '@/pages/MaintenancePage';
 
 function CollectionRouteWrapper({ onProductClick }: { onProductClick: (product: Product) => void }) {
   const [searchParams] = useSearchParams();
@@ -639,8 +640,14 @@ function CollectionRouteWrapper({ onProductClick }: { onProductClick: (product: 
   );
 }
 
+const IS_MAINTENANCE = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+
 // Main App Component
 function App() {
+  if (IS_MAINTENANCE) {
+    return <MaintenancePage />;
+  }
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const navigate = useNavigate();
