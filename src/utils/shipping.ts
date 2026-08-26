@@ -31,20 +31,33 @@ export async function fetchAllShippingZones(): Promise<EnrichedShippingZone[]> {
     try {
         const zones = await getShippingZones();
 
-        // Fetch locations + methods for all zones in parallel (including zone 0 = Rest of World fallback)
-        const enrichedZones = await Promise.all(
-            zones.map(async (zone: WooCommerceShippingZone) => {
+        // Fetch locations + methods for zones in small batches to avoid hitting host rate limits & preflight flood
+        const BATCH_SIZE = 3;
+        const enrichedZones: EnrichedShippingZone[] = [];
+
+        for (let i = 0; i < zones.length; i += BATCH_SIZE) {
+            const batch = zones.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.all(
+                batch.map(async (zone: WooCommerceShippingZone) => {
                     const [locations, methods] = await Promise.all([
-                        getShippingZoneLocations(zone.id),
-                        getShippingZoneMethods(zone.id),
+                        getShippingZoneLocations(zone.id).catch(err => {
+                            console.warn(`Failed to fetch locations for zone ${zone.id}:`, err);
+                            return [];
+                        }),
+                        getShippingZoneMethods(zone.id).catch(err => {
+                            console.warn(`Failed to fetch methods for zone ${zone.id}:`, err);
+                            return [];
+                        }),
                     ]);
                     return {
                         ...zone,
-                        locations,
-                        methods: methods.filter((m: WooCommerceShippingMethod) => m.enabled),
+                        locations: Array.isArray(locations) ? locations : [],
+                        methods: Array.isArray(methods) ? methods.filter((m: WooCommerceShippingMethod) => m && m.enabled) : [],
                     } as EnrichedShippingZone;
                 })
-        );
+            );
+            enrichedZones.push(...batchResults);
+        }
 
         // Cache result
         try {
