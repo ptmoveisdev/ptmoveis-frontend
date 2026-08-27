@@ -121,12 +121,7 @@ export async function fetchWooCommerce<T>(
         // Cria Basic Auth header
         const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
 
-        console.log('🔍 Fazendo requisição WooCommerce:', {
-            url: url.replace(WOOCOMMERCE_CONSUMER_KEY, 'KEY_HIDDEN').replace(WOOCOMMERCE_CONSUMER_SECRET, 'SECRET_HIDDEN'),
-            endpoint,
-            method: options.method || 'GET',
-            ...(isGet ? { params } : { body: options.body ? JSON.parse(options.body as string) : undefined })
-        });
+
 
         const response = await fetch(url, {
             ...options,
@@ -158,9 +153,9 @@ export async function fetchWooCommerce<T>(
             );
         }
 
-        const data = await response.json();
-        console.log('✅ Resposta WooCommerce:', Array.isArray(data) ? `${data.length} itens` : 'objeto');
 
+
+        const data = await response.json();
         return { data: data as T, headers: response.headers };
     } catch (error) {
         if (error instanceof WordPressAPIError) {
@@ -411,13 +406,8 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
         // Cria Basic Auth header (mesmo que para WooCommerce)
         const auth = btoa(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`);
 
-        console.log('🔍 Buscando opções de categoria WCCO para produto:', productId);
-
-        // Se WCCO_API_URL está configurado, usa ele diretamente
         if (WCCO_API_URL) {
             const wccoUrl = `${WCCO_API_URL}/options/${productId}`;
-            console.log(`  Usando WCCO_API_URL: ${wccoUrl}`);
-
             try {
                 const response = await fetch(wccoUrl, {
                     headers: {
@@ -426,19 +416,14 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                     },
                 });
 
-                console.log(`  Status: ${response.status} ${response.statusText}`);
-
                 if (response.ok) {
                     const data = await response.json();
                     const normalized = Array.isArray(data) ? data : [];
                     wccoOptionsCache.set(productId, normalized);
-                    console.log('✅ Opções WCCO recebidas:', normalized);
                     return normalized;
-                } else {
-                    console.warn(`⚠️ Endpoint WCCO retornou ${response.status}`);
                 }
-            } catch (error) {
-                console.error('❌ Erro ao buscar do WCCO_API_URL:', error);
+            } catch {
+                // fallthrough to fallbacks
             }
         }
 
@@ -450,13 +435,9 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
             `${baseUrl}/wp-json/wp/v2/product-category-options/${productId}`,
         ];
 
-        console.log('  Tentando endpoints fallback...');
-
         // Tenta cada endpoint
         for (const url of possibleEndpoints) {
             try {
-                console.log(`  Tentando: ${url}`);
-
                 const response = await fetch(url, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -464,26 +445,19 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                     },
                 });
 
-                console.log(`  Status: ${response.status} ${response.statusText}`);
-
                 if (response.ok) {
                     const data = await response.json();
                     const normalized = Array.isArray(data) ? data : [];
                     wccoOptionsCache.set(productId, normalized);
-                    console.log('✅ Opções WCCO recebidas:', normalized);
                     return normalized;
                 }
-            } catch (endpointError) {
-                console.log(`  Erro neste endpoint:`, endpointError);
+            } catch {
                 continue;
             }
         }
 
-        console.warn('⚠️ Nenhum endpoint WCCO funcionou. Plugin pode não estar instalado ou configurado.');
         return [];
-
-    } catch (error) {
-        console.error('❌ Erro ao buscar opções de categoria do produto:', error);
+    } catch {
         return [];
     }
 }

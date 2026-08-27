@@ -3,7 +3,7 @@
  * Substitui os produtos locais por produtos do WooCommerce
  */
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useProducts } from '@/hooks/useWordPress';
 import { ProductCard } from '@/components/ProductCard';
 import { convertWPProductToLocal } from '@/utils/productUtils';
@@ -26,12 +26,6 @@ export function WordPressFeaturedProducts({ onProductClick }: WordPressFeaturedP
         return shuffled.slice(0, 10);
     }, [allProducts]);
 
-    // Log para debug
-    useEffect(() => {
-        if (wpProducts.length > 0) {
-            console.log('✅ Produtos aleatórios gerados:', wpProducts.length);
-        }
-    }, [wpProducts]);
 
     // Loading state
     if (loading) {

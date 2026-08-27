@@ -3,7 +3,7 @@
  * Lista produtos do WooCommerce com paginação
  */
 
-import { useEffect } from 'react';
+
 import { useProducts } from '@/hooks/useWordPress';
 import { ProductCard } from '@/components/ProductCard';
 import type { Product } from '@/data/products';
@@ -74,12 +74,6 @@ export function WordPressProducts({
         order: 'asc'
     });
 
-    // Log para debug
-    useEffect(() => {
-        if (wpProducts.length > 0) {
-            console.log(`✅ ${title} carregados:`, wpProducts.length);
-        }
-    }, [wpProducts, title]);
 
     // Loading state
     if (loading) {

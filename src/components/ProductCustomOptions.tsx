@@ -203,7 +203,6 @@ export function ProductCustomOptions({ productId, onSelectionChange, attemptedSu
             {fields.map((field, fieldIndex) => {
                 // Validação adicional: garante que field tem a estrutura esperada
                 if (!field || !field.title || !Array.isArray(field.options)) {
-                    console.warn('Campo WCCO inválido:', field);
                     return null;
                 }
                 
