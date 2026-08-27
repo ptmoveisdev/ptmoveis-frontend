@@ -1,8 +1,9 @@
-// Eventos de e-commerce para o dataLayer (GTM/GA4/Google Ads) e Meta Pixel.
+// Eventos de e-commerce para o dataLayer (GTM/Google Ads), GA4 (gtag direto) e Meta Pixel.
 declare global {
     interface Window {
         dataLayer: any[];
         fbq?: (...args: any[]) => void;
+        gtag?: (...args: any[]) => void;
     }
 }
 
@@ -18,6 +19,8 @@ function pushEcommerce(event: string, ecommerce: Record<string, any>) {
     // Limpa o objeto ecommerce anterior antes de cada evento (recomendação GA4).
     window.dataLayer.push({ ecommerce: null });
     window.dataLayer.push({ event, ecommerce });
+    // GA4 recebe diretamente via gtag (o GTM não tem tag de GA4 configurada).
+    window.gtag?.('event', event, ecommerce);
 }
 
 export function trackViewItem(item: TrackItem) {
@@ -69,12 +72,14 @@ export function trackBeginCheckout(items: TrackItem[], value: number) {
 export function trackWhatsAppClick(source: string) {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: 'whatsapp_click', click_source: source });
+    window.gtag?.('event', 'whatsapp_click', { click_source: source });
     window.fbq?.('track', 'Contact', { content_category: 'whatsapp', content_name: source });
 }
 
 export function trackPhoneClick(source: string) {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: 'phone_click', click_source: source });
+    window.gtag?.('event', 'phone_click', { click_source: source });
     window.fbq?.('track', 'Contact', { content_category: 'phone', content_name: source });
 }
 
