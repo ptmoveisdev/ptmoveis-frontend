@@ -3,6 +3,7 @@ import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { ScalapayWidget } from './ScalapayWidget';
+import { trackWhatsAppClick } from '@/utils/tracking';
 
 interface CartSidebarProps {
     isOpen: boolean;
@@ -187,6 +188,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             {/* WhatsApp Checkout Button */}
                             <Button
                                 onClick={() => {
+                                    trackWhatsAppClick('cart_checkout');
                                     const message = `Olá! Gostaria de finalizar a compra dos seguintes itens:\n\n${items.map(item => `- ${item.name} (${item.quantity}x) ${item.selectedAttributes ? `[${item.selectedAttributes}]` : ''} - ${item.price.toFixed(2)}€`).join('\n')}\n\n*Total: ${totalPrice.toFixed(2)}€*`;
                                     window.open(`https://wa.me/351939076117?text=${encodeURIComponent(message)}`, '_blank');
                                 }}

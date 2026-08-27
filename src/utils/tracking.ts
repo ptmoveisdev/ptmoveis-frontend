@@ -66,6 +66,18 @@ export function trackBeginCheckout(items: TrackItem[], value: number) {
     });
 }
 
+export function trackWhatsAppClick(source: string) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'whatsapp_click', click_source: source });
+    window.fbq?.('track', 'Contact', { content_category: 'whatsapp', content_name: source });
+}
+
+export function trackPhoneClick(source: string) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'phone_click', click_source: source });
+    window.fbq?.('track', 'Contact', { content_category: 'phone', content_name: source });
+}
+
 export function trackPurchase(params: {
     transactionId: string;
     value: number;

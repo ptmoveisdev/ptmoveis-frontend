@@ -1,4 +1,5 @@
 import { ChevronLeft, Mail, Phone, MapPin, CreditCard, ShieldCheck, FileText, Briefcase } from 'lucide-react';
+import { trackPhoneClick } from '@/utils/tracking';
 
 interface StaticPageProps {
     onBack: () => void;
@@ -268,7 +269,13 @@ export function ContactFAQ({ onBack }: { onBack: () => void }) {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500">Telefone / WhatsApp</p>
-                                <p className="font-medium">+351 939 076 117</p>
+                                <a
+                                    href="tel:+351939076117"
+                                    onClick={() => trackPhoneClick('contact_page')}
+                                    className="font-medium hover:text-[#D4AF37] transition-colors"
+                                >
+                                    +351 939 076 117
+                                </a>
                             </div>
                         </div>
 

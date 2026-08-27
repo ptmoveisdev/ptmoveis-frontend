@@ -17,6 +17,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { FavoritesSidebar } from '@/components/FavoritesSidebar';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
+import { trackWhatsAppClick } from '@/utils/tracking';
 import ProductPage from '@/pages/ProductPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
@@ -532,12 +533,13 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
                 href="https://wa.me/351939076117"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackWhatsAppClick('footer')}
                 className="flex items-center gap-2 hover:text-[#25D366] transition-colors"
               >
                 <div className="w-4 h-4 flex items-center justify-center">
                   <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
                 </div>
-                <span><a href="https://wa.me/351939076117" target="_blank" rel="noopener noreferrer">+351 939 076 117</a></span>
+                <span>+351 939 076 117</span>
               </a>
             </div>
           </div>
