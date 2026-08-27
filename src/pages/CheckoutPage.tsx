@@ -358,7 +358,7 @@ export default function CheckoutPage() {
             try {
                 const nominatimUrl = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cep)}&countrycodes=pt&format=json&limit=1&addressdetails=1`;
                 const nomRes = await fetch(nominatimUrl, {
-                    headers: { 'Accept-Language': 'pt', 'User-Agent': 'ptmoveis-checkout/1.0' }
+                    headers: { 'Accept-Language': 'pt' }
                 });
                 if (nomRes.ok) {
                     const nomData = await nomRes.json();

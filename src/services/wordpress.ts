@@ -64,7 +64,6 @@ async function fetchWordPress<T>(
             ...options,
             headers: {
                 'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 ...options.headers,
             },
         });
@@ -134,7 +133,6 @@ export async function fetchWooCommerce<T>(
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Basic ${auth}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 ...options.headers,
             },
         });
@@ -425,7 +423,6 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Basic ${auth}`,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     },
                 });
 
@@ -464,7 +461,6 @@ export async function getProductCategoryOptions(productId: number): Promise<any[
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Basic ${auth}`,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     },
                 });
 

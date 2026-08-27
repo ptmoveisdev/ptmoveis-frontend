@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Proxy WordPress / WooCommerce API to bypass CORS (opcional)
+[[redirects]]
+  from   = "/wp-json/*"
+  to     = "https://api.ptmoveis.pt/wp-json/:splat"
+  status = 200
+  force  = true
+
 # SPA routing — redirect all requests to index.html
 [[redirects]]
   from   = "/*"
