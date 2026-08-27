@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 import { ScalapayWidget } from '@/components/ScalapayWidget';
+import { trackBeginCheckout } from '@/utils/tracking';
 
 
 const GatewayIcon = ({ id }: { id: string }) => {
@@ -156,6 +157,16 @@ export default function CheckoutPage() {
     const [isLoadingShipping, setIsLoadingShipping] = useState(true);
 
     const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
+
+    // Dispara begin_checkout uma vez, quando a página abre com itens no carrinho
+    React.useEffect(() => {
+        if (items.length === 0) return;
+        trackBeginCheckout(
+            items.map(item => ({ item_id: item.productId, item_name: item.name, price: item.price, quantity: item.quantity })),
+            totalPrice
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Fetch payment gateways once on mount
     React.useEffect(() => {

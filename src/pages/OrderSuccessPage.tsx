@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { getOrderById, captureScalapayPayment } from '@/services/wordpress';
 import { useCart } from '@/contexts/CartContext';
+import { trackPurchase } from '@/utils/tracking';
 
 interface OrderState {
     orderId?: string;
@@ -143,6 +144,27 @@ export default function OrderSuccessPage() {
 
         fetchOrder();
     }, [resolvedState]);
+
+    // Dispara o evento de compra assim que a encomenda real é confirmada pelo backend.
+    useEffect(() => {
+        if (!order || !resolvedState?.orderId) return;
+        if (resolvedState.orderId === 'whatsapp' || resolvedState.orderId === 'pending') return;
+
+        const items = (order.line_items || []).map((item: any) => ({
+            item_id: String(item.product_id ?? item.id),
+            item_name: item.name,
+            price: parseFloat(item.price ?? item.total ?? '0') || 0,
+            quantity: item.quantity,
+        }));
+
+        trackPurchase({
+            transactionId: String(resolvedState.orderId),
+            value: parseFloat(order.total),
+            currency: order.currency,
+            shipping: order.shipping_total ? parseFloat(order.shipping_total) : undefined,
+            items,
+        });
+    }, [order, resolvedState]);
 
     if (!resolvedState?.orderId) return null;
 

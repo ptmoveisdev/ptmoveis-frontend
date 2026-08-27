@@ -18,6 +18,7 @@ import type { WooCommerceVariation } from '@/types/wordpress';
 import { toast } from 'sonner';
 import { ProductShippingCalculator } from '@/components/ProductShippingCalculator';
 import { ScalapayWidget } from '@/components/ScalapayWidget';
+import { trackViewItem } from '@/utils/tracking';
 
 export default function ProductPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -51,6 +52,16 @@ export default function ProductPage() {
         setIsLiked(false);
         setIsFullscreen(false);
     }, [slug]);
+
+    useEffect(() => {
+        if (!wpProduct) return;
+        trackViewItem({
+            item_id: String(wpProduct.id),
+            item_name: wpProduct.name,
+            price: parseFloat(wpProduct.price),
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [wpProduct?.id]);
 
     if (loading) {
         return (

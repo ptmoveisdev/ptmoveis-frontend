@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { trackAddToCart } from '@/utils/tracking';
 
 export interface CartItem {
     id: string; // Pode ser "ID_PRODUTO" ou "ID_PRODUTO-ID_VARIACAO"
@@ -46,6 +47,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, [items]);
 
     const addToCart = useCallback((product: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+        trackAddToCart({
+            item_id: product.productId,
+            item_name: product.name,
+            price: product.price,
+            quantity: product.quantity || 1,
+        });
+
         setItems(prevItems => {
             const existingItemIndex = prevItems.findIndex(item =>
                 item.productId === product.productId &&
