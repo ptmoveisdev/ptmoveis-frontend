@@ -10,16 +10,6 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
   <script type="module" src="https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5"></script>
   <title>PT Móveis | Móveis de Qualidade para sua Casa</title>
-  <!-- Redirect non-hash paths to hash-router compatible URLs (e.g. from Instagram/Facebook links) -->
-  <script>
-    (function () {
-      var path = window.location.pathname;
-      if (path && path !== '/' && path !== '') {
-        // Move pathname to hash, keeping query params (fbclid, utm_*, etc.) at root level for analytics
-        window.location.replace('/' + window.location.search + '#' + path);
-      }
-    })();
-  </script>
   <!-- Google Consent Mode v2: por defeito tudo negado (RGPD) até o utilizador escolher no banner -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -91,6 +81,17 @@
     fbq('track', 'PageView');
   </script>
   <!-- End Meta Pixel Code -->
+
+  <!-- Redirect non-hash paths para o hash-router (ex: links do Instagram/Facebook). Corre depois das tags acima para garantir que ficam registadas antes do redirecionamento. -->
+  <script>
+    (function () {
+      var path = window.location.pathname;
+      if (path && path !== '/' && path !== '') {
+        // Move pathname para o hash, mantendo os parâmetros de query (fbclid, utm_*, etc.) na raiz para efeitos de análise
+        window.location.replace('/' + window.location.search + '#' + path);
+      }
+    })();
+  </script>
 </head>
 
 <body>
