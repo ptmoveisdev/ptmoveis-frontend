@@ -55,6 +55,21 @@ const saveCheckoutData = (data: Partial<CheckoutFormData>) => {
     } catch {}
 };
 
+// gclid/fbclid capturados na entrada do site (ver index.html), guardados na própria encomenda
+// para ficarem disponíveis a um futuro pipeline de conversões offline (ex: GHL/Flowhub).
+const getAdClickMetaData = (): Array<{ key: string; value: string }> => {
+    try {
+        const gclid = localStorage.getItem('ptmoveis_gclid');
+        const fbclid = localStorage.getItem('ptmoveis_fbclid');
+        return [
+            ...(gclid ? [{ key: '_gclid', value: gclid }] : []),
+            ...(fbclid ? [{ key: '_fbclid', value: fbclid }] : []),
+        ];
+    } catch {
+        return [];
+    }
+};
+
 interface LineItemPayload {
     product_id: number;
     variation_id?: number;
@@ -511,6 +526,7 @@ export default function CheckoutPage() {
                     { key: '_nif', value: formData.nif || '' },
                     { key: '_paypal_order_id', value: _data.orderID },
                     ...(isApm ? [] : [{ key: '_paypal_transaction_id', value: captureId }]),
+                    ...getAdClickMetaData(),
                 ]
             });
 
@@ -573,6 +589,7 @@ export default function CheckoutPage() {
                     meta_data: [
                         { key: '_nif', value: data.nif || '' },
                         { key: '_klarna_flow', value: 'hpp_redirect' },
+                        ...getAdClickMetaData(),
                     ]
                 };
 
@@ -653,6 +670,7 @@ export default function CheckoutPage() {
                     meta_data: [
                         { key: '_nif', value: data.nif || '' },
                         { key: '_scalapay_flow', value: 'redirect' },
+                        ...getAdClickMetaData(),
                     ]
                 };
 
@@ -820,7 +838,8 @@ export default function CheckoutPage() {
                     {
                         key: '_nif',
                         value: data.nif || ''
-                    }
+                    },
+                    ...getAdClickMetaData(),
                 ]
             };
 

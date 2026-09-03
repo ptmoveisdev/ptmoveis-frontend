@@ -180,6 +180,8 @@ export default function OrderSuccessPage() {
             currency: order.currency,
             shipping: order.shipping_total ? parseFloat(order.shipping_total) : undefined,
             items,
+            email: order.billing?.email,
+            phone: order.billing?.phone,
         });
     }, [order, resolvedState, scalapayPaymentUnconfirmed]);
 

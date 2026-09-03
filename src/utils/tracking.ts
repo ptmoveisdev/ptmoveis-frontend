@@ -89,6 +89,8 @@ export function trackPurchase(params: {
     currency?: string;
     shipping?: number;
     items: TrackItem[];
+    email?: string;
+    phone?: string;
 }) {
     // Evita contar a mesma encomenda 2x (ex: utilizador atualiza a página de sucesso).
     const dedupeKey = `ptmoveis_purchase_tracked_${params.transactionId}`;
@@ -104,6 +106,17 @@ export function trackPurchase(params: {
         fbclid = localStorage.getItem('ptmoveis_fbclid');
     } catch (e) { /* localStorage indisponível */ }
 
+    // Dados para Conversões Otimizadas do Google Ads (o próprio gtag/GTM faz o hash, não enviar em texto simples além daqui).
+    if (params.email || params.phone) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+            user_data: {
+                ...(params.email ? { email: params.email } : {}),
+                ...(params.phone ? { phone_number: params.phone } : {}),
+            },
+        });
+    }
+
     pushEcommerce('purchase', {
         transaction_id: params.transactionId,
         value: params.value,
@@ -113,10 +126,9 @@ export function trackPurchase(params: {
         ...(gclid ? { gclid } : {}),
         ...(fbclid ? { fbclid } : {}),
     });
-    window.fbq?.('track', 'Purchase', {
-        value: params.value,
-        currency: params.currency ?? 'EUR',
-        content_ids: params.items.map(i => i.item_id),
-        content_type: 'product',
-    });
+
+    // O Purchase da Meta já é reportado pelo Conversions API do plugin Meta for WooCommerce,
+    // do lado do servidor (hooks nativos da encomenda WooCommerce — mais fiável que o browser
+    // e sem risco de contagem dupla, já que o event_id do plugin é aleatório e não é possível
+    // sincronizá-lo com o nosso lado). Não disparar fbq('track','Purchase') aqui de propósito.
 }
