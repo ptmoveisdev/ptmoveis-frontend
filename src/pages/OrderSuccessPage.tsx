@@ -75,6 +75,9 @@ export default function OrderSuccessPage() {
     const [order, setOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [resolvedState, setResolvedState] = useState<OrderState | null>(null);
+    // true = pagamento Scalapay não confirmado (recusado pelo Scalapay ou falha na captura no servidor).
+    // Nesse caso a encomenda existe (pendente) mas não deve contar como Purchase.
+    const [scalapayPaymentUnconfirmed, setScalapayPaymentUnconfirmed] = useState(false);
 
     useEffect(() => {
         if (routerState?.orderId) {
@@ -88,14 +91,27 @@ export default function OrderSuccessPage() {
         if (scalapayToken) {
             const stored = localStorage.getItem('scalapay_pending_order');
             const parsed: OrderState & { orderId: string; orderData?: any } = stored ? JSON.parse(stored) : {};
-            if (parsed.orderId && scalapayStatus === 'APPROVED') {
-                captureScalapayPayment(Number(parsed.orderId), scalapayToken, parsed.orderData).catch(err =>
-                    console.error('❌ Scalapay capture:', err)
-                );
-            }
-            setResolvedState({ orderId: parsed.orderId, total: parsed.total });
             localStorage.removeItem('scalapay_pending_order');
             clearCart();
+
+            // Espera a confirmação da captura antes de resolver o estado, para que o efeito de
+            // Purchase (que depende de resolvedState) nunca corra antes de sabermos o resultado real.
+            (async () => {
+                if (parsed.orderId && scalapayStatus === 'APPROVED') {
+                    try {
+                        await captureScalapayPayment(Number(parsed.orderId), scalapayToken, parsed.orderData);
+                    } catch (err) {
+                        console.error('❌ Scalapay capture:', err);
+                        // A aprovação do Scalapay não se traduziu numa captura confirmada no servidor —
+                        // não contar como Purchase até isto ser confirmado manualmente.
+                        setScalapayPaymentUnconfirmed(true);
+                    }
+                } else {
+                    // Scalapay não aprovou o pagamento (cancelado/recusado) — nunca contar como Purchase.
+                    setScalapayPaymentUnconfirmed(true);
+                }
+                setResolvedState({ orderId: parsed.orderId, total: parsed.total });
+            })();
             return;
         }
 
@@ -149,6 +165,7 @@ export default function OrderSuccessPage() {
     useEffect(() => {
         if (!order || !resolvedState?.orderId) return;
         if (resolvedState.orderId === 'whatsapp' || resolvedState.orderId === 'pending') return;
+        if (scalapayPaymentUnconfirmed) return;
 
         const items = (order.line_items || []).map((item: any) => ({
             item_id: String(item.product_id ?? item.id),
@@ -164,7 +181,7 @@ export default function OrderSuccessPage() {
             shipping: order.shipping_total ? parseFloat(order.shipping_total) : undefined,
             items,
         });
-    }, [order, resolvedState]);
+    }, [order, resolvedState, scalapayPaymentUnconfirmed]);
 
     if (!resolvedState?.orderId) return null;
 

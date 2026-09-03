@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedirectUrl, getScalapayCheckoutUrl, type ScalapayOrderData } from '@/services/wordpress';
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 import { ScalapayWidget } from '@/components/ScalapayWidget';
-import { trackBeginCheckout } from '@/utils/tracking';
+import { trackBeginCheckout, trackWhatsAppClick } from '@/utils/tracking';
 
 
 const GatewayIcon = ({ id }: { id: string }) => {
@@ -765,6 +765,7 @@ export default function CheckoutPage() {
                 const encodedMessage = encodeURIComponent(message);
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
+                trackWhatsAppClick('checkout_finalizar');
                 clearCart();
                 window.open(whatsappUrl, '_blank');
                 navigate('/encomenda-concluida', { state: { orderId: 'whatsapp', total: finalTotal } });

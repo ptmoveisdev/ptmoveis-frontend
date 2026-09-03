@@ -95,12 +95,23 @@ export function trackPurchase(params: {
     if (sessionStorage.getItem(dedupeKey)) return;
     sessionStorage.setItem(dedupeKey, '1');
 
+    // gclid/fbclid capturados na entrada (ver index.html) — ficam disponíveis no dataLayer
+    // para uma futura importação de conversões offline (ex: pipeline GHL).
+    let gclid: string | null = null;
+    let fbclid: string | null = null;
+    try {
+        gclid = localStorage.getItem('ptmoveis_gclid');
+        fbclid = localStorage.getItem('ptmoveis_fbclid');
+    } catch (e) { /* localStorage indisponível */ }
+
     pushEcommerce('purchase', {
         transaction_id: params.transactionId,
         value: params.value,
         currency: params.currency ?? 'EUR',
         shipping: params.shipping,
         items: params.items.map(i => ({ ...i, quantity: i.quantity ?? 1 })),
+        ...(gclid ? { gclid } : {}),
+        ...(fbclid ? { fbclid } : {}),
     });
     window.fbq?.('track', 'Purchase', {
         value: params.value,
