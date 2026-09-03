@@ -14,6 +14,7 @@ import { createWooCommerceOrder, getPaymentGateways, getKlarnaHppUrl, getApmRedi
 import { fetchAllShippingZones, matchShippingZoneWithMethod, type EnrichedShippingZone } from '@/utils/shipping';
 import { ScalapayWidget } from '@/components/ScalapayWidget';
 import { trackBeginCheckout, trackWhatsAppClick } from '@/utils/tracking';
+import { buildWhatsAppUrl } from '@/utils/whatsapp';
 
 
 const GatewayIcon = ({ id }: { id: string }) => {
@@ -747,8 +748,6 @@ export default function CheckoutPage() {
         if (data.paymentMethod === 'whatsapp') {
             setIsSubmitting(true);
             try {
-                const phoneNumber = '351939076117';
-
                 let message = `*NOVA ENCOMENDA - PT Móveis*\n\n`;
                 message += `*DADOS DO CLIENTE*\n`;
                 message += `Nome: ${data.firstName} ${data.lastName}\n`;
@@ -780,8 +779,7 @@ export default function CheckoutPage() {
                 message += `Portes: ${dynamicShippingCost === null ? 'A calcular' : `${dynamicShippingCost.toFixed(2)} €`}\n`;
                 message += `*TOTAL: ${finalTotal.toFixed(2)} €*\n`;
 
-                const encodedMessage = encodeURIComponent(message);
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+                const whatsappUrl = buildWhatsAppUrl('checkout_finalizar', message);
 
                 trackWhatsAppClick('checkout_finalizar');
                 clearCart();

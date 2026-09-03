@@ -18,6 +18,7 @@ import { FavoritesSidebar } from '@/components/FavoritesSidebar';
 import type { Product } from '@/data/products';
 import { WordPressFeaturedProducts } from '@/components/WordPressFeaturedProducts';
 import { trackWhatsAppClick } from '@/utils/tracking';
+import { buildWhatsAppUrl } from '@/utils/whatsapp';
 import ProductPage from '@/pages/ProductPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
@@ -530,7 +531,7 @@ function Footer({ onNavigate }: { onNavigate: (path: string) => void }) {
                   Rua do Parque n 459 Penamaior , <br />Paços de Ferreira, <br />Portugal, 4595-298</span>
               </div>
               <a
-                href="https://wa.me/351939076117"
+                href={buildWhatsAppUrl('footer', 'Olá! Gostaria de mais informações sobre os vossos móveis.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackWhatsAppClick('footer')}

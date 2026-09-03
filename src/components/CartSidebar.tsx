@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { ScalapayWidget } from './ScalapayWidget';
 import { trackWhatsAppClick } from '@/utils/tracking';
+import { buildWhatsAppUrl } from '@/utils/whatsapp';
 
 interface CartSidebarProps {
     isOpen: boolean;
@@ -190,7 +191,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                 onClick={() => {
                                     trackWhatsAppClick('cart_checkout');
                                     const message = `Olá! Gostaria de finalizar a compra dos seguintes itens:\n\n${items.map(item => `- ${item.name} (${item.quantity}x) ${item.selectedAttributes ? `[${item.selectedAttributes}]` : ''} - ${item.price.toFixed(2)}€`).join('\n')}\n\n*Total: ${totalPrice.toFixed(2)}€*`;
-                                    window.open(`https://wa.me/351939076117?text=${encodeURIComponent(message)}`, '_blank');
+                                    window.open(buildWhatsAppUrl('cart_checkout', message), '_blank');
                                 }}
                                 className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white text-base font-bold py-6 rounded-lg"
                             >

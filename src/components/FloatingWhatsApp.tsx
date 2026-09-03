@@ -1,4 +1,5 @@
 import { trackWhatsAppClick } from '@/utils/tracking';
+import { buildWhatsAppUrl } from '@/utils/whatsapp';
 
 export function WhatsAppIcon({ className = "w-6 h-6" }: { className?: string }) {
     return (
@@ -16,7 +17,7 @@ export function WhatsAppIcon({ className = "w-6 h-6" }: { className?: string }) 
 export function FloatingWhatsApp() {
     return (
         <a
-            href="https://wa.me/351939076117"
+            href={buildWhatsAppUrl('floating_button', 'Olá! Tenho uma dúvida sobre os vossos móveis.')}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppClick('floating_button')}
