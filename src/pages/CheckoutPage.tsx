@@ -779,6 +779,49 @@ export default function CheckoutPage() {
                 message += `Portes: ${dynamicShippingCost === null ? 'A calcular' : `${dynamicShippingCost.toFixed(2)} €`}\n`;
                 message += `*TOTAL: ${finalTotal.toFixed(2)} €*\n`;
 
+                // Cria a encomenda em "pending" para o WhatsApp entrar no mesmo pipeline
+                // do Flowhub (woocommerce_new_order); o pagamento continua a fechar-se na conversa
+                try {
+                    const { line_items, fee_lines } = prepareWooCommerceCart(items);
+                    await createWooCommerceOrder({
+                        payment_method: 'whatsapp',
+                        payment_method_title: 'WhatsApp',
+                        set_paid: false,
+                        billing: {
+                            first_name: data.firstName,
+                            last_name: data.lastName,
+                            address_1: data.address,
+                            city: data.city,
+                            postcode: data.postalCode,
+                            country: 'PT',
+                            email: data.email,
+                            phone: data.phone,
+                        },
+                        shipping: {
+                            first_name: data.firstName,
+                            last_name: data.lastName,
+                            address_1: data.address,
+                            city: data.city,
+                            postcode: data.postalCode,
+                            country: 'PT',
+                        },
+                        line_items,
+                        fee_lines,
+                        shipping_lines: [{
+                            method_id: matchedShippingMethod ? matchedShippingMethod.method_id : 'flat_rate',
+                            instance_id: matchedShippingMethod ? matchedShippingMethod.id.toString() : undefined,
+                            method_title: matchedShippingMethod ? matchedShippingMethod.title : 'Envio',
+                            total: (dynamicShippingCost || 0).toFixed(2),
+                        }],
+                        meta_data: [
+                            { key: '_nif', value: data.nif || '' },
+                            ...getAdClickMetaData(),
+                        ]
+                    });
+                } catch (orderError) {
+                    console.error('Falha ao criar encomenda WhatsApp no WooCommerce:', orderError);
+                }
+
                 const whatsappUrl = buildWhatsAppUrl('checkout_finalizar', message);
 
                 trackWhatsAppClick('checkout_finalizar');
