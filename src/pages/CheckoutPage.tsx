@@ -1157,7 +1157,7 @@ export default function CheckoutPage() {
                                         <Button
                                             type="submit"
                                             form="checkout-form"
-                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated}
+                                            disabled={isSubmitting || isLoadingShipping || !isShippingCalculated || !isValid}
                                             className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 sm:py-6 rounded-xl text-base sm:text-lg relative disabled:bg-gray-400 disabled:cursor-not-allowed"
                                         >
                                             {isSubmitting ? (
