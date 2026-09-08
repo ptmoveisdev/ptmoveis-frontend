@@ -1,5 +1,5 @@
 import type { WooCommerceShippingZone, WooCommerceShippingMethod, WooCommerceShippingLocation } from '../types/wordpress';
-import { getShippingZones, getShippingZoneLocations, getShippingZoneMethods } from '../services/wordpress';
+import { getShippingZonesFull } from '../services/wordpress';
 
 export interface EnrichedShippingZone extends WooCommerceShippingZone {
     locations: WooCommerceShippingLocation[];
@@ -29,35 +29,15 @@ export async function fetchAllShippingZones(): Promise<EnrichedShippingZone[]> {
     }
 
     try {
-        const zones = await getShippingZones();
-
-        // Fetch locations + methods for zones in small batches to avoid hitting host rate limits & preflight flood
-        const BATCH_SIZE = 3;
-        const enrichedZones: EnrichedShippingZone[] = [];
-
-        for (let i = 0; i < zones.length; i += BATCH_SIZE) {
-            const batch = zones.slice(i, i + BATCH_SIZE);
-            const batchResults = await Promise.all(
-                batch.map(async (zone: WooCommerceShippingZone) => {
-                    const [locations, methods] = await Promise.all([
-                        getShippingZoneLocations(zone.id).catch(err => {
-                            console.warn(`Failed to fetch locations for zone ${zone.id}:`, err);
-                            return [];
-                        }),
-                        getShippingZoneMethods(zone.id).catch(err => {
-                            console.warn(`Failed to fetch methods for zone ${zone.id}:`, err);
-                            return [];
-                        }),
-                    ]);
-                    return {
-                        ...zone,
-                        locations: Array.isArray(locations) ? locations : [],
-                        methods: Array.isArray(methods) ? methods.filter((m: WooCommerceShippingMethod) => m && m.enabled) : [],
-                    } as EnrichedShippingZone;
-                })
-            );
-            enrichedZones.push(...batchResults);
-        }
+        // Uma única chamada ao servidor (agrega tudo via PHP), em vez de N+1 pedidos
+        // client-side por zona — esses excediam o limite de pedidos simultâneos da
+        // hospedagem e deixavam as últimas zonas do lote sem dados.
+        const rawZones = await getShippingZonesFull();
+        const enrichedZones: EnrichedShippingZone[] = rawZones.map(zone => ({
+            ...zone,
+            locations: Array.isArray(zone.locations) ? zone.locations : [],
+            methods: Array.isArray(zone.methods) ? zone.methods.filter((m: WooCommerceShippingMethod) => m && m.enabled) : [],
+        }));
 
         // Cache result
         try {

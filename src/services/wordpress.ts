@@ -661,27 +661,25 @@ export async function getPaymentGateways(): Promise<any[]> {
 // ============================================
 
 /**
- * Busca zonas de entrega
+ * Busca todas as zonas de envio (já com locations e methods) numa única chamada ao servidor.
+ * Substitui as N+1 chamadas por zona ao REST API do WooCommerce (products/shipping/zones/{id}/*),
+ * que em lotes ultrapassavam o limite de pedidos simultâneos da hospedagem partilhada e deixavam
+ * as últimas zonas do lote (as de ID mais alto) sem dados, bloqueando o checkout nessas regiões.
+ * Requer endpoint WordPress: GET /wp-json/ptmoveis/v1/shipping-zones
  */
-export async function getShippingZones(): Promise<WooCommerceShippingZone[]> {
-    const { data } = await fetchWooCommerce<WooCommerceShippingZone[]>('/shipping/zones', {});
-    return data;
-}
-
-/**
- * Busca locais de uma zona
- */
-export async function getShippingZoneLocations(zoneId: number): Promise<WooCommerceShippingLocation[]> {
-    const { data } = await fetchWooCommerce<WooCommerceShippingLocation[]>(`/shipping/zones/${zoneId}/locations`, {});
-    return data;
-}
-
-/**
- * Busca métodos de entrega de uma zona
- */
-export async function getShippingZoneMethods(zoneId: number): Promise<WooCommerceShippingMethod[]> {
-    const { data } = await fetchWooCommerce<WooCommerceShippingMethod[]>(`/shipping/zones/${zoneId}/methods`, {});
-    return data;
+export async function getShippingZonesFull(): Promise<Array<WooCommerceShippingZone & {
+    locations: WooCommerceShippingLocation[];
+    methods: WooCommerceShippingMethod[];
+}>> {
+    const base = WORDPRESS_BASE_URL.replace(/\/$/, '');
+    const response = await fetch(`${base}/wp-json/ptmoveis/v1/shipping-zones`, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+        throw new Error(`Erro ao buscar zonas de envio: ${response.status}`);
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
 }
 
 // ============================================
