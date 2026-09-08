@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -162,6 +162,8 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const whatsappClickSource = location.state?.fromCart ? 'cart_checkout' : 'checkout_finalizar';
     const { items, totalPrice, clearCart } = useCart();
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -822,9 +824,9 @@ export default function CheckoutPage() {
                     console.error('Falha ao criar encomenda WhatsApp no WooCommerce:', orderError);
                 }
 
-                const whatsappUrl = buildWhatsAppUrl('checkout_finalizar', message);
+                const whatsappUrl = buildWhatsAppUrl(whatsappClickSource, message);
 
-                trackWhatsAppClick('checkout_finalizar');
+                trackWhatsAppClick(whatsappClickSource);
                 clearCart();
                 window.open(whatsappUrl, '_blank');
                 navigate('/encomenda-concluida', { state: { orderId: 'whatsapp', total: finalTotal } });
