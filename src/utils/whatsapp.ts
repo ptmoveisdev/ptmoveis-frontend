@@ -13,14 +13,18 @@ export function buildWhatsAppUrl(clickSource: string, baseText: string): string 
     const ref = REF_CODES[clickSource] ?? clickSource.toUpperCase();
 
     let clickId = '';
+    let keyword = '';
     try {
         const gclid = localStorage.getItem('ptmoveis_gclid');
         const fbclid = localStorage.getItem('ptmoveis_fbclid');
         if (gclid) clickId = ` g:${gclid}`;
         else if (fbclid) clickId = ` f:${fbclid}`;
+        // Palavra-chave que ativou o anúncio Google (capturada no index.html)
+        const kw = localStorage.getItem('ptmoveis_keyword');
+        if (kw) keyword = ` kw:${kw}`;
     } catch (e) { /* localStorage indisponível */ }
 
-    const suffix = `[ref ${ref}${clickId}]`;
+    const suffix = `[ref ${ref}${clickId}${keyword}]`;
     const fullText = `${baseText}\n\n${suffix}`;
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(fullText)}`;
 }
