@@ -10,13 +10,23 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
   <script type="module" src="https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5"></script>
   <title>PT Móveis | Móveis de Qualidade para sua Casa</title>
-  <!-- Guarda gclid/fbclid (parâmetros de clique de anúncios) em localStorage, para poderem ser
-       anexados a eventos de compra mesmo que o utilizador navegue vários dias antes de comprar. -->
+  <!-- Guarda gclid/fbclid + palavra-chave e origem da campanha (parâmetros de clique de anúncios)
+       em localStorage, para poderem ser anexados à encomenda e à mensagem de WhatsApp mesmo que o
+       utilizador navegue vários dias antes de comprar. -->
   <script>
     (function () {
       try {
         var params = new URLSearchParams(window.location.search);
+        // Ids de clique de anúncio (Google / Meta)
         ['gclid', 'fbclid'].forEach(function (key) {
+          var value = params.get(key);
+          if (value) localStorage.setItem('ptmoveis_' + key, value);
+        });
+        // Palavra-chave que ativou o anúncio (Google Ads: final URL com utm_term={keyword})
+        var keyword = params.get('utm_term') || params.get('keyword');
+        if (keyword) localStorage.setItem('ptmoveis_keyword', keyword);
+        // Origem/campanha, para distinguir Google de outras fontes
+        ['utm_source', 'utm_campaign'].forEach(function (key) {
           var value = params.get(key);
           if (value) localStorage.setItem('ptmoveis_' + key, value);
         });

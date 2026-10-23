@@ -62,9 +62,15 @@ const getAdClickMetaData = (): Array<{ key: string; value: string }> => {
     try {
         const gclid = localStorage.getItem('ptmoveis_gclid');
         const fbclid = localStorage.getItem('ptmoveis_fbclid');
+        const keyword = localStorage.getItem('ptmoveis_keyword');
+        const utmSource = localStorage.getItem('ptmoveis_utm_source');
+        const utmCampaign = localStorage.getItem('ptmoveis_utm_campaign');
         return [
             ...(gclid ? [{ key: '_gclid', value: gclid }] : []),
             ...(fbclid ? [{ key: '_fbclid', value: fbclid }] : []),
+            ...(keyword ? [{ key: '_keyword', value: keyword }] : []),
+            ...(utmSource ? [{ key: '_utm_source', value: utmSource }] : []),
+            ...(utmCampaign ? [{ key: '_utm_campaign', value: utmCampaign }] : []),
         ];
     } catch {
         return [];
