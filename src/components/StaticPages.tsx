@@ -335,7 +335,7 @@ export function ContactFAQ({ onBack }: { onBack: () => void }) {
                                 Quais os métodos de pagamento?
                                 <ChevronLeft className="w-4 h-4 rotate-0 group-open:-rotate-90 transition-transform" />
                             </summary>
-                            <p className="mt-2 text-sm text-gray-600">Preferencialmente Pagamento Seguro (numerário) ou transferência bancária prévia.</p>
+                            <p className="mt-2 text-sm text-gray-600">PayPal, Scalapay (3 ou 4 prestações sem juros) ou, via WhatsApp, numerário na entrega ou transferência bancária prévia.</p>
                         </details>
                     </div>
                 </div>
@@ -374,9 +374,31 @@ export function ComplaintsBook({ onBack }: { onBack: () => void }) {
 export function Payments({ onBack }: { onBack: () => void }) {
     return (
         <StaticPageLayout onBack={onBack} title="Pagamentos">
-            <p className="mb-8">Oferecemos métodos de pagamento seguros e convenientes para os nossos clientes.</p>
+            <p className="mb-2">Oferecemos métodos de pagamento seguros e convenientes para os nossos clientes.</p>
+            <p className="mb-8 text-sm text-gray-600">Para pagar em numerário na entrega ou por transferência bancária, finalize a encomenda pelo WhatsApp e combinamos consigo.</p>
 
             <div className="grid sm:grid-cols-2 gap-6">
+                <div className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <h3 className="font-bold text-[#1E3A5F] mb-2">PayPal</h3>
+                    <p className="text-sm text-gray-600">
+                        Pague de forma rápida e segura com a sua conta PayPal, diretamente no checkout.
+                    </p>
+                </div>
+
+                <div className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mb-4">
+                        <CreditCard className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h3 className="font-bold text-[#1E3A5F] mb-2">Scalapay</h3>
+                    <p className="text-sm text-gray-600">
+                        Pague em 3 ou 4 prestações, sem juros nem custos adicionais, diretamente no checkout.
+                    </p>
+                </div>
+
+
                 <div className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
                     <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-4">
                         <CreditCard className="w-6 h-6 text-green-600" />
