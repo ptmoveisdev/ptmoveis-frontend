@@ -235,7 +235,7 @@ export function HeroSlider({ onViewCollection }: HeroSliderProps) {
 
       {/* Dots indicadores + botão pause */}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+        <div className="absolute bottom-[3px] md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 md:gap-3">
           {slides.map((_, index) => (
             <button
               key={index}
@@ -250,10 +250,10 @@ export function HeroSlider({ onViewCollection }: HeroSliderProps) {
           ))}
           <button
             onClick={() => setIsPaused(p => !p)}
-            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white transition-all hover:scale-110"
+            className="w-[18px] h-[18px] md:w-7 md:h-7 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white transition-all hover:scale-110"
             aria-label={isPaused ? 'Retomar slideshow' : 'Pausar slideshow'}
           >
-            {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+            {isPaused ? <Play className="w-2 h-2 md:w-3.5 md:h-3.5" /> : <Pause className="w-2 h-2 md:w-3.5 md:h-3.5" />}
           </button>
         </div>
       )}
